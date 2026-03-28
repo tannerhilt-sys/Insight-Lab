@@ -1,0 +1,52 @@
+# Finance Buddy — Product Vision & Planning Prompt
+
+Create a comprehensive plan for a personal finance application called **Finance Buddy** with the following requirements:
+
+## Target Audience
+- **Primary:** Young adults (ages 16–25) who are new to personal finance and investing.
+- **Secondary:** Users of all ages looking for an accessible, AI-guided financial companion.
+- **Age Requirement:** Users must be 16 years or older to create an account.
+
+## Core Features
+
+### 1. Financial Education
+- Interactive lessons on investing fundamentals, budgeting, and financial literacy.
+- Explain key concepts (compound interest, diversification, risk tolerance, etc.) in plain, approachable language.
+- Adaptive learning paths that adjust to the user's knowledge level.
+
+### 2. Budgeting Tools
+- Help users create and manage personal budgets.
+- Track income, expenses, and savings goals.
+- Provide actionable insights and tips to improve spending habits.
+
+### 3. Stock Market Guidance
+- Teach users how to read stock charts, understand market indicators, and interpret financial news.
+- Provide real-time market data and watchlists.
+
+### 4. AI-Powered Portfolio Manager
+- Manage and monitor the user's stock portfolio.
+- Actively watch the market during open trading hours.
+- When the AI identifies an opportunity or risk, it should:
+  1. **Prompt the user** with a recommended action (buy or sell).
+  2. **Explain the reasoning** behind the recommendation in clear, jargon-free language.
+  3. **Let the user decide:** accept, deny, or ask follow-up questions to better understand the "why" before acting.
+- The user always retains final decision-making authority — the AI advises, never acts unilaterally.
+
+### 5. AI Chatbot Companion
+- During onboarding, the user can **name their Finance Buddy** (e.g., "Finn", "Cash", or any custom name). The chosen name is used throughout the app to create a personal, conversational experience.
+- The chatbot is **always available** for open-ended questions — not just during active buy/sell prompts. Users can ask about:
+  - Financial concepts ("What's a P/E ratio?")
+  - Their portfolio ("How is my portfolio performing this week?")
+  - General money advice ("How should I start saving for college?")
+  - Anything else finance-related that comes to mind.
+- The chatbot serves as a **passive advisor** when it isn't actively prompting the user for portfolio decisions, so users never feel stuck without guidance.
+- **Visual Identity (Future):** Design an animated buddy avatar/mascot that appears alongside the chat interface. The buddy's speech bubbles originate from this character, giving the AI a friendly, recognizable presence. The avatar style and design will be defined during the UI/UX phase.
+
+### 6. Personalized Recommendations
+- Suggest stocks, funds, or strategies tailored to the user's goals, risk tolerance, and portfolio.
+
+## Key Principles
+- **Education-first:** Every recommendation is a learning opportunity.
+- **Transparency:** Always explain the reasoning; never be a black box.
+- **User control:** The user approves every transaction.
+- **Accessibility:** Use simple language and intuitive design so first-time investors feel confident.
