@@ -1,0 +1,168 @@
+# Finance Buddy — Missing Parts to Add
+
+Areas not yet covered in the Project Description, Notes, or Improvement Suggestions documents.
+
+---
+
+## 1. Monetization / Business Model
+
+No document discusses how Finance Buddy generates revenue.
+
+**Options to consider:**
+- **Freemium tiers:** Free education and budgeting; paid access to advanced AI insights, deeper analytics, or unlimited chat
+- **Subscription model:** Monthly or annual plans with tiered feature access
+- **Affiliate revenue:** Partnerships with brokers or financial products (disclosed transparently)
+- **Premium AI features:** Deeper portfolio analysis, priority response times, extended conversation history
+- **No ads policy:** Explicitly commit to an ad-free experience — trust is core to the product and ads undermine it
+
+---
+
+## 2. Competitive Landscape
+
+No competitive analysis exists. Finance Buddy needs clear positioning against existing players.
+
+**Investing apps:** Robinhood, Acorns, Stash
+- These focus on execution, not education. Finance Buddy leads with learning.
+
+**Budgeting apps:** Mint, YNAB
+- These track money but don't teach investing or offer AI guidance.
+
+**AI finance bots:** Cleo, Plum
+- These automate savings but lack portfolio simulation, structured education, or explainable recommendations.
+
+**Finance Buddy's differentiator:**
+- All-in-one (education + budgeting + investing guidance) with AI as the core engine, not a bolt-on feature.
+
+---
+
+## 3. Privacy & Data Governance
+
+Safety is mentioned in existing docs, but there is no concrete data handling plan.
+
+**Areas to define:**
+- **Regulatory compliance:** GDPR and CCPA, especially for users under 18
+- **Data classification:** What financial data is stored vs. ephemeral (session-only)?
+- **Retention & deletion:** How long is data kept? What triggers deletion?
+- **Account deletion / data export:** Right to be forgotten; user-downloadable data
+- **Third-party data sharing:** Explicit policy on what is and isn't shared with external services
+- **Encryption scope:** At rest, in transit, and in backups
+
+---
+
+## 4. Offline / Degraded Experience
+
+No plan exists for what happens without internet or when the AI service is unavailable.
+
+**Considerations:**
+- **Cached lessons:** Allow users to continue learning offline
+- **Offline budget tracking:** Let users log expenses without a connection and sync later
+- **Graceful fallback UI:** Clear messaging when AI is unavailable instead of broken states
+- **Queued actions:** Buffer user inputs and process them when connectivity returns
+
+---
+
+## 5. Analytics & Success Metrics
+
+No KPIs or measurement plan is defined.
+
+**Key metrics to track:**
+| Category | Metric |
+|----------|--------|
+| Engagement | DAU / MAU, session length, AI chat frequency |
+| Onboarding | Completion rate, drop-off points, time to first insight |
+| Education | Lesson completion rate, quiz scores over time |
+| Budgeting | Budget adherence rate, savings goal progress |
+| Investing | Paper portfolio engagement, recommendation acceptance rate |
+| Retention | Day 1 / Day 7 / Day 30 retention, churn indicators |
+
+---
+
+## 6. AI Model Strategy & Cost Management
+
+The technical architecture references "LLM" but doesn't address model selection or cost control.
+
+**Decisions to make:**
+- **Model selection:** Which LLM(s) and why — balance cost, quality, and latency
+- **Token budget:** Per-user usage caps or throttling to control API spend
+- **Response caching:** Cache common Q&A responses (e.g., "What is a P/E ratio?") to reduce redundant API calls
+- **Architecture approach:** Fine-tuning vs. prompt engineering vs. retrieval-augmented generation (RAG)
+- **Latency targets:** Define acceptable response times for chat (e.g., under 2 seconds)
+- **Fallback models:** Use a smaller/cheaper model for simple queries, reserve the primary model for complex ones
+
+---
+
+## 7. Accessibility (a11y)
+
+No mention of inclusive design in any document.
+
+**Requirements:**
+- Screen reader compatibility (ARIA labels, semantic HTML)
+- Color contrast ratios meeting WCAG AA or AAA standards
+- Colorblind-safe palette for charts, risk indicators, and portfolio visuals
+- Font scaling support for users with low vision
+- Keyboard navigation for all interactive elements
+- Reduced motion option for animations
+
+---
+
+## 8. Localization / Internationalization (i18n)
+
+Currently assumes a US-English-only audience.
+
+**Plan for:**
+- **Language support:** English-first for MVP, but architect for multi-language from the start
+- **Currency localization:** Display local currency symbols and formatting
+- **Market localization:** Support for non-US exchanges in future phases
+- **Region-specific terminology:** Financial terms vary by country (e.g., "401k" is US-only)
+
+---
+
+## 9. User Feedback Loop
+
+No mechanism for users to improve the product or rate AI quality.
+
+**Features to add:**
+- **Thumbs up / thumbs down** on every AI response
+- **"Was this helpful?"** prompt on recommendation cards
+- **In-app bug reporting** and feature request submission
+- **Feedback pipeline:** Route user ratings back into AI prompt tuning and content improvement
+- **Optional post-session surveys** (short, non-intrusive)
+
+---
+
+## 10. Notification Strategy (Beyond Alerts)
+
+Alerts are mentioned, but there is no engagement or anti-spam strategy.
+
+**Define:**
+- **Frequency caps:** Maximum notifications per day to avoid overwhelming users
+- **Quiet hours / do-not-disturb:** Respect user schedules
+- **Channel preferences:** Let users choose between push, email, and in-app notifications
+- **Re-engagement nudges:** Gentle reminders for inactive users (e.g., "Your buddy misses you — here's what happened in your watchlist this week")
+- **Opt-out granularity:** Let users disable specific notification types, not just all-or-nothing
+
+---
+
+## 11. Testing & QA Strategy
+
+No plan for validating correctness — critical when financial data is involved.
+
+**Areas to cover:**
+- **AI recommendation quality:** How are suggestions evaluated for accuracy and safety?
+- **Financial calculation verification:** Unit tests for all budget math, portfolio returns, and projections
+- **User acceptance testing:** Structured testing plan with target users before launch
+- **Load testing:** Ensure real-time market data and AI chat scale under concurrent users
+- **Regression testing:** Automated checks to prevent broken features across updates
+
+---
+
+## 12. Partnerships & Ecosystem
+
+No partnership strategy is documented.
+
+**Opportunities:**
+- **Educational institutions:** Partner with schools and universities for financial literacy programs
+- **Financial literacy nonprofits:** Collaborate for content credibility and reach
+- **Broker APIs:** Establish relationships early for Phase 3 integration
+- **Content partnerships:** License or co-create educational content with trusted financial media
+- **Hackathon / demo context:** Identify potential sponsors or mentors aligned with the product vision

@@ -1,9 +1,7 @@
 Yconic Intercollegiate AI Hackathon
 March 28-29th, 2026
 
-
-# Prompt
-create a plan to determine how we can create an application that will be targeted towards young adults, but other ages can use also, that aids       
+Prompt: create a plan to determine how we can create an application that will be targeted towards young adults, but other ages can use also, that aids       
 in financial learning and knowledge on how to invest, budget, read the stock, make recommendations. the application should also be the manage                -r of the user's portfolio for stocks and watch the market when its open. the ai buddy should make prompt the user to either sell or buy stocks       
 with an explanation and ask for the user to accept or deny or ask to understand the why better. the user must be 16 years or older to use the app.
 
