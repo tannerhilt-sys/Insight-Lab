@@ -1,0 +1,273 @@
+Finance Buddy — AI-First Product Vision & MVP Planning Document
+Product Positioning
+
+Finance Buddy is an AI-powered financial companion that helps beginners learn, budget, and invest with confidence through simple explanations, personalized guidance, and user-controlled recommendations.
+
+Project Purpose
+
+Finance Buddy is being designed as an AI-first personal finance application for a hackathon MVP. The product should demonstrate meaningful, visible use of AI throughout the user journey — not just as a chatbot, but as the core engine behind education, budgeting insights, portfolio guidance, onboarding personalization, and recommendation explainability.
+
+This planning document is intended to guide the design and coding of a preliminary MVP.
+
+Problem Statement
+
+Young adults and beginner investors often feel overwhelmed by personal finance. Most finance tools either assume prior knowledge or focus only on tracking numbers without teaching users what those numbers mean. Finance Buddy solves this by combining financial education, budgeting support, investing guidance, and a conversational AI companion in one accessible experience.
+
+Target Audience
+Primary: Young adults ages 16–25 who are new to budgeting, saving, and investing.
+Secondary: Users of all ages looking for an approachable, AI-guided financial companion.
+Age Requirement: Users must be 16 years or older to create an account.
+Core Product Promise
+
+Finance Buddy should make money management feel less intimidating by:
+
+teaching users in plain language,
+turning financial data into understandable insights,
+recommending next steps without taking control away from the user,
+and making AI feel helpful, transparent, and educational.
+AI-First Design Principles
+Education-first: Every recommendation should teach the user something.
+Transparency: AI should always explain why it is making a suggestion.
+User control: The app never executes trades automatically; the user approves every action.
+Accessibility: Financial concepts should be translated into simple, intuitive language.
+Safety: The app should include beginner-friendly guardrails and avoid high-risk or confusing features in the MVP.
+Personalization: AI should adapt to the user's goals, knowledge level, and risk tolerance.
+User Experience Overview
+
+A user joins Finance Buddy, names their AI companion, answers a short onboarding quiz, and immediately gets a personalized starting experience. The AI buddy can then:
+
+explain financial concepts,
+help build a budget,
+track goals,
+monitor a watchlist or paper portfolio,
+summarize important market movement,
+and suggest possible actions while clearly explaining reasoning.
+
+The experience should feel like a friendly, always-available financial coach for beginners.
+
+Core Features
+1. AI-Powered Onboarding and Personalization
+Let the user name their Finance Buddy during onboarding.
+Ask a short AI-assisted onboarding quiz covering:
+financial goals,
+current knowledge level,
+savings habits,
+investing interest,
+and risk tolerance.
+Use the results to personalize:
+lesson difficulty,
+budgeting suggestions,
+portfolio guidance,
+and recommendation style.
+Generate a beginner-friendly financial profile summary at the end of onboarding.
+
+2. Financial Education
+Interactive lessons on budgeting, saving, investing basics, and financial literacy.
+Explain key concepts such as compound interest, diversification, inflation, ETFs, risk tolerance, and P/E ratio in plain language.
+Use adaptive learning paths that adjust to the user's knowledge level.
+Add AI-generated examples based on the user's goals, such as saving for college or starting with a small investment amount.
+Include a "learn more" flow attached to recommendations so every action becomes a lesson.
+
+3. Budgeting Tools
+Help users create and manage a monthly budget.
+Track income, expenses, and savings goals.
+Categorize spending and highlight patterns.
+Use AI to generate simple, actionable insights such as:
+where the user is overspending,
+how much they could save by reducing certain categories,
+and how spending trends affect their goals.
+Include a budget health summary or score with an explanation of how it was calculated.
+
+4. Stock Market Guidance
+Teach users how to read stock charts and understand common market indicators.
+Provide real-time or near-real-time market data if available in the MVP stack.
+Let users create a watchlist.
+Translate financial news into simple language.
+Offer AI explanations such as:
+what happened,
+why it matters,
+and whether it affects the user's watchlist or learning goals.
+
+5. AI-Powered Portfolio Manager
+Allow the user to build and monitor a portfolio.
+For MVP, prioritize a paper trading or simulated portfolio mode so users can practice without real money.
+Watch the market during trading hours and detect notable movements or risk signals.
+When the AI identifies an opportunity or risk, it should:
+Prompt the user with a suggested action.
+Explain the reasoning in clear, jargon-free language.
+Show supporting signals such as price movement, watchlist relevance, risk level, or diversification impact.
+Let the user decide whether to accept, deny, or ask follow-up questions.
+The AI should advise only. It should never act unilaterally.
+
+6. AI Chatbot Companion
+The chatbot should be available throughout the app, not only during portfolio alerts.
+Users should be able to ask questions about:
+personal finance concepts,
+their budget,
+their goals,
+their portfolio,
+stock terms,
+and general money habits.
+The AI should maintain conversational context so follow-up questions feel natural.
+The chatbot should act as both:
+an active advisor when surfacing recommendations or alerts, and
+a passive guide when the user simply wants to learn or reflect.
+In future iterations, pair the chatbot with an animated buddy avatar/mascot for stronger product identity.
+
+7. Personalized Recommendations
+Suggest stocks, ETFs, funds, or beginner-friendly strategies based on:
+user goals,
+timeline,
+risk tolerance,
+budget,
+and existing holdings.
+Make every recommendation explainable.
+Show the potential benefit, possible downside, and why the suggestion matches the user's profile.
+Frame recommendations as learning-based guidance, not guaranteed outcomes.
+High-Impact Features to Add
+
+These features strengthen the concept and make the AI value clearer:
+
+1. Paper Trading / Simulation Mode
+Let users test investing decisions without using real money.
+Use this as the default MVP portfolio experience.
+Makes the app safer, more beginner-friendly, and easier to demo.
+
+2. Goal-Based Planning
+Let users choose goals such as:
+build an emergency fund,
+save for college,
+save for a first big purchase,
+or start investing with a small amount.
+AI should connect recommendations back to those goals.
+
+3. Risk Profile Quiz
+Use a short onboarding quiz to assess risk tolerance.
+Feed this into education difficulty, portfolio suggestions, and alerts.
+
+4. Explain-Before-You-Act Recommendation Cards
+
+Every portfolio or budgeting suggestion should include:
+what changed,
+why the AI is surfacing it,
+a simple risk label,
+and a quick lesson or "learn more" link.
+
+5. Daily or Weekly AI Check-Ins
+Provide digest-style updates such as:
+spending changes,
+savings progress,
+portfolio movement,
+and key financial lessons.
+This keeps the AI buddy useful even when the user is not initiating a chat.
+
+6. News-to-Learning Translator
+Convert financial headlines into beginner-friendly summaries.
+Explain how a news event might affect a company, sector, or portfolio.
+
+7. Progress and Motivation System
+Reward actions like completing lessons, building a budget, or maintaining a savings streak.
+Use AI to generate encouraging messages tied to real progress.
+
+8. Context-Aware Quick Prompts
+Add one-tap prompts such as:
+"Can I afford this?"
+"Why is my portfolio down today?"
+"Explain ETFs"
+"How much should I save this month?"
+This helps beginners engage with the chatbot immediately.
+MVP Pillars
+
+The preliminary MVP should focus on four pillars:
+
+1. AI Onboarding + Risk and Goals Profile
+User names their buddy.
+User answers onboarding questions.
+AI creates a personalized summary and beginner profile.
+
+2. Budget Tracker with AI Insights
+User enters income, expenses, and a savings goal.
+AI categorizes, summarizes, and offers plain-language tips.
+
+3. Paper Portfolio / Watchlist Experience
+User creates a watchlist or simulated portfolio.
+App tracks performance and surfaces explainable market insights.
+
+4. AI Buddy Chat with Explainable Recommendations
+Always-available chatbot.
+Can answer finance questions and discuss the user's budget or portfolio.
+Can surface recommendation cards with clear reasons and user-controlled next steps.
+Preliminary MVP Scope for Coding
+
+To keep the hackathon build realistic, the first coded version should include:
+
+user onboarding flow,
+custom buddy naming,
+risk tolerance + goals questionnaire,
+dashboard with budget summary,
+simple expense entry or mock budget data,
+savings goal tracker,
+watchlist or paper portfolio module,
+AI chat interface,
+AI-generated explanations for concepts and recommendations,
+and simple alerts or insight cards.
+Suggested MVP User Flow
+User signs up and confirms they are at least 16.
+User names their Finance Buddy.
+User completes a short onboarding quiz.
+AI generates a personalized financial profile.
+User lands on a dashboard showing:
+budget snapshot,
+savings goal progress,
+watchlist or paper portfolio,
+and a prompt to ask their buddy a question.
+User receives at least one AI-generated insight, such as:
+a budgeting suggestion,
+a savings reminder,
+or a market-related explanation.
+User can ask follow-up questions in chat and receive conversational answers.
+AI Usage Across the MVP
+
+To align with the hackathon goal of using AI as much as possible, AI should appear in multiple visible and functional ways:
+
+Onboarding AI: summarizes the user's financial profile.
+Education AI: explains concepts and adapts lessons.
+Budget AI: analyzes spending and suggests improvements.
+Portfolio AI: watches market activity and drafts explainable recommendations.
+Chat AI: answers follow-up questions in natural language.
+Recommendation AI: personalizes ideas based on goals and risk tolerance.
+Summary AI: generates daily or weekly check-ins.
+Safety and Trust Guardrails
+
+Because this product touches personal finance, the MVP should clearly communicate boundaries:
+
+Recommendations are educational and supportive, not guaranteed financial advice.
+The user must approve every decision.
+The app should avoid advanced or high-risk trading features in the MVP.
+Explanations should include both opportunity and risk.
+Sensitive financial data should be handled securely.
+The product should emphasize confidence-building, not pressure.
+Future Expansion Ideas
+
+After the preliminary MVP, future versions could add:
+
+bank account integration,
+live brokerage integrations,
+advanced portfolio analytics,
+recurring lesson plans,
+family or student-specific budgeting modes,
+avatar animation and voice interaction,
+multi-goal planning,
+and more advanced AI market monitoring.
+Success Criteria for the Hackathon MVP
+
+A successful MVP should demonstrate that:
+
+AI is central to the product, not decorative.
+The app makes finance easier for beginners to understand.
+Users can learn, budget, and explore investing in one place.
+Recommendations are transparent and user-controlled.
+The product feels supportive, safe, and practical enough to evolve into a real platform.
+One-Sentence Pitch
+
+Finance Buddy is an AI-first financial coach for beginners that combines learning, budgeting, simulated investing, and explainable recommendations in one friendly companion experience.
