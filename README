@@ -1,5 +1,67 @@
 Yconic Intercollegiate AI Hackathon
 March 28-29th, 2026
 
-Prompt:
+
+# Prompt
+create a plan to determine how we can create an application that will be targeted towards young adults, but other ages can use also, that aids       
+in financial learning and knowledge on how to invest, budget, read the stock, make recommendations. the application should also be the manage                -r of the user's portfolio for stocks and watch the market when its open. the ai buddy should make prompt the user to either sell or buy stocks       
+with an explanation and ask for the user to accept or deny or ask to understand the why better. the user must be 16 years or older to use the app.
+
+Finance Buddy
+=============
+
+Your AI-powered personal finance companion designed for young adults and beyond.
+
+Overview
+--------
+Finance Buddy is an application that helps users learn about personal finance,
+build smart budgeting habits, and navigate the stock market with confidence.
+An AI buddy guides you through every decision — explaining the "why" so you
+grow your knowledge alongside your portfolio.
+
+Features
+--------
+- Financial Education: Interactive lessons on investing, budgeting, and
+  financial literacy tailored to your knowledge level.
+
+- Budgeting Tools: Create and manage budgets, track income and expenses,
+  and get tips to improve your spending habits.
+
+- Stock Market Guidance: Learn to read stock charts, understand market
+  indicators, and interpret financial news with real-time data.
+
+- AI Portfolio Manager: Your AI buddy monitors the market during trading
+  hours and prompts you with buy/sell recommendations. You always get a
+  clear explanation and the final say — accept, deny, or ask questions.
+
+- AI Chatbot Companion: Name your Finance Buddy during onboarding and
+  chat with it anytime. Ask about financial concepts, your portfolio,
+  money advice, or anything finance-related — even when the buddy isn't
+  actively managing your portfolio. A friendly animated avatar/mascot
+  will accompany the chat interface in a future update.
+
+- Personalized Recommendations: Receive suggestions for stocks, funds,
+  and strategies based on your goals and risk tolerance.
+
+Who Is It For?
+--------------
+- Primary audience: Young adults ages 16-25 new to personal finance.
+- Open to users of all ages looking for an accessible financial companion.
+- Users must be 16 years or older to create an account.
+
+Key Principles
+--------------
+- Education-first: Every recommendation is a learning opportunity.
+- Transparency: The AI always explains its reasoning.
+- User control: You approve every transaction.
+- Accessibility: Simple language and intuitive design for all experience levels.
+
+Getting Started
+---------------
+(Coming soon)
+
+License
+-------
+(TBD)
+
 
