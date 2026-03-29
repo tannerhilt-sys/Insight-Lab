@@ -55,7 +55,15 @@ function generateQuote(ticker) {
   };
 }
 
-// GET /quote/:ticker
+/**
+ * GET /quote/:ticker
+ * Return a simulated real-time quote for a supported ticker.
+ * Prices are derived from base prices using Brownian-motion randomness
+ * (range: ~±2% of base price per call). Not real market data.
+ * @returns {200} Quote { ticker, companyName, sector, price, change, changePercent,
+ *   high, low, open, previousClose, volume, marketCap, timestamp }
+ * @returns {404} Unsupported ticker
+ */
 router.get('/quote/:ticker', authenticate, (req, res) => {
   try {
     const ticker = req.params.ticker.toUpperCase();
@@ -72,7 +80,13 @@ router.get('/quote/:ticker', authenticate, (req, res) => {
   }
 });
 
-// GET /search?q=
+/**
+ * GET /search?q=
+ * Search supported tickers and company names (case-insensitive substring match).
+ * Returns all 20 stocks when query is absent.
+ * @query {string} [q] - Search term
+ * @returns {200} { results: { ticker, companyName, sector }[] }
+ */
 router.get('/search', authenticate, (req, res) => {
   try {
     const query = (req.query.q || '').toUpperCase().trim();
@@ -103,7 +117,13 @@ router.get('/search', authenticate, (req, res) => {
   }
 });
 
-// GET /news
+/**
+ * GET /news
+ * Curated static financial news articles for educational context.
+ * Articles are timestamped relative to the current time on each call.
+ * @returns {200} { news: NewsArticle[] }
+ *   NewsArticle: { id, title, summary, source, category, publishedAt, tickers }
+ */
 router.get('/news', authenticate, (req, res) => {
   try {
     const now = new Date();

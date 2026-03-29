@@ -75,7 +75,13 @@ function buildFallbackCards(userId, totalExpenses, holdings, holdingTickers) {
   ];
 }
 
-// GET / — return user's insight cards
+/**
+ * GET /insights
+ * Return all insight cards for the authenticated user, sorted newest-first.
+ * @returns {200} InsightCard[] — { id, type, title, body, priority, status, createdAt }
+ *   type: "BUDGET" | "PORTFOLIO" | "MARKET"
+ *   status: "ACTIVE" | "ACCEPTED" | "DISMISSED"
+ */
 router.get('/', authenticate, (req, res) => {
   try {
     const cards = getInsightCards(req.user.id);
@@ -87,7 +93,12 @@ router.get('/', authenticate, (req, res) => {
   }
 });
 
-// POST /:id/accept
+/**
+ * POST /insights/:id/accept
+ * Mark an insight card as accepted (user intends to act on it).
+ * @returns {200} Updated InsightCard
+ * @returns {404} Card not found or not owned by requester
+ */
 router.post('/:id/accept', authenticate, (req, res) => {
   try {
     const card = getInsightCard(req.params.id);
@@ -103,7 +114,12 @@ router.post('/:id/accept', authenticate, (req, res) => {
   }
 });
 
-// POST /:id/dismiss
+/**
+ * POST /insights/:id/dismiss
+ * Mark an insight card as dismissed.
+ * @returns {200} Updated InsightCard
+ * @returns {404} Card not found or not owned by requester
+ */
 router.post('/:id/dismiss', authenticate, (req, res) => {
   try {
     const card = getInsightCard(req.params.id);
@@ -119,7 +135,14 @@ router.post('/:id/dismiss', authenticate, (req, res) => {
   }
 });
 
-// POST /generate
+/**
+ * POST /insights/generate
+ * Generate 3 personalized AI insight cards using the user's budget, portfolio,
+ * and onboarding profile. Cards are persisted and returned.
+ * Falls back to rule-based cards when ANTHROPIC_API_KEY is absent or Claude fails.
+ * Claude response is a JSON array — parsed with bracket extraction for safety.
+ * @returns {201} InsightCard[] (3 cards: BUDGET, PORTFOLIO, MARKET)
+ */
 router.post('/generate', authenticate, async (req, res) => {
   try {
     const profile = getProfile(req.user.id);
