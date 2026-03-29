@@ -1,60 +1,120 @@
-import React, { useState } from 'react';
-import { View, Text, ScrollView, StyleSheet, TouchableOpacity } from 'react-native';
+import React, { useState, useEffect, useCallback } from 'react';
+import { View, Text, ScrollView, StyleSheet, TouchableOpacity, ActivityIndicator } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { colors } from '../lib/colors';
+import { api } from '../lib/api';
 
-const holdings = [
-  { symbol: 'AAPL', name: 'Apple Inc.', shares: 10, price: 178.72, change: 2.34, changePct: 1.33 },
-  { symbol: 'GOOGL', name: 'Alphabet Inc.', shares: 3, price: 141.80, change: -1.25, changePct: -0.87 },
-  { symbol: 'MSFT', name: 'Microsoft Corp.', shares: 5, price: 378.91, change: 5.12, changePct: 1.37 },
-  { symbol: 'TSLA', name: 'Tesla Inc.', shares: 8, price: 248.48, change: -3.67, changePct: -1.46 },
-  { symbol: 'AMZN', name: 'Amazon.com', shares: 4, price: 185.07, change: 1.89, changePct: 1.03 },
-  { symbol: 'NVDA', name: 'NVIDIA Corp.', shares: 2, price: 875.28, change: 15.43, changePct: 1.79 },
-];
+interface Holding {
+  id: string;
+  ticker: string;
+  shares: number;
+  avgCost: number;
+  currentPrice: number;
+  marketValue: number;
+  costBasis: number;
+  gainLoss: number;
+  gainLossPercent: number;
+}
 
-const watchlist = [
-  { symbol: 'META', name: 'Meta Platforms', price: 505.75, change: 3.21, changePct: 0.64 },
-  { symbol: 'NFLX', name: 'Netflix', price: 628.40, change: -2.15, changePct: -0.34 },
-  { symbol: 'DIS', name: 'Walt Disney', price: 112.33, change: 0.78, changePct: 0.70 },
-];
+interface WatchlistItem {
+  id: string;
+  ticker: string;
+  companyName: string;
+  addedAt: string;
+}
+
+interface PortfolioData {
+  holdings: Holding[];
+  totalValue: number;
+  totalCost: number;
+  totalGainLoss: number;
+}
 
 export default function PortfolioScreen() {
   const [tab, setTab] = useState<'holdings' | 'watchlist'>('holdings');
+  const [holdings, setHoldings] = useState<Holding[]>([]);
+  const [watchlist, setWatchlist] = useState<WatchlistItem[]>([]);
+  const [totalValue, setTotalValue] = useState(0);
+  const [totalGainLoss, setTotalGainLoss] = useState(0);
+  const [isLoading, setIsLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
 
-  const totalValue = holdings.reduce((s, h) => s + h.shares * h.price, 0);
-  const totalChange = holdings.reduce((s, h) => s + h.shares * h.change, 0);
+  const fetchData = useCallback(async () => {
+    setIsLoading(true);
+    setError(null);
+    try {
+      const [portfolioData, watchlistData] = await Promise.all([
+        api<PortfolioData>('/portfolio/holdings'),
+        api<WatchlistItem[]>('/portfolio/watchlist'),
+      ]);
+      setHoldings(portfolioData.holdings ?? []);
+      setTotalValue(portfolioData.totalValue ?? 0);
+      setTotalGainLoss(portfolioData.totalGainLoss ?? 0);
+      setWatchlist(Array.isArray(watchlistData) ? watchlistData : []);
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'Failed to load portfolio');
+    } finally {
+      setIsLoading(false);
+    }
+  }, []);
+
+  useEffect(() => {
+    fetchData();
+  }, [fetchData]);
+
+  if (isLoading) {
+    return (
+      <View style={styles.centerContainer}>
+        <ActivityIndicator size="large" color={colors.primary[600]} />
+        <Text style={styles.loadingText}>Loading portfolio…</Text>
+      </View>
+    );
+  }
 
   return (
     <ScrollView style={styles.container} showsVerticalScrollIndicator={false}>
       {/* Portfolio Summary */}
       <View style={styles.summaryCard}>
         <Text style={styles.summaryLabel}>Paper Trading Portfolio</Text>
-        <Text style={styles.summaryValue}>${totalValue.toLocaleString('en-US', { minimumFractionDigits: 2 })}</Text>
+        <Text style={styles.summaryValue}>
+          ${totalValue.toLocaleString('en-US', { minimumFractionDigits: 2 })}
+        </Text>
         <View style={styles.changeRow}>
           <Ionicons
-            name={totalChange >= 0 ? 'arrow-up' : 'arrow-down'}
+            name={totalGainLoss >= 0 ? 'arrow-up' : 'arrow-down'}
             size={14}
-            color={totalChange >= 0 ? colors.emerald[500] : colors.red[400]}
+            color={totalGainLoss >= 0 ? colors.emerald[500] : colors.red[400]}
           />
-          <Text style={[styles.changeText, { color: totalChange >= 0 ? colors.emerald[500] : colors.red[400] }]}>
-            ${Math.abs(totalChange).toFixed(2)} today
+          <Text style={[styles.changeText, { color: totalGainLoss >= 0 ? colors.emerald[500] : colors.red[400] }]}>
+            ${Math.abs(totalGainLoss).toFixed(2)} total gain/loss
           </Text>
         </View>
 
         {/* Mini allocation bars */}
-        <View style={styles.allocRow}>
-          {holdings.slice(0, 4).map((h, i) => {
-            const pct = ((h.shares * h.price) / totalValue) * 100;
-            const barColors = [colors.primary[600], colors.emerald[500], colors.amber[500], colors.purple[500]];
-            return (
-              <View key={i} style={{ flex: pct }}>
-                <View style={[styles.allocBar, { backgroundColor: barColors[i] }]} />
-                <Text style={styles.allocLabel}>{h.symbol} {Math.round(pct)}%</Text>
-              </View>
-            );
-          })}
-        </View>
+        {holdings.length > 0 && (
+          <View style={styles.allocRow}>
+            {holdings.slice(0, 4).map((h, i) => {
+              const pct = totalValue > 0 ? (h.marketValue / totalValue) * 100 : 0;
+              const barColors = [colors.primary[600], colors.emerald[500], colors.amber[500], colors.purple[500]];
+              return (
+                <View key={h.id} style={{ flex: Math.max(pct, 1) }}>
+                  <View style={[styles.allocBar, { backgroundColor: barColors[i % barColors.length] }]} />
+                  <Text style={styles.allocLabel}>{h.ticker} {Math.round(pct)}%</Text>
+                </View>
+              );
+            })}
+          </View>
+        )}
       </View>
+
+      {error && (
+        <View style={styles.errorBanner}>
+          <Text style={styles.errorText}>{error}</Text>
+          <TouchableOpacity onPress={fetchData}>
+            <Text style={styles.retryText}>Retry</Text>
+          </TouchableOpacity>
+        </View>
+      )}
 
       {/* Tab Toggle */}
       <View style={styles.tabRow}>
@@ -62,69 +122,79 @@ export default function PortfolioScreen() {
           style={[styles.tab, tab === 'holdings' && styles.tabActive]}
           onPress={() => setTab('holdings')}
         >
-          <Text style={[styles.tabText, tab === 'holdings' && styles.tabTextActive]}>Holdings</Text>
+          <Text style={[styles.tabText, tab === 'holdings' && styles.tabTextActive]}>
+            Holdings {holdings.length > 0 ? `(${holdings.length})` : ''}
+          </Text>
         </TouchableOpacity>
         <TouchableOpacity
           style={[styles.tab, tab === 'watchlist' && styles.tabActive]}
           onPress={() => setTab('watchlist')}
         >
-          <Text style={[styles.tabText, tab === 'watchlist' && styles.tabTextActive]}>Watchlist</Text>
+          <Text style={[styles.tabText, tab === 'watchlist' && styles.tabTextActive]}>
+            Watchlist {watchlist.length > 0 ? `(${watchlist.length})` : ''}
+          </Text>
         </TouchableOpacity>
       </View>
 
-      {/* Stock List */}
+      {/* Holdings List */}
       {tab === 'holdings' ? (
         <View style={styles.listCard}>
-          {holdings.map((stock, i) => (
-            <View key={i} style={[styles.stockRow, i < holdings.length - 1 && styles.stockRowBorder]}>
-              <View style={{ flex: 1 }}>
-                <Text style={styles.stockSymbol}>{stock.symbol}</Text>
-                <Text style={styles.stockName}>{stock.name}</Text>
-                <Text style={styles.stockShares}>{stock.shares} shares</Text>
-              </View>
-              <View style={{ alignItems: 'flex-end' }}>
-                <Text style={styles.stockPrice}>${(stock.shares * stock.price).toLocaleString('en-US', { minimumFractionDigits: 2 })}</Text>
-                <View style={[styles.changeBadge, { backgroundColor: stock.change >= 0 ? colors.emerald[50] : colors.red[50] }]}>
-                  <Text style={[styles.changeBadgeText, { color: stock.change >= 0 ? colors.emerald[500] : colors.red[400] }]}>
-                    {stock.change >= 0 ? '+' : ''}{stock.changePct.toFixed(2)}%
+          {holdings.length === 0 ? (
+            <View style={styles.emptyState}>
+              <Ionicons name="bar-chart-outline" size={36} color={colors.slate[300]} />
+              <Text style={styles.emptyText}>No holdings yet</Text>
+              <Text style={styles.emptySubtext}>Buy stocks on the web app to get started</Text>
+            </View>
+          ) : (
+            holdings.map((stock, i) => (
+              <View key={stock.id} style={[styles.stockRow, i < holdings.length - 1 && styles.stockRowBorder]}>
+                <View style={{ flex: 1 }}>
+                  <Text style={styles.stockSymbol}>{stock.ticker}</Text>
+                  <Text style={styles.stockShares}>{stock.shares} shares @ ${stock.avgCost.toFixed(2)}</Text>
+                </View>
+                <View style={{ alignItems: 'flex-end' }}>
+                  <Text style={styles.stockPrice}>
+                    ${stock.marketValue.toLocaleString('en-US', { minimumFractionDigits: 2 })}
                   </Text>
+                  <View style={[
+                    styles.changeBadge,
+                    { backgroundColor: stock.gainLoss >= 0 ? colors.emerald[50] : colors.red[50] }
+                  ]}>
+                    <Text style={[
+                      styles.changeBadgeText,
+                      { color: stock.gainLoss >= 0 ? colors.emerald[500] : colors.red[400] }
+                    ]}>
+                      {stock.gainLoss >= 0 ? '+' : ''}{stock.gainLossPercent.toFixed(2)}%
+                    </Text>
+                  </View>
                 </View>
               </View>
-            </View>
-          ))}
+            ))
+          )}
         </View>
       ) : (
         <View style={styles.listCard}>
-          {watchlist.map((stock, i) => (
-            <View key={i} style={[styles.stockRow, i < watchlist.length - 1 && styles.stockRowBorder]}>
-              <View style={{ flex: 1 }}>
-                <Text style={styles.stockSymbol}>{stock.symbol}</Text>
-                <Text style={styles.stockName}>{stock.name}</Text>
-              </View>
-              <View style={{ alignItems: 'flex-end' }}>
-                <Text style={styles.stockPrice}>${stock.price.toFixed(2)}</Text>
-                <View style={[styles.changeBadge, { backgroundColor: stock.change >= 0 ? colors.emerald[50] : colors.red[50] }]}>
-                  <Text style={[styles.changeBadgeText, { color: stock.change >= 0 ? colors.emerald[500] : colors.red[400] }]}>
-                    {stock.change >= 0 ? '+' : ''}{stock.changePct.toFixed(2)}%
-                  </Text>
+          {watchlist.length === 0 ? (
+            <View style={styles.emptyState}>
+              <Ionicons name="eye-outline" size={36} color={colors.slate[300]} />
+              <Text style={styles.emptyText}>Watchlist is empty</Text>
+              <Text style={styles.emptySubtext}>Add stocks to watch on the web app</Text>
+            </View>
+          ) : (
+            watchlist.map((item, i) => (
+              <View key={item.id} style={[styles.stockRow, i < watchlist.length - 1 && styles.stockRowBorder]}>
+                <View style={{ flex: 1 }}>
+                  <Text style={styles.stockSymbol}>{item.ticker}</Text>
+                  <Text style={styles.stockName}>{item.companyName}</Text>
+                </View>
+                <View style={{ alignItems: 'flex-end' }}>
+                  <Text style={styles.watchlistLabel}>Watching</Text>
                 </View>
               </View>
-            </View>
-          ))}
+            ))
+          )}
         </View>
       )}
-
-      {/* Buy/Sell Buttons */}
-      <View style={styles.tradeButtons}>
-        <TouchableOpacity style={[styles.tradeBtn, { backgroundColor: colors.emerald[500] }]}>
-          <Ionicons name="add-circle-outline" size={18} color="#fff" />
-          <Text style={styles.tradeBtnText}>Buy</Text>
-        </TouchableOpacity>
-        <TouchableOpacity style={[styles.tradeBtn, { backgroundColor: colors.red[400] }]}>
-          <Ionicons name="remove-circle-outline" size={18} color="#fff" />
-          <Text style={styles.tradeBtnText}>Sell</Text>
-        </TouchableOpacity>
-      </View>
 
       <View style={{ height: 24 }} />
     </ScrollView>
@@ -133,6 +203,8 @@ export default function PortfolioScreen() {
 
 const styles = StyleSheet.create({
   container: { flex: 1, backgroundColor: colors.slate[50] },
+  centerContainer: { flex: 1, alignItems: 'center', justifyContent: 'center', gap: 12 },
+  loadingText: { fontSize: 14, color: colors.slate[500] },
   summaryCard: {
     margin: 20,
     backgroundColor: colors.primary[600],
@@ -146,6 +218,19 @@ const styles = StyleSheet.create({
   allocRow: { flexDirection: 'row', gap: 4, marginTop: 20 },
   allocBar: { height: 4, borderRadius: 2 },
   allocLabel: { fontSize: 10, color: 'rgba(255,255,255,0.6)', marginTop: 4 },
+
+  errorBanner: {
+    marginHorizontal: 20,
+    marginBottom: 12,
+    backgroundColor: colors.red[50],
+    borderRadius: 12,
+    padding: 12,
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+  },
+  errorText: { fontSize: 13, color: colors.red[400], flex: 1 },
+  retryText: { fontSize: 13, fontWeight: '600', color: colors.primary[600], marginLeft: 8 },
 
   tabRow: { flexDirection: 'row', marginHorizontal: 20, backgroundColor: colors.slate[100], borderRadius: 12, padding: 3, marginBottom: 16 },
   tab: { flex: 1, paddingVertical: 10, alignItems: 'center', borderRadius: 10 },
@@ -164,6 +249,9 @@ const styles = StyleSheet.create({
     shadowRadius: 3,
     elevation: 1,
   },
+  emptyState: { alignItems: 'center', padding: 40, gap: 8 },
+  emptyText: { fontSize: 15, fontWeight: '600', color: colors.slate[600] },
+  emptySubtext: { fontSize: 13, color: colors.slate[400], textAlign: 'center' },
   stockRow: { flexDirection: 'row', alignItems: 'center', padding: 16 },
   stockRowBorder: { borderBottomWidth: 1, borderBottomColor: colors.slate[100] },
   stockSymbol: { fontSize: 15, fontWeight: '700', color: colors.slate[900] },
@@ -172,8 +260,5 @@ const styles = StyleSheet.create({
   stockPrice: { fontSize: 15, fontWeight: '600', color: colors.slate[900] },
   changeBadge: { paddingHorizontal: 8, paddingVertical: 2, borderRadius: 8, marginTop: 2 },
   changeBadgeText: { fontSize: 12, fontWeight: '600' },
-
-  tradeButtons: { flexDirection: 'row', gap: 12, marginHorizontal: 20, marginTop: 16 },
-  tradeBtn: { flex: 1, flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 6, paddingVertical: 14, borderRadius: 12 },
-  tradeBtnText: { color: '#fff', fontSize: 15, fontWeight: '700' },
+  watchlistLabel: { fontSize: 12, color: colors.slate[400], fontStyle: 'italic' },
 });
