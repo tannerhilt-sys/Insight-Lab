@@ -30,7 +30,17 @@ function validateSignupInput(email, password, buddyName) {
   return null;
 }
 
-// POST /signup
+/**
+ * POST /signup
+ * Create a new user account.
+ * @body {string} email - Valid email address
+ * @body {string} password - 8-128 character password
+ * @body {string} [buddyName] - Display name (max 30 chars), defaults to "Buddy"
+ * @body {boolean} ageConfirmed - Must be true (age ≥ 16 confirmation)
+ * @returns {201} { token: string, user: { id, email, buddyName } }
+ * @returns {400} Validation error
+ * @returns {409} Email already registered
+ */
 router.post('/signup', async (req, res) => {
   try {
     const { email, password, buddyName, ageConfirmed } = req.body;
@@ -69,7 +79,15 @@ router.post('/signup', async (req, res) => {
   }
 });
 
-// POST /login
+/**
+ * POST /login
+ * Authenticate with email + password, receive a JWT.
+ * Uses constant-time bcrypt comparison to prevent email enumeration.
+ * @body {string} email
+ * @body {string} password
+ * @returns {200} { token: string, userId: string, buddyName: string }
+ * @returns {401} Invalid credentials
+ */
 router.post('/login', async (req, res) => {
   try {
     const { email, password } = req.body;
@@ -101,7 +119,14 @@ router.post('/login', async (req, res) => {
   }
 });
 
-// GET /me
+/**
+ * GET /me
+ * Return the authenticated user's profile (password excluded).
+ * @header Authorization: Bearer <token>
+ * @returns {200} { user: { id, email, buddyName, createdAt } }
+ * @returns {401} Missing/invalid token
+ * @returns {404} User not found
+ */
 router.get('/me', authenticate, (req, res) => {
   try {
     const user = getUser(req.user.id);
