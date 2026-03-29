@@ -90,7 +90,12 @@ function computeAnalytics(enriched) {
   return { sectorAllocation, concentrationScore, diversificationScore, topHoldings };
 }
 
-// GET /holdings
+/**
+ * GET /holdings
+ * Return all holdings for the authenticated user enriched with simulated live prices.
+ * @returns {200} { holdings: Holding[], totalValue: number, totalCost: number, totalGainLoss: number }
+ *   Holding: { id, ticker, shares, avgCost, currentPrice, marketValue, costBasis, gainLoss, gainLossPercent }
+ */
 router.get('/holdings', authenticate, (req, res) => {
   try {
     const holdings = getHoldings(req.user.id);
@@ -114,7 +119,14 @@ router.get('/holdings', authenticate, (req, res) => {
   }
 });
 
-// GET /analytics — portfolio diversification and sector breakdown
+/**
+ * GET /analytics
+ * Portfolio diversification analytics using Herfindahl-Hirschman Index (HHI).
+ * @returns {200} { sectorAllocation: SectorAllocation[], concentrationScore: number,
+ *   diversificationScore: number (1-10), topHoldings: TopHolding[] }
+ *   concentrationScore: 0-100 (higher = more concentrated in fewer stocks)
+ *   diversificationScore: 1-10 (higher = better diversified across sectors)
+ */
 router.get('/analytics', authenticate, (req, res) => {
   try {
     const holdings = getHoldings(req.user.id);
@@ -134,7 +146,15 @@ router.get('/analytics', authenticate, (req, res) => {
   }
 });
 
-// POST /buy
+/**
+ * POST /buy
+ * Buy shares of a stock (paper trading). Averages into existing position.
+ * @body {string} ticker - Stock symbol (1-10 uppercase letters)
+ * @body {number} shares - Number of shares (0.001 - 10,000)
+ * @body {number} price  - Price per share (0.01 - 1,000,000)
+ * @returns {201} Holding object (new or updated position)
+ * @returns {400} Validation error
+ */
 router.post('/buy', authenticate, (req, res) => {
   try {
     const { ticker, shares, price } = req.body;
@@ -181,7 +201,15 @@ router.post('/buy', authenticate, (req, res) => {
   }
 });
 
-// POST /sell
+/**
+ * POST /sell
+ * Sell shares from an existing holding. Partial or full liquidation.
+ * @body {string} ticker - Stock symbol
+ * @body {number} shares - Shares to sell (must not exceed held quantity)
+ * @returns {200} { message, remainingShares, saleProceeds, realizedGainLoss }
+ * @returns {400} Validation error or insufficient shares
+ * @returns {404} Ticker not in portfolio
+ */
 router.post('/sell', authenticate, (req, res) => {
   try {
     const { ticker, shares } = req.body;
@@ -232,7 +260,10 @@ router.post('/sell', authenticate, (req, res) => {
   }
 });
 
-// GET /watchlist
+/**
+ * GET /watchlist
+ * @returns {200} WatchlistItem[] — { id, ticker, companyName, addedAt }
+ */
 router.get('/watchlist', authenticate, (req, res) => {
   try {
     res.json(getWatchlist(req.user.id));
@@ -242,7 +273,13 @@ router.get('/watchlist', authenticate, (req, res) => {
   }
 });
 
-// POST /watchlist
+/**
+ * POST /watchlist
+ * Add a ticker to the user's watchlist.
+ * @body {string} ticker - Stock symbol
+ * @body {string} [companyName] - Human-readable company name (max 100 chars)
+ * @returns {201} WatchlistItem
+ */
 router.post('/watchlist', authenticate, (req, res) => {
   try {
     const { ticker, companyName } = req.body;
@@ -267,7 +304,12 @@ router.post('/watchlist', authenticate, (req, res) => {
   }
 });
 
-// DELETE /watchlist/:ticker
+/**
+ * DELETE /watchlist/:ticker
+ * Remove a ticker from the user's watchlist.
+ * @returns {200} { success: true }
+ * @returns {404} Ticker not in watchlist
+ */
 router.delete('/watchlist/:ticker', authenticate, (req, res) => {
   try {
     const tickerError = validateTicker(req.params.ticker);
@@ -283,7 +325,12 @@ router.delete('/watchlist/:ticker', authenticate, (req, res) => {
   }
 });
 
-// GET /explain/:ticker
+/**
+ * GET /explain/:ticker
+ * AI-generated plain-language explanation of a stock for beginner investors.
+ * Falls back to a static template when ANTHROPIC_API_KEY is not set.
+ * @returns {200} { ticker: string, explanation: string }
+ */
 router.get('/explain/:ticker', authenticate, async (req, res) => {
   try {
     const tickerError = validateTicker(req.params.ticker);
