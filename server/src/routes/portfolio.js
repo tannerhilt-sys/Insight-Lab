@@ -11,12 +11,24 @@ import {
   addWatchlistItem,
   removeWatchlistByTicker,
 } from '../data/store.js';
-import { CLAUDE_MODEL, VALID_TICKERS, MIN_AMOUNT, MAX_AMOUNT, MAX_SHARES } from '../constants.js';
+import { CLAUDE_MODEL } from '../constants.js';
+import { validateTicker, validateShares, validatePrice } from '../utils/validation.js';
 
 const router = Router();
 
-// Allow seeded tickers (AAPL, SPY, etc.) plus basic format check for unknown tickers
-const TICKER_REGEX = /^[A-Z]{1,5}$/;
+// Sector mapping for diversification analytics
+const TICKER_SECTORS = {
+  AAPL: 'Technology', MSFT: 'Technology', GOOGL: 'Technology', NVDA: 'Technology',
+  META: 'Technology', INTC: 'Technology', AMD: 'Technology', ORCL: 'Technology',
+  CRM: 'Technology', ADBE: 'Technology',
+  AMZN: 'Consumer Cyclical', TSLA: 'Automotive', NFLX: 'Communication', DIS: 'Communication',
+  JPM: 'Financial', BAC: 'Financial', V: 'Financial', MA: 'Financial',
+  PYPL: 'Financial', SQ: 'Financial',
+  JNJ: 'Healthcare', UNH: 'Healthcare', PFE: 'Healthcare',
+  WMT: 'Consumer Staples', KO: 'Consumer Staples', PEP: 'Consumer Staples',
+  BA: 'Industrials', SPY: 'ETF', QQQ: 'ETF', VTI: 'ETF',
+  SHOP: 'Technology', COIN: 'Financial',
+};
 
 function getAnthropicClient() {
   if (!process.env.ANTHROPIC_API_KEY) return null;
@@ -25,33 +37,57 @@ function getAnthropicClient() {
 
 /** Simulate a current price with slight random variation from avgCost. */
 function simulateCurrentPrice(avgCost) {
-  // Slight upward bias: range is roughly -4.5% to +5.5%
   const variation = (Math.random() - 0.45) * 0.1;
   return Math.round(avgCost * (1 + variation) * 100) / 100;
 }
 
-function validateShares(shares) {
-  const num = Number(shares);
-  if (!isFinite(num) || isNaN(num)) return 'shares must be a valid number';
-  if (num <= 0) return 'shares must be greater than 0';
-  if (num > MAX_SHARES) return `shares must not exceed ${MAX_SHARES.toLocaleString()}`;
-  if (!Number.isInteger(num)) return 'shares must be a whole number';
-  return null;
-}
+/** Compute portfolio analytics: sector allocation, concentration, diversification score. */
+function computeAnalytics(enriched) {
+  if (enriched.length === 0) {
+    return { sectorAllocation: [], concentrationScore: 0, diversificationScore: 0, topHoldings: [] };
+  }
 
-function validatePrice(price) {
-  const num = Number(price);
-  if (!isFinite(num) || isNaN(num)) return 'price must be a valid number';
-  if (num < MIN_AMOUNT) return `price must be at least ${MIN_AMOUNT}`;
-  if (num > MAX_AMOUNT) return `price must not exceed ${MAX_AMOUNT.toLocaleString()}`;
-  return null;
-}
+  const totalValue = enriched.reduce((s, h) => s + h.marketValue, 0);
 
-function validateTicker(ticker) {
-  if (!ticker || typeof ticker !== 'string') return 'ticker is required';
-  const upper = ticker.toUpperCase().trim();
-  if (!TICKER_REGEX.test(upper)) return 'ticker must be 1-5 uppercase letters';
-  return null;
+  // Sector allocation
+  const sectorMap = {};
+  for (const h of enriched) {
+    const sector = TICKER_SECTORS[h.ticker] ?? 'Other';
+    sectorMap[sector] = (sectorMap[sector] ?? 0) + h.marketValue;
+  }
+  const sectorAllocation = Object.entries(sectorMap)
+    .map(([sector, value]) => ({
+      sector,
+      value: Math.round(value * 100) / 100,
+      percent: Math.round((value / totalValue) * 10000) / 100,
+    }))
+    .sort((a, b) => b.value - a.value);
+
+  // Concentration: Herfindahl-Hirschman Index (0-10000, lower = more diversified)
+  const hhiRaw = enriched.reduce((sum, h) => {
+    const weight = h.marketValue / totalValue;
+    return sum + weight * weight;
+  }, 0);
+  // Normalize HHI to 0-100 concentration score (100 = fully concentrated in 1 stock)
+  const concentrationScore = Math.round(hhiRaw * 100 * 100) / 100;
+
+  // Sector count-based diversification (1-10 scale)
+  const uniqueSectors = sectorAllocation.length;
+  const maxConcentration = sectorAllocation[0]?.percent ?? 100;
+  const sectorPenalty = Math.max(0, maxConcentration - 40) / 10; // penalty if >40% in one sector
+  const diversificationScore = Math.min(10, Math.max(1, Math.round((uniqueSectors * 1.5 - sectorPenalty) * 10) / 10));
+
+  // Top holdings by weight
+  const topHoldings = enriched
+    .map((h) => ({
+      ticker: h.ticker,
+      marketValue: h.marketValue,
+      weight: Math.round((h.marketValue / totalValue) * 10000) / 100,
+    }))
+    .sort((a, b) => b.marketValue - a.marketValue)
+    .slice(0, 5);
+
+  return { sectorAllocation, concentrationScore, diversificationScore, topHoldings };
 }
 
 // GET /holdings
@@ -74,6 +110,26 @@ router.get('/holdings', authenticate, (req, res) => {
     res.json({ holdings: enriched, totalValue, totalCost, totalGainLoss });
   } catch (err) {
     console.error('Get holdings error:', err);
+    res.status(500).json({ error: 'Internal server error' });
+  }
+});
+
+// GET /analytics — portfolio diversification and sector breakdown
+router.get('/analytics', authenticate, (req, res) => {
+  try {
+    const holdings = getHoldings(req.user.id);
+    const enriched = holdings.map((h) => {
+      const currentPrice = simulateCurrentPrice(h.avgCost);
+      const marketValue = Math.round(currentPrice * h.shares * 100) / 100;
+      const costBasis = Math.round(h.avgCost * h.shares * 100) / 100;
+      const gainLoss = Math.round((marketValue - costBasis) * 100) / 100;
+      const gainLossPercent = costBasis > 0 ? Math.round((gainLoss / costBasis) * 10000) / 100 : 0;
+      return { ...h, currentPrice, marketValue, costBasis, gainLoss, gainLossPercent };
+    });
+
+    res.json(computeAnalytics(enriched));
+  } catch (err) {
+    console.error('Analytics error:', err);
     res.status(500).json({ error: 'Internal server error' });
   }
 });
@@ -147,14 +203,29 @@ router.post('/sell', authenticate, (req, res) => {
       return res.status(400).json({ error: `Insufficient shares. You hold ${existing.shares} share(s) of ${normalizedTicker}.` });
     }
 
+    const currentPrice = simulateCurrentPrice(existing.avgCost);
+    const saleProceeds = Math.round(currentPrice * numShares * 100) / 100;
+    const costBasis = Math.round(existing.avgCost * numShares * 100) / 100;
+    const realizedGainLoss = Math.round((saleProceeds - costBasis) * 100) / 100;
+
     if (numShares === existing.shares) {
       removeHolding(existing.id);
-      return res.json({ message: `Sold all ${numShares} share(s) of ${normalizedTicker}`, remainingShares: 0 });
+      return res.json({
+        message: `Sold all ${numShares} share(s) of ${normalizedTicker}`,
+        remainingShares: 0,
+        saleProceeds,
+        realizedGainLoss,
+      });
     }
 
     existing.shares -= numShares;
     existing.updatedAt = new Date().toISOString();
-    res.json({ message: `Sold ${numShares} share(s) of ${normalizedTicker}`, remainingShares: existing.shares });
+    res.json({
+      message: `Sold ${numShares} share(s) of ${normalizedTicker}`,
+      remainingShares: existing.shares,
+      saleProceeds,
+      realizedGainLoss,
+    });
   } catch (err) {
     console.error('Sell error:', err);
     res.status(500).json({ error: 'Internal server error' });

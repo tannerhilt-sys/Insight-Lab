@@ -11,11 +11,10 @@ import {
   getSavingsGoals,
   addSavingsGoal,
 } from '../data/store.js';
-import { CLAUDE_MODEL, VALID_BUDGET_TYPES, MIN_AMOUNT, MAX_AMOUNT } from '../constants.js';
+import { CLAUDE_MODEL, VALID_BUDGET_TYPES } from '../constants.js';
+import { validateAmount, validateDate, validateMonth } from '../utils/validation.js';
 
 const router = Router();
-
-const DATE_REGEX = /^\d{4}-\d{2}-\d{2}$/;
 
 function getAnthropicClient() {
   if (!process.env.ANTHROPIC_API_KEY) return null;
@@ -39,22 +38,13 @@ function calcBudgetTotals(entries) {
   return { totalIncome, totalExpenses, netSavings: totalIncome - totalExpenses, categoryTotals };
 }
 
-function validateAmount(amount) {
-  const num = Number(amount);
-  if (!isFinite(num) || isNaN(num)) return 'amount must be a valid number';
-  if (num < MIN_AMOUNT) return `amount must be at least ${MIN_AMOUNT}`;
-  if (num > MAX_AMOUNT) return `amount must not exceed ${MAX_AMOUNT.toLocaleString()}`;
-  return null;
-}
-
 // GET /entries?month=YYYY-MM
 router.get('/entries', authenticate, (req, res) => {
   try {
     const { month } = req.query;
 
-    if (month && !/^\d{4}-\d{2}$/.test(month)) {
-      return res.status(400).json({ error: 'month must be in YYYY-MM format' });
-    }
+    const monthError = validateMonth(month);
+    if (monthError) return res.status(400).json({ error: monthError });
 
     let entries = getBudgetEntries(req.user.id);
     if (month) {
@@ -87,9 +77,8 @@ router.post('/entries', authenticate, (req, res) => {
     if (typeof category !== 'string' || category.trim().length === 0) {
       return res.status(400).json({ error: 'category must be a non-empty string' });
     }
-    if (date && !DATE_REGEX.test(date)) {
-      return res.status(400).json({ error: 'date must be in YYYY-MM-DD format' });
-    }
+    const dateError = validateDate(date);
+    if (dateError) return res.status(400).json({ error: dateError });
 
     const entry = {
       id: uuidv4(),
@@ -141,9 +130,8 @@ router.put('/entries/:id', authenticate, (req, res) => {
       updates.description = String(req.body.description).trim().slice(0, 200);
     }
     if (req.body.date !== undefined) {
-      if (!DATE_REGEX.test(req.body.date)) {
-        return res.status(400).json({ error: 'date must be in YYYY-MM-DD format' });
-      }
+      const dateError = validateDate(req.body.date);
+      if (dateError) return res.status(400).json({ error: dateError });
       updates.date = req.body.date;
     }
 
@@ -233,9 +221,8 @@ router.post('/goals', authenticate, (req, res) => {
     const amountError = validateAmount(targetAmount);
     if (amountError) return res.status(400).json({ error: amountError });
 
-    if (deadline && !/^\d{4}-\d{2}-\d{2}$/.test(deadline)) {
-      return res.status(400).json({ error: 'deadline must be in YYYY-MM-DD format' });
-    }
+    const deadlineError = validateDate(deadline);
+    if (deadlineError) return res.status(400).json({ error: `deadline: ${deadlineError}` });
 
     const goal = {
       id: uuidv4(),
