@@ -1,0 +1,1265 @@
+# Finance Buddy — Software Engineering Specification
+
+**Version 2.0 — March 2026**
+**Document Status:** Draft — Full Product Specification
+**Audience:** Engineering Team, Technical Leads, QA
+**Product Owner:** Finance Buddy Team
+
+---
+
+**Scope Notice:** This specification covers the complete Finance Buddy application across all development phases — from hackathon MVP through full product. Requirements are prioritized using MoSCoW notation:
+
+- **MUST** — Non-negotiable requirement for the designated phase
+- **SHOULD** — Strongly recommended; include if time permits
+- **COULD** — Nice-to-have stretch goal
+- **PHASE [N]** — Indicates which development phase the requirement targets
+
+All AI interactions in MVP use the Anthropic Claude API (`claude-sonnet-4-20250514`).
+
+---
+
+## Table of Contents
+
+1. [Overview](#1-overview)
+2. [Definitions & Glossary](#2-definitions--glossary)
+3. [System Architecture](#3-system-architecture)
+4. [Technology Stack](#4-technology-stack)
+5. [Data Models](#5-data-models)
+6. [REST API Specification](#6-rest-api-specification)
+7. [AI Integration Design](#7-ai-integration-design)
+8. [Functional Requirements — Authentication & Account Management](#8-functional-requirements--authentication--account-management)
+9. [Functional Requirements — AI Onboarding & Personalization](#9-functional-requirements--ai-onboarding--personalization)
+10. [Functional Requirements — Budget Tracker](#10-functional-requirements--budget-tracker)
+11. [Functional Requirements — Paper Portfolio & Watchlist](#11-functional-requirements--paper-portfolio--watchlist)
+12. [Functional Requirements — AI Chatbot Companion](#12-functional-requirements--ai-chatbot-companion)
+13. [Functional Requirements — Financial Education](#13-functional-requirements--financial-education)
+14. [Functional Requirements — Personalized Recommendations](#14-functional-requirements--personalized-recommendations)
+15. [Functional Requirements — Double Process Acceptance](#15-functional-requirements--double-process-acceptance)
+16. [Functional Requirements — ML Predictive Analysis Engine](#16-functional-requirements--ml-predictive-analysis-engine)
+17. [Functional Requirements — Auto Portfolio Opt-In/Opt-Out](#17-functional-requirements--auto-portfolio-opt-inopt-out)
+18. [Functional Requirements — Risk & Probability Metrics](#18-functional-requirements--risk--probability-metrics)
+19. [Functional Requirements — Financial Decision-Making Suite](#19-functional-requirements--financial-decision-making-suite)
+20. [Functional Requirements — Behavioral Coaching](#20-functional-requirements--behavioral-coaching)
+21. [Functional Requirements — Progress & Gamification](#21-functional-requirements--progress--gamification)
+22. [Functional Requirements — Notification System](#22-functional-requirements--notification-system)
+23. [Functional Requirements — User Feedback Loop](#23-functional-requirements--user-feedback-loop)
+24. [Frontend Architecture](#24-frontend-architecture)
+25. [Non-Functional Requirements — Performance](#25-non-functional-requirements--performance)
+26. [Non-Functional Requirements — Security](#26-non-functional-requirements--security)
+27. [Non-Functional Requirements — Reliability & Error Handling](#27-non-functional-requirements--reliability--error-handling)
+28. [Non-Functional Requirements — Accessibility](#28-non-functional-requirements--accessibility)
+29. [Non-Functional Requirements — Cross-Platform Compatibility](#29-non-functional-requirements--cross-platform-compatibility)
+30. [Non-Functional Requirements — Localization & Internationalization](#30-non-functional-requirements--localization--internationalization)
+31. [Non-Functional Requirements — Offline & Degraded Experience](#31-non-functional-requirements--offline--degraded-experience)
+32. [Privacy, Data Governance & Compliance](#32-privacy-data-governance--compliance)
+33. [Safety, Age Compliance & Trust Guardrails](#33-safety-age-compliance--trust-guardrails)
+34. [Legal Liability & Regulatory Framework](#34-legal-liability--regulatory-framework)
+35. [AI Limitations & Risk Disclosure](#35-ai-limitations--risk-disclosure)
+36. [Testing & Quality Assurance](#36-testing--quality-assurance)
+37. [Analytics & Monitoring](#37-analytics--monitoring)
+38. [Data Infrastructure & External Services](#38-data-infrastructure--external-services)
+39. [MVP Build Scope & Milestones](#39-mvp-build-scope--milestones)
+40. [Full Development Roadmap](#40-full-development-roadmap)
+
+---
+
+## 1. Overview
+
+### 1.1 Purpose
+
+This document defines the complete technical requirements, system architecture, data models, API contracts, AI integration patterns, security requirements, compliance framework, and testing strategy for the Finance Buddy application. It is the authoritative reference for all engineering decisions from MVP through full product.
+
+### 1.2 Product Summary
+
+Finance Buddy is an AI-first personal finance companion targeting beginners aged 16–25. The product is organized around four core pillars:
+
+1. **Learn** — Adaptive financial education with AI-generated explanations
+2. **Budget** — AI-powered budget tracking with spending insights
+3. **Invest (Simulated)** — Paper trading portfolio with explainable AI recommendations
+4. **Ask** — Always-available AI chatbot companion
+
+The application extends beyond investing into a comprehensive financial decision-making suite including bank selection, credit card comparison, savings plans, debt management, and behavioral coaching.
+
+### 1.3 Core Principle
+
+> *"The AI provides probabilistic insights and educational explanations — not financial advice."*
+
+The AI is positioned as **educational guidance + decision support**, NOT an autonomous financial advisor.
+
+---
+
+## 2. Definitions & Glossary
+
+| Term | Definition |
+|------|-----------|
+| **MVP** | Minimum Viable Product — the hackathon build scope (Phase 1) |
+| **Paper Trading** | Simulated investing with no real money involved |
+| **Buddy** | The user's named AI companion instance |
+| **Insight Card** | An AI-generated recommendation card shown to the user |
+| **Risk Profile** | A score (1–5) derived from the onboarding quiz |
+| **Claude API** | Anthropic's `claude-sonnet-4-20250514` inference endpoint |
+| **Double Confirmation** | Two-step acceptance flow for trade recommendations |
+| **Auto Portfolio** | AI-managed recommendation system (opt-in, future phase) |
+| **SSE** | Server-Sent Events — used for streaming AI responses |
+| **RAG** | Retrieval-Augmented Generation — grounding AI in factual data |
+| **MUST** | Non-negotiable requirement for the designated phase |
+| **SHOULD** | Strongly recommended; include if time permits |
+| **COULD** | Nice-to-have stretch goal |
+
+---
+
+## 3. System Architecture
+
+### 3.1 High-Level Architecture
+
+Finance Buddy follows a **three-tier architecture**: a React frontend SPA, a Node.js/Express REST API backend, and a PostgreSQL database. All AI inference is delegated to the Anthropic Claude API. Market data is sourced from a third-party financial data provider.
+
+```
+┌─────────────────────────────────────────────────────────────────┐
+│                        CLIENT TIER                              │
+│  React 18 SPA (Vite + TypeScript + Tailwind + Zustand)          │
+│  ┌──────────┬──────────┬──────────┬──────────┬────────────┐     │
+│  │Dashboard │ Budget   │Portfolio │  Chat    │   Learn    │     │
+│  │          │ Tracker  │& Watch   │  (SSE)   │            │     │
+│  └──────────┴──────────┴──────────┴──────────┴────────────┘     │
+└───────────────────────────┬─────────────────────────────────────┘
+                            │ HTTPS / JWT Bearer
+┌───────────────────────────▼─────────────────────────────────────┐
+│                        API TIER                                 │
+│  Node.js 20 + Express 5 REST API                                │
+│  ┌──────────┬──────────┬──────────┬──────────┬────────────┐     │
+│  │Auth      │Budget    │Portfolio │Chat      │ AI Prompt  │     │
+│  │Middleware│Endpoints │Endpoints │Streaming │ Builder    │     │
+│  └──────────┴──────────┴──────────┴──────────┴────────────┘     │
+│                    │              │              │               │
+│          ┌────────▼──┐   ┌──────▼──────┐  ┌───▼──────────┐    │
+│          │ Prisma ORM│   │ Polygon.io  │  │ Claude API   │    │
+│          └────────┬──┘   │ Market Data │  │ (Anthropic)  │    │
+│                   │      └─────────────┘  └──────────────┘    │
+└───────────────────┼─────────────────────────────────────────────┘
+                    │
+┌───────────────────▼─────────────────────────────────────────────┐
+│                        DATA TIER                                │
+│  PostgreSQL 15                                                  │
+│  Users · Profiles · Budgets · Holdings · InsightCards · Chat    │
+└─────────────────────────────────────────────────────────────────┘
+```
+
+**Key Principle:** The backend acts as a trusted proxy for all Claude API calls. The frontend **never** holds or transmits an Anthropic API key.
+
+### 3.2 Component Overview
+
+| Component | Description | AI Role |
+|-----------|-------------|---------|
+| **React Frontend (SPA)** | All UI screens, routing, state management | Renders AI responses, insight cards, chat UI |
+| **Express API Server** | REST endpoints, business logic, auth middleware | Constructs prompts, calls Claude API, returns results |
+| **PostgreSQL Database** | Persistent storage for users, budgets, portfolios | Stores AI-generated profile summaries and insight history |
+| **Claude API (Anthropic)** | LLM inference for all AI features | Onboarding, chat, budget insights, portfolio alerts |
+| **Market Data Provider** | Stock quotes, historical data, news headlines | Feeds portfolio monitor and news translator |
+| **Auth Service** | JWT-based session management | Protects all user data endpoints |
+| **ML Recommendation Engine** | Predictive analysis (Phase 4) | Buy/hold/sell signals with confidence scores |
+
+### 3.3 AI System Split
+
+The AI layer is divided into two distinct subsystems:
+
+- **Chat AI (LLM-based):** Education, conversation, Q&A, explanations, onboarding. Powered by Claude API with prompt engineering and context injection.
+- **Recommendation Engine (Data-driven):** Financial logic engine with rule-based signals (Phase 2) evolving into ML model augmentation (Phase 4). Separate from the conversational AI.
+
+---
+
+## 4. Technology Stack
+
+| Layer | Technology | Rationale |
+|-------|-----------|-----------|
+| **Frontend** | React 18 + Vite + TypeScript | Fast HMR, strong typing, ecosystem maturity |
+| **Styling** | Tailwind CSS | Rapid UI development, consistent design tokens |
+| **State Management** | Zustand | Lightweight, no boilerplate, suitable for MVP scope |
+| **Backend** | Node.js 20 + Express 5 | Familiar, fast to scaffold, large middleware ecosystem |
+| **ORM** | Prisma | Type-safe queries, auto-generated migrations |
+| **Database** | PostgreSQL 15 | Relational integrity for financial data, JSON support |
+| **AI Inference** | Anthropic Claude API (Sonnet 4) | State-of-the-art reasoning, streaming support |
+| **Market Data** | Polygon.io (free tier) | Real-time quotes, company details, news headlines |
+| **Auth** | JWT + bcrypt | Stateless sessions, password hashing |
+| **Hosting** | Railway / Render | One-click deploys, free tier for hackathon |
+| **Testing** | Vitest + Supertest | Fast unit tests, HTTP integration tests |
+| **Mobile (Phase 4)** | React Native or Flutter | Cross-platform code reuse with native performance |
+
+---
+
+## 5. Data Models
+
+### 5.1 User
+
+| Field | Type | Required | Description |
+|-------|------|----------|-------------|
+| `id` | UUID | Yes | Primary key, auto-generated |
+| `email` | String | Yes | Unique, used for login |
+| `passwordHash` | String | Yes | bcrypt hash, never returned in API responses |
+| `buddyName` | String | Yes | User's chosen name for their AI companion |
+| `ageConfirmed` | Boolean | Yes | Must be `true` before account creation completes |
+| `createdAt` | DateTime | Yes | Account creation timestamp |
+
+### 5.2 UserProfile (Onboarding)
+
+| Field | Type | Required | Description |
+|-------|------|----------|-------------|
+| `id` | UUID | Yes | Primary key |
+| `userId` | UUID | Yes | FK → User.id |
+| `goals` | String[] | Yes | e.g. `['save_emergency_fund', 'start_investing']` |
+| `knowledgeLevel` | Enum | Yes | `BEGINNER` \| `INTERMEDIATE` \| `ADVANCED` |
+| `riskScore` | Int | Yes | 1–5, derived from quiz answers (1 = conservative, 5 = aggressive) |
+| `savingsHabit` | Enum | Yes | `NONE` \| `OCCASIONAL` \| `REGULAR` \| `DISCIPLINED` |
+| `investingInterest` | Boolean | Yes | Whether user wants portfolio features |
+| `profileSummary` | Text | Yes | Claude-generated plain-language summary |
+| `updatedAt` | DateTime | Yes | Last profile update timestamp |
+
+### 5.3 BudgetEntry
+
+| Field | Type | Required | Description |
+|-------|------|----------|-------------|
+| `id` | UUID | Yes | Primary key |
+| `userId` | UUID | Yes | FK → User.id |
+| `type` | Enum | Yes | `INCOME` \| `EXPENSE` |
+| `amount` | Decimal | Yes | Positive value in USD |
+| `category` | Enum | Yes | `HOUSING` \| `FOOD` \| `TRANSPORT` \| `ENTERTAINMENT` \| `SAVINGS` \| `OTHER` |
+| `description` | String | No | Optional user label |
+| `date` | DateTime | Yes | Transaction date |
+| `createdAt` | DateTime | Yes | Record creation timestamp |
+
+### 5.4 SavingsGoal
+
+| Field | Type | Required | Description |
+|-------|------|----------|-------------|
+| `id` | UUID | Yes | Primary key |
+| `userId` | UUID | Yes | FK → User.id |
+| `label` | String | Yes | e.g. "Emergency Fund", "College Savings" |
+| `targetAmount` | Decimal | Yes | Goal amount in USD |
+| `currentAmount` | Decimal | Yes | Running total, updated on INCOME entries tagged to goal |
+| `deadline` | DateTime | No | Optional target date |
+
+### 5.5 Holding (Paper Portfolio)
+
+| Field | Type | Required | Description |
+|-------|------|----------|-------------|
+| `id` | UUID | Yes | Primary key |
+| `userId` | UUID | Yes | FK → User.id |
+| `ticker` | String | Yes | Stock ticker symbol, e.g. `AAPL` |
+| `companyName` | String | Yes | Full company name from Polygon.io |
+| `shares` | Decimal | Yes | Simulated shares owned |
+| `avgCost` | Decimal | Yes | Average purchase price per share |
+| `purchasedAt` | DateTime | Yes | First purchase timestamp |
+
+### 5.6 InsightCard
+
+| Field | Type | Required | Description |
+|-------|------|----------|-------------|
+| `id` | UUID | Yes | Primary key |
+| `userId` | UUID | Yes | FK → User.id |
+| `type` | Enum | Yes | `BUDGET` \| `PORTFOLIO` \| `RECOMMENDATION` \| `MARKET` |
+| `title` | String | Yes | Short headline for the card |
+| `body` | Text | Yes | Claude-generated explanation |
+| `riskLabel` | Enum | No | `LOW` \| `MEDIUM` \| `HIGH` |
+| `actionLabel` | String | No | CTA text, e.g. "Simulate Buy" |
+| `status` | Enum | Yes | `PENDING` \| `ACCEPTED` \| `DISMISSED` |
+| `createdAt` | DateTime | Yes | Card generation timestamp |
+
+### 5.7 WatchlistItem
+
+| Field | Type | Required | Description |
+|-------|------|----------|-------------|
+| `id` | UUID | Yes | Primary key |
+| `userId` | UUID | Yes | FK → User.id |
+| `ticker` | String | Yes | Stock ticker symbol |
+| `addedAt` | DateTime | Yes | When added to watchlist |
+
+### 5.8 ChatMessage (Phase 2+)
+
+| Field | Type | Required | Description |
+|-------|------|----------|-------------|
+| `id` | UUID | Yes | Primary key |
+| `userId` | UUID | Yes | FK → User.id |
+| `role` | Enum | Yes | `USER` \| `ASSISTANT` |
+| `content` | Text | Yes | Message text |
+| `sessionId` | UUID | Yes | Groups messages in a conversation session |
+| `createdAt` | DateTime | Yes | Message timestamp |
+
+### 5.9 TradeConfirmation (Phase 2+)
+
+| Field | Type | Required | Description |
+|-------|------|----------|-------------|
+| `id` | UUID | Yes | Primary key |
+| `userId` | UUID | Yes | FK → User.id |
+| `insightCardId` | UUID | Yes | FK → InsightCard.id |
+| `ticker` | String | Yes | Stock ticker |
+| `action` | Enum | Yes | `BUY` \| `SELL` |
+| `shares` | Decimal | Yes | Number of shares |
+| `priceAtConfirm` | Decimal | Yes | Price when confirmed |
+| `step1At` | DateTime | Yes | Timestamp of initial accept |
+| `step2At` | DateTime | Yes | Timestamp of final confirm |
+| `undoCancelledAt` | DateTime | No | If user cancelled during grace period |
+| `status` | Enum | Yes | `CONFIRMED` \| `CANCELLED` \| `EXECUTED` |
+
+### 5.10 UserFeedback (Phase 2+)
+
+| Field | Type | Required | Description |
+|-------|------|----------|-------------|
+| `id` | UUID | Yes | Primary key |
+| `userId` | UUID | Yes | FK → User.id |
+| `targetType` | Enum | Yes | `CHAT_RESPONSE` \| `INSIGHT_CARD` \| `RECOMMENDATION` |
+| `targetId` | UUID | Yes | ID of the rated item |
+| `rating` | Enum | Yes | `THUMBS_UP` \| `THUMBS_DOWN` |
+| `comment` | Text | No | Optional feedback text |
+| `createdAt` | DateTime | Yes | Feedback timestamp |
+
+### 5.11 NotificationPreference (Phase 3+)
+
+| Field | Type | Required | Description |
+|-------|------|----------|-------------|
+| `id` | UUID | Yes | Primary key |
+| `userId` | UUID | Yes | FK → User.id |
+| `channel` | Enum | Yes | `PUSH` \| `EMAIL` \| `IN_APP` |
+| `category` | Enum | Yes | `PRICE_ALERT` \| `VOLATILITY` \| `PORTFOLIO` \| `BUDGET` \| `RECOMMENDATION` \| `DIGEST` |
+| `enabled` | Boolean | Yes | Whether this notification type is active |
+| `quietStart` | Time | No | Do-not-disturb start time |
+| `quietEnd` | Time | No | Do-not-disturb end time |
+
+### 5.12 AutoPortfolioConfig (Phase 4)
+
+| Field | Type | Required | Description |
+|-------|------|----------|-------------|
+| `id` | UUID | Yes | Primary key |
+| `userId` | UUID | Yes | FK → User.id |
+| `enabled` | Boolean | Yes | Default `false` |
+| `riskTolerance` | Enum | Yes | `CONSERVATIVE` \| `MODERATE` \| `AGGRESSIVE` |
+| `autoExecute` | Boolean | Yes | Whether trades auto-execute or require manual confirmation |
+| `maxTradeAmount` | Decimal | No | Per-trade dollar limit |
+| `liabilityAcceptedAt` | DateTime | Yes | Timestamp of liability clause acceptance |
+| `liabilityVersion` | String | Yes | Version of the liability terms accepted |
+| `optedOutAt` | DateTime | No | Timestamp if user opted out |
+
+---
+
+## 6. REST API Specification
+
+**Base URL:** `/api/v1`
+**Format:** All requests and responses use JSON
+**Auth:** `Bearer <JWT>` unless noted
+
+### 6.1 Auth Endpoints
+
+| Method | Endpoint | Auth | Input | Response / Notes |
+|--------|----------|------|-------|-----------------|
+| `POST` | `/auth/signup` | None | `{ email, password, ageConfirmed }` | `201 { userId, token }` — creates account |
+| `POST` | `/auth/login` | None | `{ email, password }` | `200 { token, refreshToken }` |
+| `POST` | `/auth/refresh` | None | `{ refreshToken }` | `200 { token }` |
+| `POST` | `/auth/logout` | Bearer | `{}` | `204` — invalidates refresh token |
+
+### 6.2 Onboarding Endpoints
+
+| Method | Endpoint | Auth | Input | Response / Notes |
+|--------|----------|------|-------|-----------------|
+| `POST` | `/onboarding/profile` | Bearer | `{ buddyName, goals, knowledgeLevel, riskAnswers, savingsHabit, investingInterest }` | `201 { profile, aiSummary }` |
+| `GET` | `/onboarding/profile` | Bearer | — | `200 { profile }` |
+| `PUT` | `/onboarding/profile` | Bearer | Partial profile fields | `200 { profile, aiSummary }` |
+
+### 6.3 Budget Endpoints
+
+| Method | Endpoint | Auth | Input | Response / Notes |
+|--------|----------|------|-------|-----------------|
+| `GET` | `/budget/entries` | Bearer | `?month=2026-03` | `200 { entries[], totals }` |
+| `POST` | `/budget/entries` | Bearer | `{ type, amount, category, description, date }` | `201 { entry }` |
+| `PUT` | `/budget/entries/:id` | Bearer | Partial entry fields | `200 { entry }` |
+| `DELETE` | `/budget/entries/:id` | Bearer | — | `204` |
+| `GET` | `/budget/insight` | Bearer | — | `200 { insight: string }` — Claude-generated |
+| `GET` | `/budget/goals` | Bearer | — | `200 { goals[] }` |
+| `POST` | `/budget/goals` | Bearer | `{ label, targetAmount, deadline? }` | `201 { goal }` |
+
+### 6.4 Portfolio Endpoints
+
+| Method | Endpoint | Auth | Input | Response / Notes |
+|--------|----------|------|-------|-----------------|
+| `GET` | `/portfolio/holdings` | Bearer | — | `200 { holdings[], totalValue, totalGainLoss }` |
+| `POST` | `/portfolio/buy` | Bearer | `{ ticker, shares }` | `201 { holding }` — paper trade at current price |
+| `POST` | `/portfolio/sell` | Bearer | `{ ticker, shares }` | `200 { holding }` |
+| `GET` | `/portfolio/watchlist` | Bearer | — | `200 { watchlist[] }` |
+| `POST` | `/portfolio/watchlist` | Bearer | `{ ticker }` | `201 { item }` |
+| `DELETE` | `/portfolio/watchlist/:ticker` | Bearer | — | `204` |
+| `GET` | `/portfolio/explain/:ticker` | Bearer | — | `200 { explanation: string }` — Claude-generated |
+
+### 6.5 Market Data Endpoints
+
+| Method | Endpoint | Auth | Input | Response / Notes |
+|--------|----------|------|-------|-----------------|
+| `GET` | `/market/quote/:ticker` | Bearer | — | `200 { ticker, price, change, changePercent }` |
+| `GET` | `/market/search` | Bearer | `?q=apple` | `200 { results[] }` |
+| `GET` | `/market/news` | Bearer | `?ticker=AAPL` | `200 { articles[] }` |
+
+### 6.6 Chat Endpoints
+
+| Method | Endpoint | Auth | Input | Response / Notes |
+|--------|----------|------|-------|-----------------|
+| `POST` | `/chat/message` | Bearer | `{ message, history[] }` | `200` streaming `text/event-stream` — Claude response |
+| `GET` | `/chat/suggestions` | Bearer | — | `200 { suggestions: string[] }` — 3 context-aware prompts |
+
+### 6.7 Insights & Recommendations Endpoints
+
+| Method | Endpoint | Auth | Input | Response / Notes |
+|--------|----------|------|-------|-----------------|
+| `GET` | `/insights` | Bearer | — | `200 { cards[] }` |
+| `POST` | `/insights/:id/accept` | Bearer | — | `200 { card }` |
+| `POST` | `/insights/:id/dismiss` | Bearer | — | `200 { card }` |
+| `POST` | `/insights/generate` | Bearer | — | `202` — triggers async Claude generation |
+
+### 6.8 Trade Confirmation Endpoints (Phase 2+)
+
+| Method | Endpoint | Auth | Input | Response / Notes |
+|--------|----------|------|-------|-----------------|
+| `POST` | `/trade/initiate` | Bearer | `{ insightCardId }` | `200 { tradeConfirmation, cooldownSeconds }` — Step 1 |
+| `POST` | `/trade/:id/confirm` | Bearer | `{ acknowledgedLiability: true }` | `200 { tradeConfirmation }` — Step 2 (rejected if cooldown not elapsed) |
+| `POST` | `/trade/:id/cancel` | Bearer | — | `200 { tradeConfirmation }` — during undo window |
+| `GET` | `/trade/history` | Bearer | `?page=1&limit=20` | `200 { trades[], total }` |
+
+### 6.9 Feedback Endpoints (Phase 2+)
+
+| Method | Endpoint | Auth | Input | Response / Notes |
+|--------|----------|------|-------|-----------------|
+| `POST` | `/feedback` | Bearer | `{ targetType, targetId, rating, comment? }` | `201 { feedback }` |
+
+### 6.10 Notification Preference Endpoints (Phase 3+)
+
+| Method | Endpoint | Auth | Input | Response / Notes |
+|--------|----------|------|-------|-----------------|
+| `GET` | `/notifications/preferences` | Bearer | — | `200 { preferences[] }` |
+| `PUT` | `/notifications/preferences` | Bearer | `{ preferences[] }` | `200 { preferences[] }` |
+
+### 6.11 Auto Portfolio Endpoints (Phase 4)
+
+| Method | Endpoint | Auth | Input | Response / Notes |
+|--------|----------|------|-------|-----------------|
+| `GET` | `/auto-portfolio/config` | Bearer | — | `200 { config }` |
+| `POST` | `/auto-portfolio/opt-in` | Bearer | `{ riskTolerance, autoExecute, maxTradeAmount?, liabilityAccepted }` | `201 { config }` |
+| `POST` | `/auto-portfolio/opt-out` | Bearer | `{ keepHoldings: boolean }` | `200 { config, holdingSummary? }` |
+| `PUT` | `/auto-portfolio/config` | Bearer | Partial config fields | `200 { config }` |
+| `GET` | `/auto-portfolio/recommendations` | Bearer | — | `200 { recommendations[] }` — ML-generated |
+
+---
+
+## 7. AI Integration Design
+
+### 7.1 Claude API Configuration
+
+| Parameter | Value |
+|-----------|-------|
+| **Model** | `claude-sonnet-4-20250514` |
+| **Max Tokens** | 1024 (chat/insights) · 512 (budget insight) · 2048 (onboarding summary) |
+| **Streaming** | Enabled for all chat endpoints via Server-Sent Events (SSE) |
+| **Temperature** | 0.7 (chat) · 0.3 (structured outputs like profile summary) |
+| **API Key Scope** | Backend only — never exposed to client |
+
+### 7.2 System Prompt Architecture
+
+Every Claude API call includes a **two-part system prompt**:
+
+1. **Global safety layer** — Applied to ALL calls. Defines Finance Buddy's role, prevents harmful advice, enforces user-control principle.
+2. **Context layer** — Call-specific. Injects relevant user data (risk score, goals, budget snapshot, portfolio holdings) so Claude can personalize responses.
+
+**Mandatory Global Safety Prompt:**
+
+```
+You are Finance Buddy, an educational financial companion. You provide guidance
+for learning purposes only. Never guarantee returns, never recommend actions
+the user has not explicitly requested, and always present both opportunities
+and risks.
+```
+
+### 7.3 Prompt Templates
+
+**Onboarding Profile Summary:**
+```
+SYSTEM: You are Finance Buddy. Generate a warm, encouraging 3-paragraph financial
+profile summary for a beginner. Use plain language. Mention their goals and risk
+tolerance. End with one actionable first step.
+
+USER: Quiz answers: { goals: [...], knowledgeLevel: 'BEGINNER',
+  riskScore: 2, savingsHabit: 'OCCASIONAL', investingInterest: true }
+```
+
+**Budget Insight:**
+```
+SYSTEM: You are Finance Buddy. Analyze this user's budget data and generate
+2-3 sentences of plain-language insight. Highlight one positive and one area
+to improve. User risk score: {riskScore}.
+
+USER: Monthly income: $3,200. Expenses: { Food: $680, Housing: $1,100,
+  Entertainment: $420, Transport: $310 }. Savings goal: $500.
+```
+
+**Chat Companion:**
+```
+SYSTEM: You are {buddyName}, the user's Finance Buddy. You are warm, patient,
+and educational. The user is a {knowledgeLevel} with risk score {riskScore}/5.
+Their goals: {goals}. Portfolio: {holdings}. Budget health: {budgetScore}/100.
+Always explain jargon. Never execute actions — suggest and explain only.
+
+CONVERSATION HISTORY: [ ...messages ]
+USER: {currentMessage}
+```
+
+**Stock Explanation:**
+```
+SYSTEM: You are Finance Buddy. Explain this stock to a beginner investor in
+3 short paragraphs: (1) what the company does, (2) what drives its stock price,
+(3) what a beginner should watch out for. No jargon.
+
+USER: Explain {ticker} ({companyName}). Current price: ${price}.
+  52-week range: ${low} – ${high}. Sector: {sector}.
+```
+
+### 7.4 Streaming Implementation
+
+Chat responses use **Server-Sent Events (SSE)**. The backend pipes Claude's streaming response directly to the client response stream.
+
+```javascript
+// Backend — Express route
+app.post('/api/v1/chat/message', authenticate, async (req, res) => {
+  res.setHeader('Content-Type', 'text/event-stream');
+  res.setHeader('Cache-Control', 'no-cache');
+
+  const stream = await anthropic.messages.stream({ model, messages, system });
+
+  for await (const chunk of stream) {
+    if (chunk.type === 'content_block_delta') {
+      res.write(`data: ${JSON.stringify({ text: chunk.delta.text })}\n\n`);
+    }
+  }
+
+  res.write('data: [DONE]\n\n');
+  res.end();
+});
+```
+
+### 7.5 Context Injection Strategy
+
+User context is built **server-side** on each request by querying the database and assembling a structured context object injected into the system prompt. This ensures Claude always has current data without requiring the client to transmit sensitive information.
+
+```javascript
+async function buildUserContext(userId) {
+  const profile  = await db.userProfile.findUnique({ where: { userId } });
+  const budget   = await getBudgetSummary(userId);
+  const holdings = await db.holding.findMany({ where: { userId } });
+
+  return {
+    buddyName:    profile.buddyName,
+    riskScore:    profile.riskScore,
+    goals:        profile.goals,
+    budgetHealth: budget.healthScore,
+    holdings:     holdings.map(h => `${h.ticker} x${h.shares}`),
+  };
+}
+```
+
+### 7.6 AI Cost Management Strategy
+
+| Strategy | Implementation |
+|----------|---------------|
+| **Token budgets** | Per-user daily caps; throttle after threshold |
+| **Response caching** | Cache common Q&A (e.g., "What is a P/E ratio?") with TTL |
+| **Fallback models** | Route simple queries to smaller/cheaper model; reserve primary for complex |
+| **RAG** | Retrieval-augmented generation for factual grounding to reduce hallucination |
+| **Latency target** | Claude streaming must begin rendering tokens within 2 seconds |
+
+### 7.7 AI Hallucination Mitigation
+
+- All financial data in responses must be sourced from the database or market data API, not generated by the LLM.
+- Tight prompt guardrails preventing fabrication of stock prices, company data, or performance metrics.
+- Confidence thresholds below which recommendations are not surfaced.
+- Human review layer for critical financial outputs in production.
+
+---
+
+## 8. Functional Requirements — Authentication & Account Management
+
+| ID | Priority | Requirement | Notes |
+|----|----------|-------------|-------|
+| AUTH-01 | MUST | Users must confirm they are 16+ before account creation | Age gate checkbox on signup |
+| AUTH-02 | MUST | Users must register with email and password | Password min 8 chars, 1 uppercase, 1 number |
+| AUTH-03 | MUST | Passwords must be hashed with bcrypt (cost factor >= 12) | Never store plaintext |
+| AUTH-04 | MUST | All protected endpoints must require a valid JWT in Authorization header | Bearer token scheme |
+| AUTH-05 | MUST | JWT access tokens must expire after 24 hours | |
+| AUTH-06 | SHOULD | Refresh token support to extend sessions without re-login | 7-day refresh TTL |
+| AUTH-07 | COULD | OAuth 2.0 social login (Google) | Phase 2+ |
+| AUTH-08 | PHASE 3 | Biometric authentication support (Face ID, Touch ID, fingerprint) | Mobile only |
+| AUTH-09 | PHASE 2 | Account deletion option that purges all user data | Right to be forgotten |
+| AUTH-10 | PHASE 3 | 2FA / PIN for high-value trade confirmations | Configurable threshold |
+
+---
+
+## 9. Functional Requirements — AI Onboarding & Personalization
+
+| ID | Priority | Requirement | Notes |
+|----|----------|-------------|-------|
+| ONB-01 | MUST | User must assign a custom name to their Finance Buddy companion | Stored in user profile |
+| ONB-02 | MUST | Onboarding quiz must collect: financial goals, knowledge level, savings habits, investing interest, risk tolerance | 5–7 questions |
+| ONB-03 | MUST | Claude API must generate a plain-language financial profile summary | Stored, shown on dashboard |
+| ONB-04 | MUST | Risk tolerance must produce a numeric score 1–5 | 1 = conservative, 5 = aggressive |
+| ONB-05 | SHOULD | Quiz UX should feel conversational (one question at a time) | Not form-like |
+| ONB-06 | SHOULD | User can re-take onboarding quiz from settings to update profile | |
+| ONB-07 | COULD | Animated buddy mascot displayed during onboarding | Phase 4 stretch |
+| ONB-08 | PHASE 2 | Collect time horizon and income/savings rate (optional) | Enables smarter guidance |
+
+---
+
+## 10. Functional Requirements — Budget Tracker
+
+| ID | Priority | Requirement | Notes |
+|----|----------|-------------|-------|
+| BUD-01 | MUST | User can input monthly income as single figure or itemized sources | |
+| BUD-02 | MUST | User can add expense entries with amount, category, and date | |
+| BUD-03 | MUST | System must auto-categorize expenses into: Housing, Food, Transport, Entertainment, Savings, Other | Claude-assisted or rule-based |
+| BUD-04 | MUST | Dashboard must display total income, total expenses, and remaining balance | |
+| BUD-05 | MUST | User can set a monthly savings goal | |
+| BUD-06 | MUST | Claude API must generate a budget health insight (2–3 sentences) on demand | |
+| BUD-07 | SHOULD | Budget health score (0–100) with explanation | |
+| BUD-08 | SHOULD | AI must detect overspending patterns and surface natural-language warning | |
+| BUD-09 | SHOULD | User can edit or delete expense entries | |
+| BUD-10 | COULD | Month-over-month spending trend chart | |
+| BUD-11 | PHASE 2 | Pre-built budget templates (50/30/20, zero-based, envelope method) | |
+| BUD-12 | PHASE 2 | Bill tracking and reminders with due date alerts | |
+| BUD-13 | PHASE 3 | Bank account integration via Plaid for automatic transaction categorization | |
+| BUD-14 | PHASE 3 | Debt payoff planner (snowball/avalanche methods) with projected payoff dates | |
+| BUD-15 | PHASE 3 | Monthly/weekly automated financial reports | |
+
+---
+
+## 11. Functional Requirements — Paper Portfolio & Watchlist
+
+| ID | Priority | Requirement | Notes |
+|----|----------|-------------|-------|
+| PF-01 | MUST | User can search for stocks by ticker or company name using Polygon.io | |
+| PF-02 | MUST | User can add stocks to a watchlist | |
+| PF-03 | MUST | User can simulate buying shares at current price (paper trading) | Track quantity, avg cost |
+| PF-04 | MUST | Portfolio screen must show each holding: shares, current price, gain/loss ($ and %) | |
+| PF-05 | MUST | Claude API must generate a plain-language explanation of any stock on request | |
+| PF-06 | SHOULD | System monitors watchlist for >3% price movement and triggers AI insight card | Polling interval: 60s |
+| PF-07 | SHOULD | Insight cards include: what changed, why it matters, risk label, suggested action, accept/dismiss | |
+| PF-08 | SHOULD | User can simulate selling shares from paper portfolio | |
+| PF-09 | COULD | Portfolio performance chart (line graph) over time | |
+| PF-10 | COULD | AI-generated diversification score for the portfolio | |
+| PF-11 | PHASE 3 | Broker API integration for real trading (if legally viable) | Requires legal review |
+
+---
+
+## 12. Functional Requirements — AI Chatbot Companion
+
+| ID | Priority | Requirement | Notes |
+|----|----------|-------------|-------|
+| CHAT-01 | MUST | Chatbot must be accessible from all screens via persistent UI element | Floating button or sidebar |
+| CHAT-02 | MUST | Chatbot must maintain conversational context within a session (multi-turn) | Pass message history to Claude |
+| CHAT-03 | MUST | Claude must have access to user context: risk profile, budget summary, portfolio, goals | Injected into system prompt |
+| CHAT-04 | MUST | Chatbot must answer general personal finance questions | |
+| CHAT-05 | MUST | Claude responses must stream to UI for perceived performance | Use SSE streaming API |
+| CHAT-06 | SHOULD | Chatbot surfaces 3–4 context-aware quick-prompt suggestions when opened | e.g., "Why is my portfolio down?" |
+| CHAT-07 | SHOULD | Chatbot distinguishes between passive Q&A mode and active advisor mode | |
+| CHAT-08 | COULD | Conversation history persisted to database, resumable across sessions | Phase 2+ |
+| CHAT-09 | PHASE 4 | Animated buddy avatar/mascot alongside chat interface | Visual identity |
+
+---
+
+## 13. Functional Requirements — Financial Education
+
+| ID | Priority | Requirement | Notes |
+|----|----------|-------------|-------|
+| EDU-01 | MUST | App must include a Learn section with at least 5 beginner topics | Compound interest, ETFs, diversification, budgeting, risk tolerance |
+| EDU-02 | MUST | Each lesson must have an AI-generated plain-language explanation adapted to knowledge level | |
+| EDU-03 | SHOULD | Lessons include a short comprehension check (1–2 questions) | |
+| EDU-04 | SHOULD | Every AI recommendation includes a "Learn More" link to a related lesson | |
+| EDU-05 | COULD | Adaptive lesson path that unlocks based on completed lessons | |
+| EDU-06 | PHASE 2 | Gamification: levels, XP, badges, streaks | |
+| EDU-07 | PHASE 2 | Scenario-based learning: "What would you do in a market crash?" | |
+| EDU-08 | PHASE 2 | Microlearning format: 1–3 minute bite-sized lessons | Mobile-optimized |
+| EDU-09 | PHASE 2 | News-to-learning translator: convert headlines into beginner summaries | |
+| EDU-10 | PHASE 3 | Financial literacy hub: articles, videos, interactive tutorials | |
+| EDU-11 | PHASE 3 | Searchable financial glossary with contextual tooltips throughout app | |
+| EDU-12 | PHASE 3 | Life event guidance (buying a home, marriage, child, retirement) | |
+
+---
+
+## 14. Functional Requirements — Personalized Recommendations
+
+| ID | Priority | Requirement | Notes |
+|----|----------|-------------|-------|
+| REC-01 | MUST | Claude must generate at least one personalized recommendation on dashboard after onboarding | Based on risk profile + goals |
+| REC-02 | MUST | Every recommendation must include: what, why it matches user, potential upside, risk warning | Explainable AI requirement |
+| REC-03 | MUST | User must explicitly accept or dismiss every recommendation — no auto-action | User control principle |
+| REC-04 | SHOULD | Recommendations refreshed weekly or on user request | |
+| REC-05 | COULD | AI-generated daily digest: spending changes, portfolio movement, one lesson | |
+| REC-06 | PHASE 2 | Rule-based recommendation engine with technical indicators (RSI, moving averages) | |
+| REC-07 | PHASE 2 | Each recommendation surfaces signals used and confidence tier (high/medium/low) | |
+
+---
+
+## 15. Functional Requirements — Double Process Acceptance
+
+| ID | Priority | Phase | Requirement | Notes |
+|----|----------|-------|-------------|-------|
+| DPA-01 | MUST | 2 | All AI buy/sell recommendations must require two explicit user confirmations before execution | |
+| DPA-02 | MUST | 2 | Step 1: User reviews recommendation card and clicks "Accept Recommendation" | Card shows ticker, action, quantity, price, rationale |
+| DPA-03 | MUST | 2 | Step 2: Secondary confirmation modal with mandatory 3-5 second cooldown before "Confirm" activates | Summarizes exact action, cost/proceeds, risk %, liability reminder |
+| DPA-04 | MUST | 2 | Step 2 modal must display condensed liability notice | "By confirming, you acknowledge this is your decision..." |
+| DPA-05 | MUST | 2 | Confirmation receipt: on-screen summary with timestamp and transaction reference | |
+| DPA-06 | SHOULD | 2 | 10-15 second undo window after confirmation before submission to brokerage API | |
+| DPA-07 | SHOULD | 3 | High-value threshold: trades exceeding user-defined amount require additional auth (PIN/biometric/2FA) | |
+| DPA-08 | SHOULD | 3 | Session-based trade limits: user-configurable daily/weekly caps | |
+| DPA-09 | MUST | 2 | Visual differentiation: green for buy, red for sell with distinct iconography | |
+| DPA-10 | MUST | 2 | Push notification or email receipt option after trade confirmation | |
+
+---
+
+## 16. Functional Requirements — ML Predictive Analysis Engine
+
+| ID | Priority | Phase | Requirement | Notes |
+|----|----------|-------|-------------|-------|
+| ML-01 | MUST | 1 | Preview section: mockup examples of auto-recommendations with sample cards | Coming Soon feature |
+| ML-02 | MUST | 1 | "Coming Soon" information hub explaining ML-powered recommendations | Include waitlist signup |
+| ML-03 | MUST | 4 | ML model trained on historical stock data producing buy/hold/sell signals | |
+| ML-04 | MUST | 4 | Model outputs include confidence scores and risk assessments | |
+| ML-05 | MUST | 4 | Rigorous backtesting against unseen historical data before deployment | Benchmark against S&P 500 |
+| ML-06 | SHOULD | 4 | Ensemble methods combining multiple model architectures | LSTM, XGBoost, Transformer |
+| ML-07 | MUST | 4 | Ongoing retraining schedule: monthly or quarterly | Adapt to market evolution |
+| ML-08 | MUST | 4 | All ML limitations prominently disclosed in UI | See Section 35 |
+
+**Research deliverables required before Phase 4 build:**
+- Optimal historical lookback period (5 / 10 / 20+ years)
+- Data source evaluation (Yahoo Finance, Alpha Vantage, Quandl, Bloomberg)
+- Cost/licensing assessment for premium data feeds
+- Data granularity determination (daily / hourly / minute-level)
+- Survivorship bias mitigation strategy
+
+---
+
+## 17. Functional Requirements — Auto Portfolio Opt-In/Opt-Out
+
+| ID | Priority | Phase | Requirement | Notes |
+|----|----------|-------|-------------|-------|
+| AP-01 | MUST | 4 | Auto portfolio is OFF by default; explicit opt-in required | |
+| AP-02 | MUST | 4 | Opt-in requires: review risk disclosures, accept liability clause, select risk tolerance, confirm | |
+| AP-03 | MUST | 4 | Opt-out available at any time from Settings > Portfolio Preferences | No penalty or lock-in |
+| AP-04 | MUST | 4 | On opt-out: prompt to keep holdings as-is or receive summary for manual review | |
+| AP-05 | SHOULD | 4 | Granular controls: receive recommendations without auto-execute, limit by asset class or dollar amount | |
+| AP-06 | MUST | 4 | Opted-out users retain full access to all non-recommendation features | |
+
+---
+
+## 18. Functional Requirements — Risk & Probability Metrics
+
+| ID | Priority | Phase | Requirement | Notes |
+|----|----------|-------|-------------|-------|
+| RISK-01 | MUST | 4 | Every ML recommendation displays: confidence score (%), risk level (L/M/H), risk percentage (%) | |
+| RISK-02 | SHOULD | 4 | Expected return range with best/expected/worst case scenarios | |
+| RISK-03 | SHOULD | 4 | Historical accuracy metric for similar recommendation types | |
+| RISK-04 | SHOULD | 4 | Volatility indicator relative to historical average | |
+| RISK-05 | MUST | 4 | Plain-language recommendation rationale | |
+| RISK-06 | SHOULD | 4 | Ranked top 3-5 key factors that influenced the recommendation | |
+| RISK-07 | SHOULD | 4 | Contrarian signals surfaced when notable counter-indicators exist | |
+| RISK-08 | COULD | 4 | Comparison benchmark vs. holding a broad market index fund | |
+| RISK-09 | MUST | 4 | Colorblind-friendly visual presentation with expandable detail sections | |
+| RISK-10 | MUST | 4 | Tooltips explaining each metric for unfamiliar users | |
+
+---
+
+## 19. Functional Requirements — Financial Decision-Making Suite
+
+| ID | Priority | Phase | Requirement | Notes |
+|----|----------|-------|-------------|-------|
+| FDS-01 | PHASE 2 | 2 | Bank comparison engine: checking, savings, CDs, money market | APY, fees, ATM network, ratings |
+| FDS-02 | PHASE 2 | 2 | Credit card matching engine based on spending habits and credit score range | APR, rewards, annual fees |
+| FDS-03 | PHASE 2 | 2 | Category-specific credit card recommendations (travel, groceries, students) | |
+| FDS-04 | PHASE 2 | 2 | Credit card cost calculator showing estimated annual cost/benefit | |
+| FDS-05 | PHASE 2 | 2 | Goal-based savings: emergency fund, vacation, down payment with target amounts/timelines | |
+| FDS-06 | PHASE 3 | 3 | Automated savings contribution recommendations based on income/expenses/deadlines | |
+| FDS-07 | PHASE 3 | 3 | High-yield savings account recommendations based on current rates | |
+| FDS-08 | PHASE 3 | 3 | Bank switching guide: step-by-step with direct deposit transfer checklist | |
+| FDS-09 | PHASE 3 | 3 | Tax planning basics: 401k, IRA, HSA guidance | |
+| FDS-10 | PHASE 3 | 3 | AI-powered Q&A for personal finance questions drawing from user data | |
+
+---
+
+## 20. Functional Requirements — Behavioral Coaching
+
+| ID | Priority | Phase | Requirement | Notes |
+|----|----------|-------|-------------|-------|
+| BC-01 | PHASE 2 | 2 | Spending nudges: gentle prompts tied to budget goals | |
+| BC-02 | PHASE 2 | 2 | Emotional investing warnings: "Market volatility detected — review before acting" | |
+| BC-03 | PHASE 2 | 2 | Saving streak tracking with visual indicators | |
+| BC-04 | PHASE 2 | 2 | Investing consistency scores | |
+| BC-05 | PHASE 3 | 3 | Weekly/monthly behavior summary reports | |
+| BC-06 | PHASE 3 | 3 | Daily or weekly AI check-in digests | Spending changes, savings progress, portfolio movement |
+
+---
+
+## 21. Functional Requirements — Progress & Gamification
+
+| ID | Priority | Phase | Requirement | Notes |
+|----|----------|-------|-------------|-------|
+| GAM-01 | PHASE 2 | 2 | Reward actions: completing lessons, building budgets, savings streaks | |
+| GAM-02 | PHASE 2 | 2 | AI-generated encouragement tied to real progress | |
+| GAM-03 | PHASE 4 | 4 | Full gamification: levels, XP, badges, leaderboards | |
+| GAM-04 | PHASE 2 | 2 | Goal tracking: save toward named goals ("New laptop", "Emergency fund") | |
+| GAM-05 | PHASE 4 | 4 | Social learning: view anonymized peer strategies and popular picks | |
+
+---
+
+## 22. Functional Requirements — Notification System
+
+| ID | Priority | Phase | Requirement | Notes |
+|----|----------|-------|-------------|-------|
+| NOT-01 | PHASE 3 | 3 | Push notifications for recommendation alerts, trade confirmations, market events | |
+| NOT-02 | PHASE 3 | 3 | Frequency caps: maximum notifications per day (user-configurable) | |
+| NOT-03 | PHASE 3 | 3 | Quiet hours / do-not-disturb support | |
+| NOT-04 | PHASE 3 | 3 | Channel preferences: push, email, in-app — user's choice | |
+| NOT-05 | PHASE 4 | 4 | Re-engagement nudges for inactive users | |
+| NOT-06 | PHASE 3 | 3 | Granular opt-out per notification category | |
+
+---
+
+## 23. Functional Requirements — User Feedback Loop
+
+| ID | Priority | Phase | Requirement | Notes |
+|----|----------|-------|-------------|-------|
+| FB-01 | PHASE 2 | 2 | Thumbs up / thumbs down on every AI response | |
+| FB-02 | PHASE 2 | 2 | "Was this helpful?" prompt on recommendation cards | |
+| FB-03 | PHASE 2 | 2 | In-app bug reporting and feature request submission | |
+| FB-04 | PHASE 3 | 3 | Feedback pipeline: route ratings into AI prompt tuning and content improvement | |
+| FB-05 | PHASE 3 | 3 | Optional post-session surveys (short, non-intrusive) | |
+
+---
+
+## 24. Frontend Architecture
+
+### 24.1 Screen Inventory
+
+| Screen | Description | AI Component |
+|--------|-------------|-------------|
+| **Signup / Login** | Email + password form, age confirmation checkbox | None |
+| **Onboarding Quiz** | Step-by-step quiz, buddy naming | Streams profile summary on completion |
+| **Dashboard** | Budget snapshot, goal progress, portfolio value, insight cards | AI insight cards, recommendation pill |
+| **Budget Tracker** | Income/expense entry, category breakdown, savings goal | AI budget insight on demand |
+| **Portfolio** | Holdings table, paper buy/sell, watchlist | Stock explanation, movement alerts |
+| **Chat** | Full-screen or drawer chat interface | Streaming Claude responses, quick prompts |
+| **Learn** | Lesson cards with AI-generated explanations | Adaptive lesson content from Claude |
+| **Market View** | Watchlists, stock details, charts, news | News translation |
+| **Auto Portfolio** | ML recommendations preview, opt-in/out, risk metrics | ML-generated cards (Phase 4) |
+| **Financial Tools** | Bank selection, credit cards, savings plans, debt | AI-powered comparisons (Phase 2+) |
+| **Notifications** | Alerts, recommendations, reminders, check-ins | AI-triggered notifications |
+| **Settings** | Account info, re-take quiz, notification prefs, auto portfolio toggle | None |
+
+### 24.2 State Management (Zustand Stores)
+
+| Store | Responsibilities |
+|-------|-----------------|
+| `authStore` | User session, JWT, logout action |
+| `profileStore` | Buddy name, risk score, goals, onboarding status |
+| `budgetStore` | entries[], totals, savings goals, AI insight string |
+| `portfolioStore` | holdings[], watchlist[], last-fetched quotes |
+| `chatStore` | Message history[], streaming state, quick suggestions |
+| `insightStore` | Insight cards[], accept/dismiss actions |
+| `tradeStore` | Trade confirmation state, cooldown timer, undo window (Phase 2+) |
+| `notificationStore` | Notification preferences, unread count (Phase 3+) |
+| `feedbackStore` | Pending feedback submissions (Phase 2+) |
+
+### 24.3 Component Architecture
+
+Component hierarchy follows a **Page -> Section -> Atom** pattern. AI-specific components are prefixed with `AI` to signal they render Claude output.
+
+| Component | Purpose |
+|-----------|---------|
+| `AIInsightCard` | Renders a single insight card with accept/dismiss controls |
+| `AIStreamingText` | Renders streaming SSE token output with cursor animation |
+| `AIQuickPrompts` | Renders 3 context-aware chat suggestion chips |
+| `RiskBadge` | Displays risk label (LOW/MEDIUM/HIGH) with color coding |
+| `ConfidenceGauge` | Visual confidence score display (Phase 4) |
+| `BuddyGreeting` | Shows buddy name + personalized greeting on dashboard |
+| `TradeConfirmModal` | Double confirmation modal with cooldown timer (Phase 2) |
+| `UndoToast` | Toast notification with cancel action during undo window (Phase 2) |
+
+### 24.4 Routing
+
+| Path | Screen | Notes |
+|------|--------|-------|
+| `/` | Redirect | → `/dashboard` if logged in, else `/login` |
+| `/signup` | Signup | Account creation + age gate |
+| `/login` | Login | Login form |
+| `/onboarding` | Onboarding | Quiz (protected, redirect if complete) |
+| `/dashboard` | Dashboard | Main dashboard (protected) |
+| `/budget` | Budget Tracker | (protected) |
+| `/portfolio` | Portfolio + Watchlist | (protected) |
+| `/learn` | Education | (protected) |
+| `/learn/:slug` | Individual Lesson | (protected) |
+| `/chat` | Chat (full screen) | (protected) |
+| `/market` | Market View | (protected) |
+| `/tools` | Financial Tools | (protected, Phase 2+) |
+| `/notifications` | Notifications | (protected, Phase 3+) |
+| `/settings` | Settings | (protected) |
+
+---
+
+## 25. Non-Functional Requirements — Performance
+
+| ID | Priority | Requirement | Notes |
+|----|----------|-------------|-------|
+| NFR-P1 | MUST | Claude API streaming must begin rendering tokens within 2 seconds of user submit | |
+| NFR-P2 | MUST | REST API endpoints (non-AI) must respond within 500ms at p95 | |
+| NFR-P3 | SHOULD | Market data polling must not block the UI thread | Web Workers or async background fetch |
+| NFR-P4 | MUST | App load time under 3 seconds on 4G connections | |
+| NFR-P5 | SHOULD | Smooth 60fps animations and transitions | |
+| NFR-P6 | SHOULD | Real-time or near-real-time data updates for stock prices and portfolio values | |
+
+---
+
+## 26. Non-Functional Requirements — Security
+
+| ID | Priority | Requirement | Notes |
+|----|----------|-------------|-------|
+| NFR-S1 | MUST | Anthropic API key must never be sent to or stored in the client | Backend proxy only |
+| NFR-S2 | MUST | All API endpoints must validate JWT before processing | |
+| NFR-S3 | MUST | User financial data must be scoped to authenticated user only — no cross-user data leakage | Row-level scoping |
+| NFR-S4 | MUST | All Claude prompts must include safety system prompt preventing harmful financial advice | |
+| NFR-S5 | SHOULD | Input sanitization on all user-supplied text fields before database write | |
+| NFR-S6 | MUST | All data encrypted in transit (TLS 1.2+) | |
+| NFR-S7 | SHOULD | Sensitive data encrypted at rest in the database | |
+| NFR-S8 | MUST | User financial data must not be sent to Claude API with PII beyond first name | Strip email, use userId |
+
+---
+
+## 27. Non-Functional Requirements — Reliability & Error Handling
+
+| ID | Priority | Requirement | Notes |
+|----|----------|-------------|-------|
+| NFR-R1 | MUST | If Claude API returns an error, display graceful fallback message — never crash the UI | |
+| NFR-R2 | MUST | If market data API is unavailable, show last-known prices with staleness indicator | |
+| NFR-R3 | SHOULD | Retry Claude API calls up to 2 times on network failure before error state | Exponential backoff |
+| NFR-R4 | MUST | Trade confirmation flow must be atomic — no partial executions | |
+| NFR-R5 | SHOULD | All API errors return consistent JSON error format: `{ error, message, code }` | |
+
+---
+
+## 28. Non-Functional Requirements — Accessibility
+
+| ID | Priority | Requirement | Notes |
+|----|----------|-------------|-------|
+| NFR-A1 | SHOULD | UI must meet WCAG 2.1 AA color contrast ratios | |
+| NFR-A2 | SHOULD | All interactive elements must be keyboard navigable | |
+| NFR-A3 | SHOULD | AI-generated text must be readable at 16px minimum font size | |
+| NFR-A4 | SHOULD | Screen reader compatibility with ARIA labels and semantic HTML | |
+| NFR-A5 | SHOULD | Colorblind-safe palette for charts, risk indicators, and portfolio visuals | |
+| NFR-A6 | COULD | Font scaling support for users with low vision | |
+| NFR-A7 | COULD | Reduced motion option for animations | |
+
+---
+
+## 29. Non-Functional Requirements — Cross-Platform Compatibility
+
+| ID | Priority | Phase | Requirement | Notes |
+|----|----------|-------|-------------|-------|
+| XP-01 | MUST | 1 | Responsive web app: 320px to 2560px+ | Mobile-first design |
+| XP-02 | MUST | 1 | Support Chrome, Firefox, Safari, Edge (latest 2 versions) | |
+| XP-03 | PHASE 3 | 3 | Progressive Web App (PWA) with offline access and push notifications | |
+| XP-04 | PHASE 4 | 4 | Native/hybrid mobile app (React Native or Flutter) for iOS 15+ and Android 10+ | |
+| XP-05 | PHASE 4 | 4 | iOS and Android widget support for quick portfolio glance | |
+| XP-06 | MUST | 1 | API-first architecture: unified backend serving all platforms with feature parity | |
+
+---
+
+## 30. Non-Functional Requirements — Localization & Internationalization
+
+| ID | Priority | Phase | Requirement | Notes |
+|----|----------|-------|-------------|-------|
+| I18N-01 | MUST | 1 | English-first for MVP | |
+| I18N-02 | SHOULD | 1 | Architect for multi-language support from the start (i18n-ready string management) | |
+| I18N-03 | PHASE 4 | 4 | Currency localization: local symbols and formatting | |
+| I18N-04 | PHASE 4 | 4 | Support for non-US exchanges | |
+| I18N-05 | PHASE 4 | 4 | Region-specific financial terminology | "401k" is US-only |
+
+---
+
+## 31. Non-Functional Requirements — Offline & Degraded Experience
+
+| ID | Priority | Phase | Requirement | Notes |
+|----|----------|-------|-------------|-------|
+| OFF-01 | PHASE 3 | 3 | Cached lessons available offline | |
+| OFF-02 | PHASE 3 | 3 | Offline budget tracking: log expenses without connection, sync later | |
+| OFF-03 | MUST | 1 | Graceful fallback UI with clear messaging when AI is unavailable | |
+| OFF-04 | PHASE 3 | 3 | Queued actions: buffer user inputs, process when connectivity returns | |
+
+---
+
+## 32. Privacy, Data Governance & Compliance
+
+| ID | Priority | Requirement | Notes |
+|----|----------|-------------|-------|
+| PRIV-01 | MUST | Financial data accessible only by owning user | Row-level user scoping on all queries |
+| PRIV-02 | MUST | User financial data must not be sent to Claude API with PII beyond first name | Strip email, use userId |
+| PRIV-03 | SHOULD | "Delete my account" option in settings that purges all user data | |
+| PRIV-04 | PHASE 3 | GDPR and CCPA compliance, especially for users under 18 | |
+| PRIV-05 | PHASE 3 | Define data classification: stored vs. ephemeral (session-only) | |
+| PRIV-06 | PHASE 3 | Clear data retention and deletion policies | |
+| PRIV-07 | PHASE 3 | User-downloadable data export | Right to portability |
+| PRIV-08 | PHASE 3 | Explicit policy on third-party data sharing | |
+| PRIV-09 | MUST | Encryption at rest, in transit, and in backups | |
+
+---
+
+## 33. Safety, Age Compliance & Trust Guardrails
+
+### 33.1 Financial Advice Guardrails
+
+Finance Buddy is an **educational tool, not a licensed financial advisor**. The following guardrails must be enforced at both prompt and UI level:
+
+- All Claude system prompts must explicitly state recommendations are educational, not financial advice.
+- Every AI recommendation must include both potential upside and stated risk.
+- The app must never execute a real trade in MVP — paper trading only.
+- High-risk strategies (options, leverage, penny stocks) must not be suggested by the AI.
+- Persistent UI disclaimer: *"Finance Buddy provides educational content only. Always consult a financial advisor before making real investment decisions."*
+
+### 33.2 Age Verification
+
+| ID | Priority | Requirement | Notes |
+|----|----------|-------------|-------|
+| SAFE-01 | MUST | Signup form must include checkbox: "I confirm I am 16 years of age or older" | |
+| SAFE-02 | MUST | `ageConfirmed` must be `true` before account creation proceeds | |
+| SAFE-03 | MUST | If `ageConfirmed` is `false`, return 403 with clear message | |
+| SAFE-04 | PHASE 3 | Parental/guardian consent flow for users under 18 (jurisdiction-dependent) | |
+| SAFE-05 | PHASE 3 | Restricted features for under 18: no real trading/broker integration, education + simulation only | |
+
+---
+
+## 34. Legal Liability & Regulatory Framework
+
+### 34.1 Core Liability Provisions
+
+- AI recommendations are **informational guidance only** — not financial advice, investment counsel, or fiduciary recommendation.
+- Users are **solely responsible** for all investment decisions.
+- Financial loss from AI recommendations is **the user's liability** — they accepted through double confirmation.
+- **No guarantees** regarding accuracy, completeness, or profitability.
+- **Past performance does not guarantee future results.**
+
+### 34.2 User Acknowledgment Implementation
+
+| ID | Priority | Phase | Requirement | Notes |
+|----|----------|-------|-------------|-------|
+| LEG-01 | MUST | 1 | Terms of Service acknowledgment on signup: educational tool, not financial advisor | |
+| LEG-02 | MUST | 2 | Full liability clause: scroll-through with minimum reading time before "I Agree" activates | |
+| LEG-03 | MUST | 2 | Per-trade liability reminder in Step 2 of double confirmation | |
+| LEG-04 | SHOULD | 3 | Periodic re-acknowledgment: every 6-12 months or on terms update | |
+| LEG-05 | MUST | 2 | Audit trail: every acknowledgment, trade confirmation, and recommendation served | |
+
+### 34.3 Regulatory Requirements
+
+- Legal counsel review for **SEC, FINRA** compliance.
+- Clearly distinguish from registered investment advisor (RIA) or broker-dealer.
+- **Terms of Service** and **Privacy Policy** addressing data handling, algorithmic transparency, user rights.
+- International: **FCA (UK), MiFID II (EU)** if expanding globally.
+
+---
+
+## 35. AI Limitations & Risk Disclosure
+
+The following limitations must be prominently disclosed in the application wherever AI recommendations are presented, and summarized in the "Coming Soon" ML preview section:
+
+| # | Limitation | Description |
+|---|-----------|-------------|
+| 1 | **Cannot predict the future** | AI learns from historical data assuming past behavior repeats. Sudden events break patterns instantly. |
+| 2 | **Lacks contextual understanding** | Detects patterns but cannot interpret real-world significance or market overreaction. |
+| 3 | **False signals are common** | Even top systems achieve only 50-60% directional accuracy. False positives and negatives are frequent. |
+| 4 | **Overfitting risk** | Models may perform well in backtests but fail in live markets. |
+| 5 | **Black swan vulnerability** | Least reliable during crises, geopolitical shocks, and collapses — when guidance matters most. |
+| 6 | **Data quality dependency** | Delayed/inaccurate data, misinterpreted sentiment, and manipulated social media produce unreliable signals. |
+| 7 | **No intuition or judgment** | Cannot replicate experience-based gut instinct or deep understanding of human psychology. |
+| 8 | **Crowding effect** | As more traders adopt similar AI models, signals lose effectiveness. |
+| 9 | **Timing difficulty** | Even when directionally correct, signals may be too early or too late. |
+| 10 | **Not truly autonomous** | AI serves as decision support. Humans remain responsible for interpreting signals and making final decisions. |
+
+---
+
+## 36. Testing & Quality Assurance
+
+### 36.1 Unit Tests
+
+| Test | Validates |
+|------|----------|
+| Prompt builder functions | Context injection produces correct string format |
+| Risk score calculator | Quiz answer inputs produce correct 1–5 score |
+| Budget totals calculator | Income/expense entries sum correctly by category |
+| JWT middleware | Valid token passes; expired/missing token returns 401 |
+| Trade confirmation flow | Cooldown timer, undo window, state transitions |
+| Double confirmation logic | Step 1 -> Step 2 -> execution sequence integrity |
+
+### 36.2 Integration Tests
+
+| Test | Validates |
+|------|----------|
+| `POST /auth/signup` | Happy path, duplicate email, missing `ageConfirmed` |
+| `POST /onboarding/profile` | Claude API called, summary stored |
+| `GET /budget/insight` | Claude API called with correct context |
+| `POST /portfolio/buy` | Holding created at current Polygon.io price |
+| `POST /chat/message` | SSE stream opens and delivers tokens |
+| `POST /trade/initiate` | Trade confirmation created, cooldown timer started |
+| `POST /trade/:id/confirm` | Rejected if cooldown not elapsed; accepted after |
+| `POST /trade/:id/cancel` | Allowed during undo window; rejected after |
+
+### 36.3 Manual QA Checklist
+
+- Full user journey: signup -> onboarding -> dashboard -> budget -> portfolio -> chat
+- Claude streaming renders correctly without flicker on all target browsers
+- Age gate correctly blocks signup if checkbox unchecked
+- Insight cards show accept/dismiss and update status correctly
+- Market data staleness indicator appears when Polygon.io is unavailable
+- Double confirmation flow: cooldown timer displays and disables button correctly
+- Undo toast appears and cancellation works within grace period
+- Responsive design: test at 320px, 768px, 1024px, 1440px, 2560px
+
+### 36.4 Additional QA Areas
+
+- **AI recommendation quality:** Structured evaluation for accuracy and safety
+- **Financial calculation verification:** Unit tests for all budget math, portfolio returns, projections
+- **User acceptance testing:** Structured plan with target users before launch
+- **Load testing:** Ensure market data and AI chat scale under concurrent users
+- **Regression testing:** Automated checks to prevent broken features across updates
+
+---
+
+## 37. Analytics & Monitoring
+
+### 37.1 Key Metrics
+
+| Category | Metrics |
+|----------|---------|
+| **Engagement** | DAU / MAU, session length, AI chat frequency |
+| **Onboarding** | Completion rate, drop-off points, time to first insight |
+| **Education** | Lesson completion rate, quiz scores over time |
+| **Budgeting** | Budget adherence rate, savings goal progress |
+| **Investing** | Paper portfolio engagement, recommendation acceptance rate |
+| **Retention** | Day 1 / Day 7 / Day 30 retention, churn indicators |
+| **AI Performance** | Response latency p50/p95, token usage, cache hit rate, feedback ratings |
+| **Trade Flow** | Double confirmation completion rate, undo usage rate, drop-off at Step 2 |
+
+### 37.2 Monitoring
+
+- API response time monitoring (p50, p95, p99)
+- Claude API error rate and latency tracking
+- Market data API availability and staleness detection
+- Database query performance
+- Frontend error tracking (Sentry or equivalent)
+
+---
+
+## 38. Data Infrastructure & External Services
+
+| Category | Purpose | Providers | Phase |
+|----------|---------|-----------|-------|
+| **Market Data** | Real-time + historical prices, quotes | Polygon.io (free tier) | 1 |
+| **News** | Sentiment analysis, headline translation | NewsAPI, Finnhub | 2 |
+| **Fundamentals** | Earnings, ratios, SEC filings | Financial Modeling Prep, SEC EDGAR | 3 |
+| **Bank/Credit Data** | Comparison engines | Plaid, MX, proprietary datasets | 2 |
+| **ML Training Data** | Historical stock data for model training | Yahoo Finance, Alpha Vantage, Quandl, Bloomberg | 4 |
+| **AI Inference** | All AI features | Anthropic Claude API | 1 |
+| **Email** | Transactional emails, receipts | SendGrid, AWS SES | 2 |
+| **Push Notifications** | Mobile and web push | Firebase Cloud Messaging | 3 |
+| **Error Tracking** | Frontend/backend error monitoring | Sentry | 1 |
+
+---
+
+## 39. MVP Build Scope & Milestones
+
+### 39.1 In Scope for Hackathon MVP
+
+- User signup with age gate, login, JWT auth
+- Buddy naming + onboarding quiz with Claude profile summary
+- Dashboard with budget snapshot, savings goal, and at least one AI insight card
+- Budget entry (income + expense), category display, AI budget insight
+- Watchlist and paper portfolio (buy only) with live quotes from Polygon.io
+- Claude-generated stock explanation per ticker
+- AI chatbot with streaming, multi-turn context, and quick prompts
+- At least 3 Learn lessons with Claude-generated content
+- Personalized recommendation on dashboard based on risk profile
+- ML auto-recommendations preview section with "Coming Soon" hub
+
+### 39.2 Out of Scope for MVP
+
+- Real money / brokerage integration
+- OAuth social login
+- Persistent chat history across sessions
+- Recurring AI check-in digests (automated)
+- Avatar / mascot animation
+- Advanced portfolio analytics and charts
+- Push notifications
+- Double confirmation flow (Phase 2)
+- Financial decision-making tools (Phase 2)
+- ML predictive model (Phase 4)
+
+### 39.3 Suggested Build Order
+
+| Phase | Focus |
+|-------|-------|
+| **Build 1** | Auth, DB schema, User + UserProfile models, signup/login flow |
+| **Build 2** | Onboarding quiz UI + Claude profile summary generation |
+| **Build 3** | Budget tracker — entry CRUD, category display, AI insight endpoint |
+| **Build 4** | Portfolio — Polygon.io integration, watchlist, paper buy, stock explain |
+| **Build 5** | Chat — SSE streaming endpoint, chatbot UI, quick prompts |
+| **Build 6** | Dashboard — assemble budget snapshot, portfolio value, insight cards |
+| **Build 7** | Learn section — 3 lessons with AI-generated content |
+| **Build 8** | Polish — error states, loading states, mobile responsiveness |
+
+### 39.4 Definition of Done
+
+The MVP is complete when a new user can: **sign up -> name their buddy -> complete onboarding -> see a personalized dashboard -> add a budget entry -> simulate buying a stock -> ask the chatbot a question** — all in a single uninterrupted flow.
+
+---
+
+## 40. Full Development Roadmap
+
+### Phase 1: MVP (8–12 weeks)
+**Focus:** Learning + simulation — validate with real users.
+- All items in Section 39.1
+- Goal: demonstrate AI is central, not decorative
+
+### Phase 2: Smart Guidance
+**Focus:** Recommendation engine, behavioral coaching, trade safety.
+- Rule-based recommendation engine with explainable signals
+- Double process acceptance for trade confirmations
+- Push notifications + alerts
+- Structured learning modules with gamification
+- Behavioral coaching (spending nudges, emotional investing warnings)
+- Financial decision-making tools (bank selection, credit card comparison)
+- User feedback loop (thumbs up/down, "was this helpful?")
+- Persistent chat history
+
+### Phase 3: Real Portfolio Integration
+**Focus:** Brokerage connections, advanced finance tools, compliance.
+- Broker API integrations (legal review required)
+- Real-time alerts + full monitoring
+- Advanced analytics + portfolio insights
+- Savings plans and debt payoff planner
+- Full notification strategy with anti-spam controls
+- Plaid bank integration for auto-categorization
+- GDPR/CCPA compliance implementation
+- Offline/degraded experience
+- PWA support
+
+### Phase 4: Growth & Differentiation
+**Focus:** ML engine, auto portfolio, full platform.
+- ML predictive analysis engine (after months of training/research)
+- Auto portfolio with opt-in/opt-out and granular controls
+- Full risk & probability metrics on all recommendations
+- Full gamification (levels, XP, badges, leaderboards)
+- Social/community features (anonymized peer strategies)
+- Personalized AI personality + animated avatar
+- Native mobile apps (React Native or Flutter)
+- Internationalization and multi-market support
+- Advanced behavioral nudges + coaching
+- Voice interaction
+
+---
+
+*This Software Engineering Specification is the authoritative technical reference for the Finance Buddy application. It consolidates all product requirements, architectural decisions, data contracts, API definitions, AI integration patterns, compliance requirements, and build plans into a single document for the engineering team.*

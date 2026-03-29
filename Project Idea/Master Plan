@@ -1,0 +1,967 @@
+# Finance Buddy — Master Plan
+
+**Comprehensive Product Blueprint**
+**Version 1.0 — March 2026**
+
+---
+
+## Table of Contents
+
+1. [Product Vision & Mission](#1-product-vision--mission)
+2. [Problem Statement](#2-problem-statement)
+3. [Target Audience](#3-target-audience)
+4. [Core Beliefs & Design Principles](#4-core-beliefs--design-principles)
+5. [Product Experience Overview](#5-product-experience-overview)
+6. [Core Features](#6-core-features)
+   - 6.1 AI-Powered Onboarding & Personalization
+   - 6.2 Financial Education System
+   - 6.3 Budgeting Tools
+   - 6.4 Stock Market Guidance
+   - 6.5 AI-Powered Portfolio Manager
+   - 6.6 AI Chatbot Companion
+   - 6.7 Personalized Recommendations
+7. [Advanced Features & Enhancements](#7-advanced-features--enhancements)
+   - 7.1 Double Process Acceptance for Stock Recommendations
+   - 7.2 Machine Learning Predictive Analysis Engine
+   - 7.3 Auto Portfolio with Opt-In/Opt-Out
+   - 7.4 Risk & Probability Metrics on Recommendations
+   - 7.5 Financial Decision-Making Suite
+   - 7.6 Behavioral Coaching System
+   - 7.7 Paper Trading Simulator
+   - 7.8 Progress & Motivation System
+8. [Legal, Liability & Compliance Framework](#8-legal-liability--compliance-framework)
+9. [AI Strategy & Known Limitations](#9-ai-strategy--known-limitations)
+10. [Technical Architecture](#10-technical-architecture)
+11. [Cross-Platform Compatibility](#11-cross-platform-compatibility)
+12. [Data Infrastructure & Sources](#12-data-infrastructure--sources)
+13. [Privacy, Security & Data Governance](#13-privacy-security--data-governance)
+14. [Safety, Age Compliance & Trust Guardrails](#14-safety-age-compliance--trust-guardrails)
+15. [Accessibility](#15-accessibility)
+16. [Localization & Internationalization](#16-localization--internationalization)
+17. [Offline & Degraded Experience](#17-offline--degraded-experience)
+18. [Notification Strategy](#18-notification-strategy)
+19. [User Feedback Loop](#19-user-feedback-loop)
+20. [Analytics & Success Metrics](#20-analytics--success-metrics)
+21. [Monetization & Business Model](#21-monetization--business-model)
+22. [Competitive Landscape](#22-competitive-landscape)
+23. [Partnerships & Ecosystem](#23-partnerships--ecosystem)
+24. [Testing & Quality Assurance](#24-testing--quality-assurance)
+25. [UX / Core Screens](#25-ux--core-screens)
+26. [Development Roadmap](#26-development-roadmap)
+27. [MVP Scope & Hackathon Build](#27-mvp-scope--hackathon-build)
+28. [Biggest Risks & Mitigation](#28-biggest-risks--mitigation)
+29. [Future Expansion](#29-future-expansion)
+30. [Strategic Differentiator](#30-strategic-differentiator)
+
+---
+
+## 1. Product Vision & Mission
+
+### One-Sentence Pitch
+
+> *Finance Buddy is an AI-first financial coach for beginners that combines learning, budgeting, simulated investing, and explainable recommendations in one friendly companion experience.*
+
+### Product Positioning
+
+Finance Buddy is an AI-powered financial companion that helps beginners learn, budget, and invest with confidence through simple explanations, personalized guidance, and user-controlled recommendations.
+
+### Vision Statement
+
+Finance Buddy exists to make financial confidence accessible to everyone — starting with the generation that needs it most. We envision a world where any young adult, regardless of background or prior knowledge, can open an app and immediately have a trusted, patient, and intelligent financial companion by their side. One that teaches as it guides. One that never acts without asking. One that makes every recommendation a learning moment.
+
+Finance Buddy is **not a trading platform**. It is **not a robo-advisor**. It is a **financial education engine wrapped in a companion experience** — where AI is the product, not a feature.
+
+---
+
+## 2. Problem Statement
+
+Personal finance is one of the most important life skills — yet it is rarely taught, often feared, and consistently misrepresented by tools that were built for experts, not beginners.
+
+Young adults entering financial independence face a deeply unfriendly landscape:
+
+- **Budgeting apps** track numbers but never explain what they mean.
+- **Investment platforms** assume fluency in jargon that beginners don't have.
+- **Financial education** is fragmented, boring, or inaccessible.
+- **AI tools** exist but rarely connect learning to action in a single experience.
+
+The result: most people guess, avoid, or delay — and pay for it.
+
+---
+
+## 3. Target Audience
+
+### Primary Audience
+Young adults ages **16–25** who are new to budgeting, saving, and investing. They are motivated, curious, and digitally native — but financially underserved by existing tools.
+
+### Secondary Audience
+Adults of **any age** who want a more approachable, guided experience with their personal finances — without being overwhelmed by complexity or jargon.
+
+### Shared Trait
+They want to **understand** their money, not just track it.
+
+### Age Requirement
+Users must be **16 years or older** to create an account.
+
+---
+
+## 4. Core Beliefs & Design Principles
+
+These principles guide every product, design, and engineering decision:
+
+| Principle | Definition |
+|-----------|------------|
+| **Education-first** | Every recommendation is a learning opportunity. Every action should teach the user something. |
+| **Transparency** | AI always explains the reasoning behind suggestions. Never be a black box. |
+| **User control** | The app never executes trades automatically. The user approves every action. |
+| **Accessibility** | Financial concepts are translated into simple, intuitive language. First-time investors should feel confident. |
+| **Safety** | Beginner-friendly guardrails protect users from high-risk complexity. |
+| **Personalization** | AI adapts to the user's goals, knowledge level, and risk tolerance. |
+
+### Upgraded Core Principle for AI Role
+
+> *"The AI provides probabilistic insights and educational explanations — not financial advice."*
+
+The AI's role is positioned as **"educational guidance + decision support,"** NOT an autonomous financial advisor. All guarantee-style language (e.g., "you should buy") is eliminated.
+
+---
+
+## 5. Product Experience Overview
+
+From the moment a user joins, Finance Buddy feels like a **companion — not a tool**.
+
+A user names their Finance Buddy, completes a short personalized onboarding quiz, and immediately receives a financial profile written in plain language. From there, their companion is always present: explaining market movements, surfacing budget insights, suggesting investment ideas, and answering questions in natural conversation.
+
+Every interaction is rooted in the same promise: **help the user understand first, decide second, and act only when they're ready.**
+
+### The Four Pillars
+
+| Pillar | Description |
+|--------|-------------|
+| **01 — Learn** | Adaptive financial education that meets users at their level — from compound interest to ETFs — with AI-generated examples tied to their own goals. |
+| **02 — Budget** | A simple, AI-powered budget tracker that doesn't just categorize spending — it explains patterns, flags risks, and connects habits to long-term goals. |
+| **03 — Invest (Simulated)** | A paper trading environment where users build confidence before committing real money — with AI watching the market and surfacing explainable, user-controlled suggestions. |
+| **04 — Ask** | An always-available AI companion chatbot that answers finance questions, discusses the user's portfolio or budget, and maintains conversational context across the app. |
+
+---
+
+## 6. Core Features
+
+### 6.1 AI-Powered Onboarding & Personalization
+
+- Let the user **name their Finance Buddy** during onboarding (e.g., "Finn", "Cash", or any custom name). The chosen name is used throughout the app for a personal, conversational experience.
+- Present a short **AI-assisted onboarding quiz** covering:
+  - Financial goals (short-term gains, long-term growth, retirement, education fund, etc.)
+  - Current knowledge level
+  - Savings habits
+  - Investing interest
+  - Risk tolerance (conservative / moderate / aggressive)
+  - Time horizon
+  - Income + savings rate (optional, but enables smarter guidance)
+- Use quiz results to personalize:
+  - Lesson difficulty
+  - Budgeting suggestions
+  - Portfolio guidance
+  - Recommendation style
+- Generate a **beginner-friendly financial profile summary** at the end of onboarding.
+
+**Risk profiling unlocks:** More relevant personalized recommendations, improved user trust and engagement, and stronger legal protection.
+
+---
+
+### 6.2 Financial Education System
+
+"Lessons" alone won't retain young users. The education layer must be **engaging, adaptive, and actionable**.
+
+- **Interactive lessons** on budgeting, saving, investing basics, and financial literacy.
+- **Plain-language explanations** of key concepts: compound interest, diversification, inflation, ETFs, risk tolerance, P/E ratio, and more.
+- **Adaptive learning paths** that adjust to demonstrated knowledge level.
+- **AI-generated examples** based on the user's goals (e.g., saving for college, starting with a small investment amount).
+- **"Learn more" flow** attached to every recommendation so every action becomes a lesson.
+- **Gamification:**
+  - Levels, XP, badges, and streaks
+  - Leaderboards (optional, anonymized)
+- **Scenario-based learning:** *"What would you do in a market crash?"*
+- **Microlearning format:** 1–3 minute bite-sized lessons optimized for mobile.
+- **News-to-learning translator:** Convert financial headlines into beginner-friendly summaries. Explain how news events affect companies, sectors, or the user's portfolio.
+
+---
+
+### 6.3 Budgeting Tools
+
+- Help users **create and manage a monthly budget**.
+- **Track income, expenses, and savings goals** via manual entry and/or bank account integration (via Plaid or similar) for automatic transaction categorization.
+- **Categorize spending** and highlight patterns.
+- **AI-powered insights** such as:
+  - Where the user is overspending
+  - How much they could save by reducing certain categories
+  - How spending trends affect their goals
+  - *"You spent 30% more on dining out this month compared to your 3-month average."*
+- **Budget health summary/score** with an AI-generated explanation of how it was calculated.
+- **Budget templates:** Pre-built based on popular methods (50/30/20 rule, zero-based budgeting, envelope method).
+- **Bill tracking and reminders:** Recurring bills with due date reminders and late payment warnings.
+- **Debt payoff planner:** Snowball or avalanche methods with projected payoff dates and interest savings calculations.
+- **Monthly/weekly financial reports:** Automated summaries of income vs. expenses, savings rate, category breakdowns, and trends over time.
+
+---
+
+### 6.4 Stock Market Guidance
+
+- Teach users how to **read stock charts** and understand common market indicators.
+- Provide **real-time or near-real-time market data** with watchlists.
+- Translate **financial news into simple language** — what happened, why it matters, and whether it affects the user's watchlist or learning goals.
+- AI-driven explanations of market events and their implications.
+
+**Market Monitoring Specificity:**
+- **Initial markets:** US equities (NYSE, NASDAQ).
+- **Trading hours logic:** Pre-market, regular session, after-hours — define which the AI monitors.
+- **Notification system:**
+  - Price alerts (user-configured thresholds)
+  - Volatility alerts (automatic)
+  - Portfolio change alerts (gains/losses beyond a threshold)
+
+---
+
+### 6.5 AI-Powered Portfolio Manager
+
+- Allow users to **build and monitor a portfolio**.
+- For MVP, prioritize **paper trading / simulated portfolio mode** so users can practice without real money.
+- **Watch the market** during trading hours and detect notable movements or risk signals.
+- When the AI identifies an opportunity or risk:
+  1. **Prompt the user** with a suggested action.
+  2. **Explain the reasoning** in clear, jargon-free language.
+  3. **Show supporting signals:** price movement, watchlist relevance, risk level, diversification impact.
+  4. **Let the user decide:** accept, deny, or ask follow-up questions.
+- The AI **advises only — it never acts unilaterally**.
+
+**Tiered Portfolio Modes:**
+
+| Mode | Audience | Capabilities |
+|------|----------|-------------|
+| **Beginner** | New investors | Paper trading + guided learning |
+| **Intermediate** | Some experience | Manually tracked portfolio + AI insights |
+| **Advanced** | Experienced users | Broker integration (if legally viable) |
+
+---
+
+### 6.6 AI Chatbot Companion
+
+- Available **throughout the entire app**, not only during portfolio alerts.
+- Users can ask about:
+  - Personal finance concepts (*"What's a P/E ratio?"*)
+  - Their budget (*"Am I on track this month?"*)
+  - Their portfolio (*"How is my portfolio performing this week?"*)
+  - Stock terms and market events
+  - General money advice (*"How should I start saving for college?"*)
+  - Anything else finance-related
+- **Maintains conversational context** so follow-up questions feel natural.
+- Acts as both:
+  - **Active advisor** when surfacing recommendations or alerts
+  - **Passive guide** when the user simply wants to learn or reflect
+- **Context-aware quick prompts** (one-tap):
+  - "Can I afford this?"
+  - "Why is my portfolio down today?"
+  - "Explain ETFs"
+  - "How much should I save this month?"
+- **Visual Identity (Future):** Animated buddy avatar/mascot with speech bubbles originating from the character, giving the AI a friendly, recognizable presence.
+
+---
+
+### 6.7 Personalized Recommendations
+
+- Suggest stocks, ETFs, funds, or beginner-friendly strategies based on:
+  - User goals and timeline
+  - Risk tolerance
+  - Budget and financial situation
+  - Existing holdings
+- Every recommendation must be **explainable**.
+- Show potential benefit, possible downside, and why the suggestion matches the user's profile.
+- Frame recommendations as **learning-based guidance, not guaranteed outcomes**.
+
+**Explain-Before-You-Act Recommendation Cards:**
+Every portfolio or budgeting suggestion includes:
+- What changed
+- Why the AI is surfacing it
+- A simple risk label
+- A quick lesson or "learn more" link
+
+---
+
+## 7. Advanced Features & Enhancements
+
+### 7.1 Double Process Acceptance for Stock Recommendations
+
+All AI-powered buy/sell recommendations must include a **double confirmation process** as a fail-safe to protect users from accidental or impulsive trades.
+
+#### Confirmation Flow
+
+**Step 1 — Initial Review:**
+The user reviews the AI recommendation in a detailed card view showing the stock ticker, action (buy/sell), suggested quantity, current price, and supporting rationale. The user clicks "Accept Recommendation."
+
+**Step 2 — Cooldown & Summary:**
+A secondary confirmation modal appears with a **mandatory delay (3-5 seconds)** before the "Confirm" button activates. This modal summarizes:
+- The exact action (e.g., "You are about to BUY 10 shares of AAPL at $187.32")
+- The total estimated cost or proceeds
+- The associated risk percentage and confidence score
+- A liability reminder: *"By confirming, you acknowledge that this is your decision and Financial Buddy is not liable for outcomes."*
+
+The user clicks "Confirm Trade" to finalize.
+
+**Step 3 — Confirmation Receipt:**
+On-screen receipt plus optional push notification or email summarizing the action with timestamp and transaction reference.
+
+#### Additional Safeguards
+
+- **Undo window:** 10-15 second grace period after confirmation to cancel before submission to the brokerage API.
+- **High-value threshold alerts:** Trades exceeding a user-defined dollar amount require additional authentication (PIN, biometric, or 2FA).
+- **Session-based trade limits:** Users can set daily or weekly trade limits to prevent overtrading.
+- **Visual differentiation:** Distinct color coding (green for buy, red for sell) and clear iconography to minimize confusion.
+
+---
+
+### 7.2 Machine Learning Predictive Analysis Engine
+
+The auto-recommendation engine will be powered by a **machine learning model with predictive analysis** trained on historical stock market data. This is a **long-term feature** requiring significant research, data acquisition, and training.
+
+#### Model Architecture & Approach
+
+- **Data inputs:** Historical stock prices, trading volume, market indices, earnings reports, macroeconomic indicators (interest rates, inflation, GDP), sector performance, and optionally sentiment data from financial news and SEC filings.
+- **Model types under consideration:**
+  - **LSTM networks** for time-series price prediction
+  - **Gradient Boosted Trees** (XGBoost/LightGBM) for feature-rich classification (buy/hold/sell signals)
+  - **Transformer-based architectures** for capturing long-range dependencies in market data
+  - **Ensemble methods** combining multiple model outputs for robust predictions
+- **Output:** Buy, sell, or hold recommendations with associated confidence scores and risk assessments for individual stocks or ETFs.
+
+#### Training Timeline & Research Requirements
+
+- **Estimated training timeline:** 3-6+ months depending on model complexity, data volume, and compute resources.
+- **Dataset research required:**
+  - Optimal historical lookback period (5 years, 10 years, 20+ years)
+  - Data sources and providers (Yahoo Finance API, Alpha Vantage, Quandl, Bloomberg)
+  - Cost and licensing of premium data feeds
+  - Granularity of data needed (daily, hourly, minute-level)
+  - Survivorship bias identification and mitigation
+- **Backtesting:** Rigorous testing against unseen historical data, benchmarked against standard indices (S&P 500, NASDAQ).
+- **Ongoing retraining:** Monthly or quarterly to adapt to evolving market conditions.
+
+#### Known Limitations of AI Stock Prediction
+
+This section is critical for honest product design and user communication:
+
+1. **Cannot predict the future — only patterns.** AI learns from historical data assuming past behavior repeats. Sudden events (wars, regulatory changes, scandals) break patterns instantly. No model predicted COVID-19's crash or recovery.
+2. **Lacks contextual understanding.** AI detects price patterns and volume spikes but struggles to interpret: "Is this news actually significant?" or "Is the market overreacting?"
+3. **False signals are common.** False positives (advises against buying, stock rallies) and false negatives (signals safety before a drop). Even top systems achieve only 50-60% directional accuracy.
+4. **Overfitting is a major hidden risk.** Models overly tailored to historical data perform well in backtests but fail in live markets.
+5. **Black swan events break AI models.** Least reliable during financial crises, geopolitical shocks, and sudden corporate collapses — precisely when guidance matters most.
+6. **Data quality directly impacts output quality.** Delayed or inaccurate data, misinterpreted sentiment (sarcasm, irony, hype), and manipulated social media data all produce unreliable signals.
+7. **AI lacks intuition and judgment.** Cannot replicate experience-based gut instinct or deep understanding of human psychology driving fear, greed, and hype cycles.
+8. **Crowding effect diminishes returns.** As more traders adopt similar AI models, signals lose effectiveness and profitable opportunities disappear faster.
+9. **Timing remains extremely difficult.** Even when directionally correct, signals may come too early or too late.
+10. **AI is not truly autonomous.** Most AI tools serve as decision support systems. Humans remain responsible for interpreting signals, managing risk, and making final decisions.
+
+#### Initial Launch Plan (Pre-ML Availability)
+
+Since the ML model will **not be operational at launch**:
+
+- **Preview section:** Mockup examples of auto-recommendations including sample cards with confidence scores, risk metrics, and historical performance charts.
+- **"Coming Soon" information hub:**
+  - What ML-powered auto-recommendations will offer
+  - High-level model transparency
+  - Estimated availability timeline
+  - **Waitlist / beta program** signup for early access
+  - Progress updates (e.g., "Model is currently in training phase" or "Beta testing begins Q3")
+- **Early access signup** to gauge demand and prioritize rollout.
+
+---
+
+### 7.3 Auto Portfolio with Opt-In/Opt-Out
+
+Users must have full control over whether they participate in AI-managed auto-recommendations. The auto portfolio is **entirely optional**.
+
+#### Opt-In/Opt-Out Mechanics
+
+- **Default state:** Auto portfolio is **off by default**. Users must explicitly opt in.
+- **Opt-in process:**
+  1. Navigate to the Auto Portfolio section
+  2. Review explanation of how auto-recommendations work, including risk disclosures
+  3. Accept the liability clause specific to auto-recommendations
+  4. Select a risk tolerance profile (conservative, moderate, aggressive)
+  5. Confirm opt-in
+- **Opt-out process:**
+  - Disable at any time from Settings > Portfolio Preferences
+  - Confirmation prompt: keep existing AI-recommended holdings as-is, or receive a summary for manual review
+  - No penalty, lock-in period, or loss of access to other features
+- **Granular controls:** Opt in to specific aspects (e.g., receive recommendations but require manual execution, or auto-execute only for certain asset classes or dollar thresholds).
+
+#### Feature Access When Opted Out
+
+Users retain full access to: manual portfolio tracking, financial decision-making tools, market data, news, educational resources, budgeting, savings, and all non-recommendation functionality.
+
+---
+
+### 7.4 Risk & Probability Metrics on Recommendations
+
+Every recommendation includes full **transparency metrics**:
+
+#### Per-Recommendation Metrics
+
+| Metric | Description |
+|--------|-------------|
+| **Confidence score (%)** | Model's confidence level (e.g., "82% confidence this is a BUY") with visual gauge |
+| **Risk level** | Low / Medium / High with color indicator (green, yellow, red) |
+| **Risk percentage (%)** | Estimated probability of loss |
+| **Expected return range** | Projected outcomes (e.g., "+3% to +12% over 30 days") with best/expected/worst case |
+| **Historical accuracy** | Model's track record for similar signals (e.g., "73% correct on similar BUY signals in this sector") |
+| **Volatility indicator** | Current volatility relative to historical average and broader market |
+
+#### Contextual Information
+
+- **Recommendation rationale:** Plain-language explanation (e.g., "AAPL shows a bullish crossover pattern with increasing volume and strong earnings momentum").
+- **Key factors:** Ranked top 3-5 data points that influenced the recommendation.
+- **Contrarian signals:** Counter-indicators surfaced transparently (e.g., "Note: Overall market sentiment is bearish this week").
+- **Comparison benchmark:** How the recommendation compares to holding a broad market index fund.
+
+#### Visual Presentation
+
+- Intuitive dashboards and charts rather than raw numbers.
+- Color-coded risk indicators with colorblind-friendly palettes.
+- Expandable detail sections for deeper analysis without cluttering the default view.
+- Tooltips explaining each metric for users unfamiliar with financial terminology.
+
+---
+
+### 7.5 Financial Decision-Making Suite
+
+Beyond stock investment, a comprehensive set of tools covering major personal finance areas:
+
+#### 7.5a Bank Selection Tool
+- **Comparison engine:** Checking accounts, savings accounts, CDs, money market accounts across banks and credit unions.
+- **Criteria:** APY/interest rates, monthly fees, minimum balances, ATM network, branch availability, mobile banking features, customer service ratings, FDIC/NCUA insurance status.
+- **Personalized recommendations** based on location, balance range, and feature priorities.
+- **Switching guide:** Step-by-step guidance including direct deposit transfer checklists and automatic payment migration.
+
+#### 7.5b Credit Card Comparison
+- **Card matching engine** based on spending habits, credit score range, and reward preferences.
+- **Criteria:** APR (intro and ongoing), annual fees, rewards structure (cashback, points, miles), sign-up bonuses, foreign transaction fees, balance transfer offers, credit limit ranges.
+- **Category-specific recommendations:** Travel, groceries, dining, gas, business, students, credit building.
+- **Cost calculator:** Estimated annual cost or benefit based on projected spending.
+- **Credit score impact guidance** on timing applications.
+
+#### 7.5c Savings Plans
+- **Goal-based savings:** Emergency fund, vacation, down payment, retirement with target amounts and timelines.
+- **Automated contribution recommendations** based on income, expenses, and deadlines.
+- **HYSA recommendations** based on current interest rates.
+- **Milestones and progress tracking:** Visual progress bars, celebrations, and projected completion dates.
+- **Emergency fund calculator** based on monthly expenses and risk factors.
+
+#### 7.5d Budgeting Tools (Extended)
+See Section 6.3 for core budgeting. Additional advanced features:
+- **Spending nudges:** Gentle prompts tied to budget goals.
+- **AI spending insights:** Pattern analysis with actionable suggestions.
+- **Debt payoff planner** with snowball/avalanche methods.
+
+#### 7.5e General Financial Guidance & Education
+- **Financial literacy hub:** Articles, videos, and interactive tutorials on investing, taxes, insurance, retirement planning.
+- **Searchable glossary** integrated throughout the app with contextual tooltips.
+- **Life event guidance:** Buying a home, getting married, having a child, changing jobs, retirement.
+- **Tax planning basics:** 401k, IRA, HSA guidance, estimated tax obligations, deduction awareness.
+- **AI-powered Q&A:** Conversational assistant answering personal finance questions in plain language, drawing from the user's financial data (with permission).
+
+---
+
+### 7.6 Behavioral Coaching System
+
+Young users struggle more with **behavior** than knowledge. This is a major differentiator.
+
+- **Spending nudges:** Gentle prompts tied to budget goals.
+- **Emotional investing warnings:** *"Market volatility detected — review before acting."*
+- **Habit tracking:**
+  - Saving streaks
+  - Investing consistency scores
+  - Weekly/monthly behavior summaries
+- **Daily or weekly AI check-ins:** Digest-style updates on spending changes, savings progress, portfolio movement, and key financial lessons. Keeps the buddy useful even when the user isn't initiating a chat.
+
+---
+
+### 7.7 Paper Trading Simulator
+
+- Test investing decisions **without using real money**.
+- Default MVP portfolio experience.
+- Makes the app safer, more beginner-friendly, and easier to demo.
+- Track simulated performance alongside real market data.
+
+---
+
+### 7.8 Progress & Motivation System
+
+- **Reward actions:** Completing lessons, building a budget, maintaining savings streaks.
+- **AI-generated encouragement** tied to real progress.
+- **Levels, XP, badges** for gamification.
+- **Goal tracking:** Save toward named goals (e.g., "New laptop," "Emergency fund").
+
+---
+
+## 8. Legal, Liability & Compliance Framework
+
+### Core Liability Provisions
+
+- The AI provides recommendations as **informational guidance only** — not professional financial advice, investment counsel, or fiduciary recommendation.
+- Users are **ultimately and solely responsible** for all investment decisions, including accepting, rejecting, or modifying AI recommendations.
+- If an AI recommendation results in financial loss, **liability falls entirely on the user**, as they made the conscious decision to accept through the double confirmation process.
+- The platform makes **no guarantees** regarding accuracy, completeness, or profitability of AI recommendations.
+- **Past performance does not guarantee future results.**
+
+### User Acknowledgment Requirements
+
+- **Onboarding agreement:** Users must read and digitally sign the liability clause before accessing recommendation features. Not a simple checkbox — the user must scroll through the full document, and "I Agree" activates only after a minimum reading time.
+- **Periodic re-acknowledgment:** Re-accept terms every 6-12 months or upon updates.
+- **Per-trade reminder:** Condensed liability notice during Step 2 of every trade confirmation.
+
+### Regulatory Considerations
+
+- Legal counsel must review all language for compliance with **SEC, FINRA, and applicable state/federal regulations**.
+- The app must clearly distinguish itself from a registered investment advisor (RIA) or broker-dealer unless it obtains licensing.
+- **Terms of Service** and **Privacy Policy** addressing data handling, algorithmic transparency, and user rights.
+- International regulations: **FCA (UK), MiFID II (EU)** if expanding globally.
+- Maintain a comprehensive **audit trail** of every user acknowledgment, trade confirmation, and recommendation served.
+
+---
+
+## 9. AI Strategy & Known Limitations
+
+### AI Usage Across the Product
+
+AI is central to every layer of the experience:
+
+| AI Component | Role |
+|-------------|------|
+| **Onboarding AI** | Summarizes user's financial profile |
+| **Education AI** | Explains concepts and adapts lessons |
+| **Budget AI** | Analyzes spending and suggests improvements |
+| **Portfolio AI** | Watches market activity and drafts explainable recommendations |
+| **Chat AI** | Answers follow-up questions in natural language |
+| **Recommendation AI** | Personalizes ideas based on goals and risk tolerance |
+| **Summary AI** | Generates daily or weekly check-ins |
+
+### AI Model Strategy & Cost Management
+
+- **Model selection:** Balance cost, quality, and latency. MVP uses Anthropic Claude API (claude-sonnet-4-20250514).
+- **Token budget:** Per-user usage caps or throttling to control API spend.
+- **Response caching:** Cache common Q&A responses (e.g., "What is a P/E ratio?") to reduce redundant API calls.
+- **Architecture approach:** Fine-tuning vs. prompt engineering vs. retrieval-augmented generation (RAG).
+- **Latency targets:** Under 2 seconds for chat responses.
+- **Fallback models:** Smaller/cheaper model for simple queries; primary model reserved for complex ones.
+
+### AI System Architecture (Split)
+
+- **Chat AI:** LLM-powered education + conversation. Handles Q&A, explanations, onboarding.
+- **Recommendation Engine:** Data-driven rules + ML models. Financial logic engine with model augmentation.
+
+### AI Hallucination Mitigation
+
+- Tight guardrails and input validation
+- Retrieval-augmented generation (RAG) for factual grounding
+- Human review layer for critical financial outputs
+- Confidence thresholds below which recommendations are not surfaced
+
+---
+
+## 10. Technical Architecture
+
+### High-Level Architecture
+
+Three-tier architecture: React frontend SPA, Node.js/Express REST API backend, and PostgreSQL database. All AI inference delegated to the Anthropic Claude API. Market data sourced from third-party providers.
+
+**Key Principle:** The backend acts as a trusted proxy for all Claude API calls. The frontend **never** holds or transmits an Anthropic API key.
+
+### Technology Stack
+
+| Layer | Technology | Rationale |
+|-------|-----------|-----------|
+| **Frontend** | React 18 + Vite + TypeScript | Fast HMR, strong typing, ecosystem maturity |
+| **Styling** | Tailwind CSS | Rapid UI development, consistent design tokens |
+| **State Mgmt** | Zustand | Lightweight, no boilerplate, MVP-suitable |
+| **Backend** | Node.js 20 + Express 5 | Familiar, fast to scaffold, large middleware ecosystem |
+| **ORM** | Prisma | Type-safe queries, auto-generated migrations |
+| **Database** | PostgreSQL 15 | Relational integrity for financial data, JSON support |
+| **AI Inference** | Anthropic Claude API (Sonnet 4) | State-of-the-art reasoning, streaming support |
+| **Market Data** | Polygon.io (free tier) | Real-time quotes, company details, news headlines |
+| **Auth** | JWT + bcrypt | Stateless sessions, password hashing |
+| **Hosting** | Railway / Render | One-click deploys, free tier for hackathon |
+| **Testing** | Vitest + Supertest | Fast unit tests, HTTP integration tests |
+
+### Component Overview
+
+| Component | Description | AI Role |
+|-----------|-------------|---------|
+| React Frontend (SPA) | All UI screens, routing, state management | Renders AI responses, insight cards, chat UI |
+| Express API Server | REST endpoints, business logic, auth middleware | Constructs prompts, calls Claude API, returns results |
+| PostgreSQL Database | Persistent storage for users, budgets, portfolios | Stores AI-generated profile summaries and insight history |
+| Claude API (Anthropic) | LLM inference for all AI features | Onboarding, chat, budget insights, portfolio alerts |
+| Market Data Provider | Stock quotes, historical data, news headlines | Feeds portfolio monitor and news translator |
+| Auth Service | JWT-based session management | Protects all user data endpoints |
+
+---
+
+## 11. Cross-Platform Compatibility
+
+### Supported Platforms
+
+- **Mobile — iOS:** Native or hybrid, iPhone and iPad, targeting iOS 15+.
+- **Mobile — Android:** Native or hybrid, phones and tablets, targeting Android 10+.
+- **Web — Desktop:** Responsive web app supporting Chrome, Firefox, Safari, and Edge (latest 2 versions).
+- **Web — Mobile:** Fully responsive mobile web experience.
+
+### Technical Approach
+
+- **Responsive design:** 320px (small phones) to 2560px+ (ultrawide monitors).
+- **Framework:** Evaluate React Native or Flutter for code reuse between mobile and web with native performance.
+- **Progressive Web App (PWA):** Offline access, push notifications, home screen installation.
+- **API-first architecture:** Unified backend API serving all platforms with data and feature parity.
+
+### Platform-Specific Features
+
+**Mobile:**
+- Biometric authentication (Face ID, Touch ID, fingerprint)
+- Push notifications for recommendations, confirmations, and market events
+- Optimized touch targets and gestures
+- Offline mode for portfolio viewing and budgeting (syncs on reconnect)
+- Widget support (iOS and Android) for quick portfolio glance
+
+**Web:**
+- Keyboard shortcuts for power users
+- Multi-tab/multi-window support
+- Browser notifications
+- Export and print functionality for reports and tax documents
+
+### Performance Standards
+
+- App load time under **3 seconds on 4G**
+- Smooth **60fps** animations and transitions
+- **Real-time or near-real-time** data updates
+- **WCAG 2.1 AA** accessibility compliance across all platforms
+
+---
+
+## 12. Data Infrastructure & Sources
+
+Real-time and historical data are the backbone of every feature. Plan this early.
+
+| Category | Purpose | Potential Providers |
+|----------|---------|-------------------|
+| **Market Data** | Real-time + historical prices, quotes | Polygon.io, Alpha Vantage, Yahoo Finance |
+| **News** | Sentiment analysis, headline translation | NewsAPI, Finnhub |
+| **Fundamentals** | Earnings, ratios, SEC filings | Financial Modeling Prep, SEC EDGAR |
+| **Bank/Credit Card Data** | Comparison engines | Plaid, MX, proprietary datasets |
+
+---
+
+## 13. Privacy, Security & Data Governance
+
+### Security Architecture
+
+- **OAuth 2.0 / secure login** with encrypted sessions
+- **Encryption at rest and in transit** (and in backups)
+- Financial data requires a strong security posture
+
+### Data Governance
+
+- **Regulatory compliance:** GDPR and CCPA, especially for users under 18.
+- **Data classification:** Define what financial data is stored vs. ephemeral (session-only).
+- **Retention & deletion:** Clear policies on how long data is kept and what triggers deletion.
+- **Account deletion / data export:** Right to be forgotten; user-downloadable data.
+- **Third-party data sharing:** Explicit policy on what is and isn't shared with external services.
+
+---
+
+## 14. Safety, Age Compliance & Trust Guardrails
+
+### Age Compliance (Critical for 16+ Users)
+
+- **Parental/guardian consent flow** (jurisdiction-dependent)
+- **Restricted features for users under 18:**
+  - No real trading or broker integration
+  - Education + simulation only
+- **Age verification at onboarding**
+
+### Safety & Trust Guardrails
+
+- Recommendations are educational and supportive — not guaranteed financial advice.
+- The user must approve every decision.
+- The app avoids advanced or high-risk trading features in MVP.
+- Explanations include both opportunity and risk.
+- Sensitive financial data handled securely.
+- The product emphasizes **confidence-building, not pressure**.
+
+### AI Safety Specifically
+
+- Risk profiling gate before any recommendations are surfaced.
+- Disclaimers + user acknowledgment required.
+- Language guardrails: No guarantee-style language.
+
+---
+
+## 15. Accessibility
+
+- **Screen reader compatibility:** ARIA labels, semantic HTML.
+- **Color contrast:** WCAG AA or AAA standards.
+- **Colorblind-safe palette** for charts, risk indicators, and portfolio visuals.
+- **Font scaling** for users with low vision.
+- **Keyboard navigation** for all interactive elements.
+- **Reduced motion option** for animations.
+
+---
+
+## 16. Localization & Internationalization
+
+- **Language:** English-first for MVP, but architect for multi-language from the start.
+- **Currency localization:** Local currency symbols and formatting.
+- **Market localization:** Support for non-US exchanges in future phases.
+- **Region-specific terminology:** Financial terms vary by country (e.g., "401k" is US-only).
+
+---
+
+## 17. Offline & Degraded Experience
+
+- **Cached lessons:** Continue learning offline.
+- **Offline budget tracking:** Log expenses without connection, sync later.
+- **Graceful fallback UI:** Clear messaging when AI is unavailable.
+- **Queued actions:** Buffer user inputs and process when connectivity returns.
+
+---
+
+## 18. Notification Strategy
+
+### Alert Types
+
+- Price alerts, volatility alerts, portfolio change alerts, recommendation alerts, trade confirmations, market events, budget reminders.
+
+### Anti-Spam & Engagement
+
+- **Frequency caps:** Maximum notifications per day.
+- **Quiet hours / do-not-disturb:** Respect user schedules.
+- **Channel preferences:** Push, email, and in-app — user's choice.
+- **Re-engagement nudges:** *"Your buddy misses you — here's what happened in your watchlist this week."*
+- **Opt-out granularity:** Disable specific notification types, not just all-or-nothing.
+
+---
+
+## 19. User Feedback Loop
+
+- **Thumbs up / thumbs down** on every AI response.
+- **"Was this helpful?"** on recommendation cards.
+- **In-app bug reporting** and feature request submission.
+- **Feedback pipeline:** Route user ratings back into AI prompt tuning and content improvement.
+- **Optional post-session surveys** (short, non-intrusive).
+
+---
+
+## 20. Analytics & Success Metrics
+
+| Category | Metrics |
+|----------|---------|
+| **Engagement** | DAU / MAU, session length, AI chat frequency |
+| **Onboarding** | Completion rate, drop-off points, time to first insight |
+| **Education** | Lesson completion rate, quiz scores over time |
+| **Budgeting** | Budget adherence rate, savings goal progress |
+| **Investing** | Paper portfolio engagement, recommendation acceptance rate |
+| **Retention** | Day 1 / Day 7 / Day 30 retention, churn indicators |
+
+### Hackathon MVP Success Criteria
+
+- AI is central to the product, not decorative.
+- The app makes finance easier for beginners to understand.
+- Users can learn, budget, and explore investing in one place.
+- Recommendations are transparent and user-controlled.
+- The product feels supportive, safe, and practical enough to evolve into a real platform.
+
+---
+
+## 21. Monetization & Business Model
+
+| Model | Description |
+|-------|-------------|
+| **Freemium tiers** | Free education and budgeting; paid access to advanced AI insights, deeper analytics, or unlimited chat |
+| **Subscription** | Monthly or annual plans with tiered feature access |
+| **Affiliate revenue** | Partnerships with brokers or financial products (disclosed transparently) |
+| **Premium AI features** | Deeper portfolio analysis, priority response times, extended history |
+| **No ads policy** | Explicitly ad-free — trust is core to the product and ads undermine it |
+
+---
+
+## 22. Competitive Landscape
+
+| Category | Competitors | Finance Buddy's Edge |
+|----------|------------|---------------------|
+| **Investing apps** | Robinhood, Acorns, Stash | They focus on execution, not education. Finance Buddy leads with learning. |
+| **Budgeting apps** | Mint, YNAB | They track money but don't teach investing or offer AI guidance. |
+| **AI finance bots** | Cleo, Plum | They automate savings but lack portfolio simulation, structured education, or explainable recommendations. |
+
+**Finance Buddy's differentiator:** All-in-one (education + budgeting + investing guidance) with AI as the core engine, not a bolt-on feature.
+
+---
+
+## 23. Partnerships & Ecosystem
+
+- **Educational institutions:** Schools and universities for financial literacy programs.
+- **Financial literacy nonprofits:** Content credibility and reach.
+- **Broker APIs:** Early relationships for Phase 3 integration.
+- **Content partnerships:** Co-create educational content with trusted financial media.
+- **Hackathon / demo context:** Potential sponsors or mentors aligned with the vision.
+
+---
+
+## 24. Testing & Quality Assurance
+
+- **AI recommendation quality:** Structured evaluation for accuracy and safety.
+- **Financial calculation verification:** Unit tests for all budget math, portfolio returns, and projections.
+- **User acceptance testing:** Structured plan with target users before launch.
+- **Load testing:** Ensure real-time market data and AI chat scale under concurrent users.
+- **Regression testing:** Automated checks to prevent broken features across updates.
+- **Testing stack:** Vitest + Supertest for unit and HTTP integration tests.
+
+---
+
+## 25. UX / Core Screens
+
+| Screen | Purpose |
+|--------|---------|
+| **Dashboard** | Net worth overview, portfolio summary, daily snapshot, budget health |
+| **Learn** | Education modules, adaptive paths, progress tracking |
+| **AI Chat** | The "Buddy" conversation interface — always available |
+| **Budget Tracker** | Income, expenses, savings goals, spending insights |
+| **Market View** | Watchlists, stock details, charts, news translations |
+| **Notifications** | Alerts, recommendations, reminders, check-ins |
+| **Auto Portfolio** | ML recommendations preview, opt-in/out, risk metrics (future) |
+| **Financial Tools** | Bank selection, credit cards, savings plans, debt payoff |
+| **Settings** | Profile, risk tolerance, notification preferences, auto portfolio toggle |
+
+---
+
+## 26. Development Roadmap
+
+### Phase 1: MVP (8–12 weeks)
+**Focus:** Learning + simulation — validate the idea with real users.
+
+- User onboarding + risk profile quiz + buddy naming
+- Budget tracker (basic) with AI insights
+- AI chatbot (educational Q&A)
+- Paper trading system / watchlist
+- Simple stock data display
+- Dashboard with budget summary and savings goal
+- Recommendation cards with explanations
+- Simple alerts / insight cards
+- ML auto-recommendations **preview section** with "Coming Soon" info hub
+
+### Phase 2: Smart Guidance
+- Rule-based recommendation engine
+- AI-generated explanations for each recommendation
+- Push notifications + alerts
+- Structured learning modules with gamification
+- Behavioral coaching (spending nudges, emotional investing warnings)
+- Double process acceptance for trade confirmations
+- Financial decision-making tools (bank selection, credit card comparison)
+
+### Phase 3: Real Portfolio Integration
+- Broker API integrations (if legally viable)
+- Real-time alerts + monitoring
+- Advanced analytics + portfolio insights
+- Savings plans and debt payoff planner
+- Full notification strategy with anti-spam controls
+
+### Phase 4: Growth & Differentiation
+- ML predictive analysis engine (after months of training and research)
+- Auto portfolio with opt-in/opt-out and granular controls
+- Full risk & probability metrics on all recommendations
+- Full gamification system (levels, XP, badges, leaderboards)
+- Social/community features (anonymized peer strategies)
+- Personalized AI personality + animated avatar
+- Advanced behavioral nudges + coaching
+- Internationalization and multi-market support
+
+---
+
+## 27. MVP Scope & Hackathon Build
+
+### MVP Pillars
+
+1. **AI Onboarding + Risk and Goals Profile** — Name buddy, answer quiz, get personalized summary.
+2. **Budget Tracker with AI Insights** — Enter income/expenses/goals, get AI categorization and tips.
+3. **Paper Portfolio / Watchlist Experience** — Create watchlist or simulated portfolio, track performance, get explainable insights.
+4. **AI Buddy Chat with Explainable Recommendations** — Always-available chatbot with recommendation cards.
+
+### Preliminary MVP Coding Scope
+
+- User onboarding flow
+- Custom buddy naming
+- Risk tolerance + goals questionnaire
+- Dashboard with budget summary
+- Simple expense entry or mock budget data
+- Savings goal tracker
+- Watchlist or paper portfolio module
+- AI chat interface
+- AI-generated explanations for concepts and recommendations
+- Simple alerts or insight cards
+
+### Suggested MVP User Flow
+
+1. User signs up and confirms they are at least 16.
+2. User names their Finance Buddy.
+3. User completes a short onboarding quiz.
+4. AI generates a personalized financial profile.
+5. User lands on a dashboard showing: budget snapshot, savings goal progress, watchlist/paper portfolio, and a prompt to ask their buddy a question.
+6. User receives at least one AI-generated insight (budgeting suggestion, savings reminder, or market explanation).
+7. User can ask follow-up questions in chat and receive conversational answers.
+
+---
+
+## 28. Biggest Risks & Mitigation
+
+| Risk | Why It Matters | Mitigation |
+|------|---------------|------------|
+| **Regulation** | Financial advice laws vary by jurisdiction | Education-first positioning; legal review before launch; clear disclaimers |
+| **Trust** | Wrong recommendations erode confidence fast | Confidence scores, disclaimers, explainability, double confirmation |
+| **Data costs** | Real-time stock data is expensive at scale | Start with free-tier APIs; upgrade as revenue allows |
+| **AI hallucinations** | Fabricated financial data could cause real harm | Tight guardrails, RAG, human review layer, confidence thresholds |
+| **Overfitting (ML)** | Model works in backtests, fails live | Rigorous backtesting, ensemble methods, ongoing retraining |
+| **Black swan events** | AI breaks during crises when it's needed most | Prominent disclaimers, human oversight emphasis, circuit breakers |
+| **Privacy/Compliance** | Financial data is sensitive; minors use the app | GDPR/CCPA compliance, encryption, parental consent, age restrictions |
+| **AI model costs** | LLM API calls at scale are expensive | Token budgets, caching, fallback models, tiered usage |
+
+---
+
+## 29. Future Expansion
+
+After the MVP, future versions could add:
+
+- Bank account integration (Plaid)
+- Live brokerage integrations
+- Advanced portfolio analytics
+- Recurring lesson plans
+- Family or student-specific budgeting modes
+- Avatar animation and voice interaction
+- Multi-goal planning
+- Advanced AI market monitoring
+- International market support
+- Social features and community
+- Voice-based interaction with the buddy
+
+---
+
+## 30. Strategic Differentiator
+
+The strongest differentiator is **not:**
+
+> *"AI that tells you what to buy."*
+
+It's:
+
+> *"AI that teaches you how to think about money — while helping you act."*
+
+Lean heavily into **education + explanation + transparency**. That's what sets Finance Buddy apart from every other finance app targeting this demographic.
+
+The companion that helped a 17-year-old build their first budget should still be valuable when that same person is 30 and planning for a home.
+
+---
+
+*This Master Plan consolidates all planning documents, improvement suggestions, feature ideas, engineering specifications, known AI limitations, and strategic direction for the Finance Buddy application into a single authoritative reference.*
