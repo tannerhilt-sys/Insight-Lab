@@ -603,8 +603,10 @@ At 50,000 users with the same conversion rates: **~$564,000 ARR** — sufficient
 | **Khan Academy** | Excellent financial education content | No personalization, no tools, passive only | Connected to user's actual numbers, active learning |
 | **Cleo** | Conversational AI budgeting, Gen Z tone | Chat-only; no portfolio; no education layer; no paper trading | Full financial suite + education + paper trading in one product |
 | **Albert** | AI savings + human advisor hybrid | $14.99/mo "Genius" tier for human access; limited investing education | Free tier genuinely useful; AI is the product, not a paid add-on |
+| **Copilot** ($14.99/mo, formerly Monarch) | Clean iOS-native UI; Plaid bank sync; subscription tracking; beautiful design | iOS only; no AI coaching layer; no paper trading; no education content; no loan or credit tools | Cross-platform from day one; AI is the advisor not just the categorizer; full feature suite at the same price point |
+| **Quicken Simplifi** ($5.99/mo) | Affordable; solid bank sync; cash flow view | Desktop-era UX heritage; no AI; no investing education; no paper trading; passive data display only | Mobile-first, AI-first, education-first — built for a generation that has never used a desktop finance app |
 
-**Why Cleo and Albert matter:** These are the two most AI-native fintech products aimed at the same demographic. Their presence validates the market — both have raised $300M+ combined — but neither combines budgeting + paper trading + financial education in a single experience. Finance Buddy is the synthesis they haven't built.
+**Why Cleo, Albert, Copilot, and Simplifi matter:** These four products collectively represent the current AI-adjacent and budget-focused fintech market. Their combined estimated user base of 3M+ registered users validates the demand. But none of them combine personalized AI coaching + budgeting + simulated investing + credit education in a single experience. Finance Buddy is the synthesis they haven't built.
 
 **The gap no one fills:** A tool that combines personalized AI coaching + budgeting + simulated investing + credit education + education content — all aware of the user's actual financial situation — does not exist today. Finance Buddy fills this gap specifically for the underserved 16–25 demographic.
 
@@ -631,6 +633,18 @@ At 50,000 users with the same conversion rates: **~$564,000 ARR** — sufficient
 | NPS score | ≥ 50 | Best-in-class fintech (Robinhood peak): 71 |
 | AI chat satisfaction | ≥ 4.2/5.0 | User thumbs-up/down rating per response |
 | Course completion rate | ≥ 60% | EdTech average: 15%; gamified EdTech: 45–65% |
+
+### Outcome-Based Metrics (the measures that matter most)
+
+Activity metrics (DAU, session length, course completion) tell us the product is being used. Outcome metrics tell us it is *working*. Finance Buddy targets three outcome metrics at the 6-month post-launch mark:
+
+| Outcome Metric | Target | Measurement Method |
+|----------------|--------|-------------------|
+| Savings rate increase | Users who set a savings goal increase their net savings rate by ≥ 15% within 90 days | Compare `netSavings / totalIncome` at Day 0 vs. Day 90 for goal-setting cohort |
+| Emergency fund completion rate | ≥ 25% of users who set an emergency fund goal reach 100% within 6 months | Goal progress tracking in savings module |
+| Debt payoff acceleration | Users who use the Loan Payoff feature make ≥ 1 extra payment above minimum within 90 days | Loan tracker: extra payment events logged against user cohort |
+
+These outcome metrics — not engagement metrics — are what distinguish Finance Buddy from a content platform that entertains users about money versus a tool that demonstrably changes their financial trajectory.
 
 ---
 
