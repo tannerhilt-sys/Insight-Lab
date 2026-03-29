@@ -37,15 +37,24 @@ export const useAuthStore = create<AuthState>((set, get) => ({
   login: async (email, password) => {
     set({ isLoading: true, error: null });
     try {
-      const data = await api<{ token: string; user: { id: string; email: string; buddyName: string } }>('/auth/login', {
+      // Handle both nested {user:{id,email,buddyName}} and legacy flat {userId,buddyName} formats
+      const data = await api<{
+        token: string;
+        user?: { id: string; email: string; buddyName: string };
+        userId?: string;
+        buddyName?: string;
+      }>('/auth/login', {
         method: 'POST',
         body: JSON.stringify({ email, password }),
         skipAuth: true,
       });
+      const id = data.user?.id ?? data.userId ?? '';
+      const userEmail = data.user?.email ?? email;
+      const userBuddyName = data.user?.buddyName ?? data.buddyName ?? 'Buddy';
       localStorage.setItem('finance-buddy-token', data.token);
       set({
         token: data.token,
-        user: { id: data.user.id, email: data.user.email, buddyName: data.user.buddyName },
+        user: { id, email: userEmail, buddyName: userBuddyName },
         isAuthenticated: true,
         isLoading: false,
       });
@@ -59,15 +68,23 @@ export const useAuthStore = create<AuthState>((set, get) => ({
   signup: async (email, password, buddyName, ageConfirmed) => {
     set({ isLoading: true, error: null });
     try {
-      const data = await api<{ token: string; user: { id: string; email: string; buddyName: string } }>('/auth/signup', {
+      const data = await api<{
+        token: string;
+        user?: { id: string; email: string; buddyName: string };
+        userId?: string;
+        buddyName?: string;
+      }>('/auth/signup', {
         method: 'POST',
         body: JSON.stringify({ email, password, buddyName, ageConfirmed }),
         skipAuth: true,
       });
+      const id = data.user?.id ?? data.userId ?? '';
+      const userEmail = data.user?.email ?? email;
+      const userBuddyName = data.user?.buddyName ?? data.buddyName ?? buddyName ?? 'Buddy';
       localStorage.setItem('finance-buddy-token', data.token);
       set({
         token: data.token,
-        user: { id: data.user.id, email: data.user.email, buddyName: data.user.buddyName },
+        user: { id, email: userEmail, buddyName: userBuddyName },
         isAuthenticated: true,
         isLoading: false,
       });
@@ -87,8 +104,17 @@ export const useAuthStore = create<AuthState>((set, get) => ({
     if (!get().token) return;
     set({ isLoading: true });
     try {
-      const data = await api<{ user: { id: string; email: string; buddyName: string } }>('/auth/me');
-      set({ user: { id: data.user.id, email: data.user.email, buddyName: data.user.buddyName }, isAuthenticated: true, isLoading: false });
+      // Handle both {user:{id,...}} and legacy flat {id, email, buddyName} formats
+      const data = await api<{
+        user?: { id: string; email: string; buddyName: string };
+        id?: string;
+        email?: string;
+        buddyName?: string;
+      }>('/auth/me');
+      const id = data.user?.id ?? data.id ?? '';
+      const email = data.user?.email ?? data.email ?? '';
+      const buddyName = data.user?.buddyName ?? data.buddyName ?? 'Buddy';
+      set({ user: { id, email, buddyName }, isAuthenticated: true, isLoading: false });
     } catch {
       localStorage.removeItem('finance-buddy-token');
       set({
