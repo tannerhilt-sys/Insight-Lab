@@ -1,6 +1,15 @@
-// In-memory data store for Finance Buddy
-// Primary maps index by id. Secondary index maps (userIndex.*) index id sets by userId
-// for O(1) per-user lookups instead of O(n) full-table scans.
+/**
+ * In-memory data store for Finance Buddy.
+ *
+ * Architecture: Primary Maps index by `id`. Secondary index Maps (`userIndex.*`)
+ * index `Set<id>` by `userId` for O(1) per-user lookups instead of O(n) full-table scans.
+ *
+ * This structure is isomorphic to PostgreSQL tables with indexed `user_id` foreign keys.
+ * Migration to Postgres requires replacing Map methods with parameterized SQL queries —
+ * the data shapes and access patterns remain identical.
+ *
+ * @see constants.js for validation bounds shared by all routes.
+ */
 
 const store = {
   users: new Map(),        // id -> user
