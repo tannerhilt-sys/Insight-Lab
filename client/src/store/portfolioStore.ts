@@ -20,9 +20,23 @@ export interface WatchlistItem {
   addedAt: string;
 }
 
+export interface SectorAllocation {
+  sector: string;
+  value: number;
+  percent: number;
+}
+
+export interface PortfolioAnalytics {
+  sectorAllocation: SectorAllocation[];
+  concentrationScore: number;
+  diversificationScore: number;
+  topHoldings: { ticker: string; marketValue: number; weight: number }[];
+}
+
 interface PortfolioState {
   holdings: Holding[];
   watchlist: WatchlistItem[];
+  analytics: PortfolioAnalytics | null;
   totalValue: number;
   totalCost: number;
   totalGainLoss: number;
@@ -30,8 +44,9 @@ interface PortfolioState {
   error: string | null;
 
   fetchHoldings: () => Promise<void>;
+  fetchAnalytics: () => Promise<void>;
   buyStock: (ticker: string, shares: number, price: number) => Promise<void>;
-  sellStock: (ticker: string, shares: number) => Promise<void>;
+  sellStock: (ticker: string, shares: number) => Promise<{ saleProceeds: number; realizedGainLoss: number }>;
   fetchWatchlist: () => Promise<void>;
   addToWatchlist: (ticker: string, companyName: string) => Promise<void>;
   removeFromWatchlist: (ticker: string) => Promise<void>;
@@ -41,6 +56,7 @@ interface PortfolioState {
 export const usePortfolioStore = create<PortfolioState>((set) => ({
   holdings: [],
   watchlist: [],
+  analytics: null,
   totalValue: 0,
   totalCost: 0,
   totalGainLoss: 0,
@@ -96,11 +112,19 @@ export const usePortfolioStore = create<PortfolioState>((set) => ({
     }
   },
 
+  fetchAnalytics: async () => {
+    try {
+      const data = await api<PortfolioAnalytics>('/portfolio/analytics');
+      set({ analytics: data });
+    } catch {
+      // keep existing analytics on failure
+    }
+  },
+
   sellStock: async (ticker, shares) => {
     set({ error: null });
     try {
-      // Wait for server confirmation before updating state
-      await api<{ message: string; remainingShares: number }>('/portfolio/sell', {
+      const result = await api<{ message: string; remainingShares: number; saleProceeds: number; realizedGainLoss: number }>('/portfolio/sell', {
         method: 'POST',
         body: JSON.stringify({ ticker, shares }),
       });
@@ -114,6 +138,7 @@ export const usePortfolioStore = create<PortfolioState>((set) => ({
         const totalGainLoss = Math.round((totalValue - totalCost) * 100) / 100;
         return { holdings, totalValue, totalCost, totalGainLoss };
       });
+      return { saleProceeds: result.saleProceeds, realizedGainLoss: result.realizedGainLoss };
     } catch (err) {
       const message = err instanceof Error ? err.message : 'Failed to sell stock';
       set({ error: message });
