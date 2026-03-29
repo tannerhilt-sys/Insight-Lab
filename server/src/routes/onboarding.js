@@ -75,7 +75,19 @@ function validateProfileBody(body) {
   return null;
 }
 
-// POST / — create profile
+/**
+ * POST /onboarding
+ * Create or replace the user's financial profile and generate an AI summary.
+ * This is called after the 7-question quiz. The AI summary is personalized
+ * to the user's goals, knowledge level, and risk tolerance.
+ * @body {string} [buddyName] - Display name (max 30 chars)
+ * @body {string} [knowledgeLevel] - "beginner" | "intermediate" | "advanced"
+ * @body {number} [riskScore] - Integer 1-10
+ * @body {string[]} [goals] - Subset of VALID_GOALS
+ * @body {string} [savingsHabit] - One of VALID_SAVINGS_HABITS
+ * @body {string} [investingInterest] - Free text interest level
+ * @returns {201} { profile: OnboardingProfile, aiSummary: string }
+ */
 router.post('/', authenticate, async (req, res) => {
   try {
     const validationError = validateProfileBody(req.body);
@@ -109,7 +121,12 @@ router.post('/', authenticate, async (req, res) => {
   }
 });
 
-// GET /
+/**
+ * GET /onboarding
+ * Retrieve the authenticated user's onboarding profile.
+ * @returns {200} OnboardingProfile
+ * @returns {404} Profile not yet created
+ */
 router.get('/', authenticate, (req, res) => {
   try {
     const profile = getProfile(req.user.id);
@@ -123,7 +140,13 @@ router.get('/', authenticate, (req, res) => {
   }
 });
 
-// PUT /
+/**
+ * PUT /onboarding
+ * Partially update the user's onboarding profile. All fields are optional.
+ * Does not regenerate the AI summary — use POST to recreate it.
+ * @returns {200} Updated OnboardingProfile
+ * @returns {404} Profile not yet created (complete onboarding first)
+ */
 router.put('/', authenticate, (req, res) => {
   try {
     const existing = getProfile(req.user.id);
