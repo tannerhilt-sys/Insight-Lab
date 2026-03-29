@@ -7,6 +7,9 @@ import {
   AlertTriangle,
   Save,
   Check,
+  Crown,
+  Zap,
+  Star,
 } from 'lucide-react';
 import { useAuthStore } from '@/store/authStore';
 
@@ -20,6 +23,8 @@ export default function SettingsPage() {
   const [knowledgeLevel, setKnowledgeLevel] = useState('intermediate');
   const [autoPortfolio, setAutoPortfolio] = useState(false);
   const [saved, setSaved] = useState(false);
+  const [currentPlan, setCurrentPlan] = useState<'free' | 'plus' | 'pro'>('free');
+  const [planSaved, setPlanSaved] = useState(false);
 
   const [notifications, setNotifications] = useState({
     budgetAlerts: true,
@@ -236,6 +241,138 @@ export default function SettingsPage() {
           )}
         </button>
       </div>
+
+      {/* Subscription */}
+      <section className="card">
+        <div className="flex items-center gap-3 mb-6">
+          <div className="p-2 bg-amber-100 rounded-xl">
+            <Crown className="w-5 h-5 text-amber-600" />
+          </div>
+          <h2 className="text-lg font-semibold text-slate-900">Subscription</h2>
+          {currentPlan !== 'free' && (
+            <span className="text-xs font-medium px-2.5 py-0.5 bg-amber-100 text-amber-700 rounded-full capitalize">
+              {currentPlan} Active
+            </span>
+          )}
+        </div>
+
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+          {/* Free */}
+          <div
+            className={`relative rounded-xl border-2 p-5 cursor-pointer transition-all ${
+              currentPlan === 'free'
+                ? 'border-slate-400 bg-slate-50'
+                : 'border-slate-200 hover:border-slate-300 bg-white'
+            }`}
+            onClick={() => setCurrentPlan('free')}
+          >
+            {currentPlan === 'free' && (
+              <span className="absolute top-3 right-3 text-xs font-semibold px-2 py-0.5 bg-slate-200 text-slate-600 rounded-full">
+                Current
+              </span>
+            )}
+            <div className="p-2 bg-slate-100 rounded-lg w-fit mb-3">
+              <Star className="w-5 h-5 text-slate-500" />
+            </div>
+            <h3 className="font-bold text-slate-900 text-lg">Free</h3>
+            <p className="text-2xl font-bold text-slate-900 mt-1">$0<span className="text-sm font-normal text-slate-400">/mo</span></p>
+            <ul className="mt-4 space-y-2 text-sm text-slate-600">
+              <li className="flex items-center gap-2"><Check className="w-4 h-4 text-emerald-500 shrink-0" />Budget tracking</li>
+              <li className="flex items-center gap-2"><Check className="w-4 h-4 text-emerald-500 shrink-0" />Paper trading</li>
+              <li className="flex items-center gap-2"><Check className="w-4 h-4 text-emerald-500 shrink-0" />5 AI chats / day</li>
+              <li className="flex items-center gap-2"><Check className="w-4 h-4 text-emerald-500 shrink-0" />Basic insights</li>
+            </ul>
+            <button
+              onClick={() => setCurrentPlan('free')}
+              className={`mt-5 w-full py-2 rounded-lg text-sm font-medium transition-colors ${
+                currentPlan === 'free'
+                  ? 'bg-slate-200 text-slate-500 cursor-default'
+                  : 'bg-slate-100 text-slate-700 hover:bg-slate-200'
+              }`}
+            >
+              {currentPlan === 'free' ? 'Current Plan' : 'Downgrade'}
+            </button>
+          </div>
+
+          {/* Plus */}
+          <div
+            className={`relative rounded-xl border-2 p-5 cursor-pointer transition-all ${
+              currentPlan === 'plus'
+                ? 'border-primary-500 bg-primary-50'
+                : 'border-slate-200 hover:border-primary-300 bg-white'
+            }`}
+            onClick={() => setCurrentPlan('plus')}
+          >
+            {currentPlan === 'plus' && (
+              <span className="absolute top-3 right-3 text-xs font-semibold px-2 py-0.5 bg-primary-100 text-primary-700 rounded-full">
+                Current
+              </span>
+            )}
+            <div className="p-2 bg-primary-100 rounded-lg w-fit mb-3">
+              <Zap className="w-5 h-5 text-primary-600" />
+            </div>
+            <h3 className="font-bold text-slate-900 text-lg">Plus</h3>
+            <p className="text-2xl font-bold text-slate-900 mt-1">$7.99<span className="text-sm font-normal text-slate-400">/mo</span></p>
+            <ul className="mt-4 space-y-2 text-sm text-slate-600">
+              <li className="flex items-center gap-2"><Check className="w-4 h-4 text-emerald-500 shrink-0" />Everything in Free</li>
+              <li className="flex items-center gap-2"><Check className="w-4 h-4 text-emerald-500 shrink-0" />Unlimited AI chats</li>
+              <li className="flex items-center gap-2"><Check className="w-4 h-4 text-emerald-500 shrink-0" />Advanced insights</li>
+              <li className="flex items-center gap-2"><Check className="w-4 h-4 text-emerald-500 shrink-0" />Savings goal coaching</li>
+            </ul>
+            <button
+              onClick={() => setCurrentPlan('plus')}
+              className={`mt-5 w-full py-2 rounded-lg text-sm font-medium transition-colors ${
+                currentPlan === 'plus'
+                  ? 'bg-primary-200 text-primary-600 cursor-default'
+                  : 'bg-primary-600 text-white hover:bg-primary-700'
+              }`}
+            >
+              {currentPlan === 'plus' ? 'Current Plan' : currentPlan === 'pro' ? 'Downgrade' : 'Upgrade to Plus'}
+            </button>
+          </div>
+
+          {/* Pro */}
+          <div
+            className={`relative rounded-xl border-2 p-5 cursor-pointer transition-all ${
+              currentPlan === 'pro'
+                ? 'border-amber-500 bg-amber-50'
+                : 'border-slate-200 hover:border-amber-300 bg-white'
+            }`}
+            onClick={() => setCurrentPlan('pro')}
+          >
+            <span className="absolute top-3 right-3 text-xs font-semibold px-2 py-0.5 bg-amber-100 text-amber-700 rounded-full">
+              {currentPlan === 'pro' ? 'Current' : 'Best Value'}
+            </span>
+            <div className="p-2 bg-amber-100 rounded-lg w-fit mb-3">
+              <Crown className="w-5 h-5 text-amber-600" />
+            </div>
+            <h3 className="font-bold text-slate-900 text-lg">Pro</h3>
+            <p className="text-2xl font-bold text-slate-900 mt-1">$14.99<span className="text-sm font-normal text-slate-400">/mo</span></p>
+            <ul className="mt-4 space-y-2 text-sm text-slate-600">
+              <li className="flex items-center gap-2"><Check className="w-4 h-4 text-emerald-500 shrink-0" />Everything in Plus</li>
+              <li className="flex items-center gap-2"><Check className="w-4 h-4 text-emerald-500 shrink-0" />AI portfolio manager</li>
+              <li className="flex items-center gap-2"><Check className="w-4 h-4 text-emerald-500 shrink-0" />Real-time market alerts</li>
+              <li className="flex items-center gap-2"><Check className="w-4 h-4 text-emerald-500 shrink-0" />Priority AI responses</li>
+            </ul>
+            <button
+              onClick={() => setCurrentPlan('pro')}
+              className={`mt-5 w-full py-2 rounded-lg text-sm font-medium transition-colors ${
+                currentPlan === 'pro'
+                  ? 'bg-amber-200 text-amber-700 cursor-default'
+                  : 'bg-amber-500 text-white hover:bg-amber-600'
+              }`}
+            >
+              {currentPlan === 'pro' ? 'Current Plan' : 'Upgrade to Pro'}
+            </button>
+          </div>
+        </div>
+
+        {currentPlan !== 'free' && (
+          <p className="text-xs text-slate-400 mt-4">
+            Billing is simulated for demo purposes. No real charges will be made.
+          </p>
+        )}
+      </section>
 
       {/* Danger Zone */}
       <section className="card border-red-200">

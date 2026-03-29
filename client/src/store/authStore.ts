@@ -37,7 +37,7 @@ export const useAuthStore = create<AuthState>((set, get) => ({
   login: async (email, password) => {
     set({ isLoading: true, error: null });
     try {
-      const data = await api<{ token: string; userId: string; buddyName: string }>('/auth/login', {
+      const data = await api<{ token: string; user: { id: string; email: string; buddyName: string } }>('/auth/login', {
         method: 'POST',
         body: JSON.stringify({ email, password }),
         skipAuth: true,
@@ -45,7 +45,7 @@ export const useAuthStore = create<AuthState>((set, get) => ({
       localStorage.setItem('finance-buddy-token', data.token);
       set({
         token: data.token,
-        user: { id: data.userId, email, buddyName: data.buddyName },
+        user: { id: data.user.id, email: data.user.email, buddyName: data.user.buddyName },
         isAuthenticated: true,
         isLoading: false,
       });
@@ -59,7 +59,7 @@ export const useAuthStore = create<AuthState>((set, get) => ({
   signup: async (email, password, buddyName, ageConfirmed) => {
     set({ isLoading: true, error: null });
     try {
-      const data = await api<{ token: string; userId: string; buddyName: string }>('/auth/signup', {
+      const data = await api<{ token: string; user: { id: string; email: string; buddyName: string } }>('/auth/signup', {
         method: 'POST',
         body: JSON.stringify({ email, password, buddyName, ageConfirmed }),
         skipAuth: true,
@@ -67,7 +67,7 @@ export const useAuthStore = create<AuthState>((set, get) => ({
       localStorage.setItem('finance-buddy-token', data.token);
       set({
         token: data.token,
-        user: { id: data.userId, email, buddyName: data.buddyName },
+        user: { id: data.user.id, email: data.user.email, buddyName: data.user.buddyName },
         isAuthenticated: true,
         isLoading: false,
       });
@@ -87,8 +87,8 @@ export const useAuthStore = create<AuthState>((set, get) => ({
     if (!get().token) return;
     set({ isLoading: true });
     try {
-      const data = await api<{ id: string; email: string; buddyName: string }>('/auth/me');
-      set({ user: { id: data.id, email: data.email, buddyName: data.buddyName }, isAuthenticated: true, isLoading: false });
+      const data = await api<{ user: { id: string; email: string; buddyName: string } }>('/auth/me');
+      set({ user: { id: data.user.id, email: data.user.email, buddyName: data.user.buddyName }, isAuthenticated: true, isLoading: false });
     } catch {
       localStorage.removeItem('finance-buddy-token');
       set({

@@ -1,9 +1,12 @@
 import { Router } from 'express';
 import Anthropic from '@anthropic-ai/sdk';
 import { authenticate } from '../middleware/auth.js';
-import { getProfile, appendChatMessage, getChatHistory } from '../data/store.js';
+import { getProfile, appendChatMessage } from '../data/store.js';
+import { CLAUDE_MODEL, MAX_CHAT_MESSAGE_LENGTH, MAX_CHAT_HISTORY_ITEMS } from '../constants.js';
 
 const router = Router();
+
+const VALID_ROLES = ['user', 'assistant'];
 
 function getAnthropicClient() {
   if (!process.env.ANTHROPIC_API_KEY) return null;
@@ -30,6 +33,22 @@ Your personality:
 If asked about something outside of finance, gently steer the conversation back to financial topics.`;
 }
 
+/** Sanitize and validate a client-supplied history array. */
+function sanitizeHistory(history) {
+  if (!Array.isArray(history)) return [];
+  return history
+    .slice(-MAX_CHAT_HISTORY_ITEMS)
+    .filter(
+      (msg) =>
+        msg &&
+        typeof msg === 'object' &&
+        VALID_ROLES.includes(msg.role) &&
+        typeof msg.content === 'string' &&
+        msg.content.length > 0,
+    )
+    .map((msg) => ({ role: msg.role, content: msg.content.slice(0, MAX_CHAT_MESSAGE_LENGTH) }));
+}
+
 // POST /message — SSE streaming response
 router.post('/message', authenticate, async (req, res) => {
   try {
@@ -38,13 +57,26 @@ router.post('/message', authenticate, async (req, res) => {
     if (!message) {
       return res.status(400).json({ error: 'message is required' });
     }
+    if (typeof message !== 'string') {
+      return res.status(400).json({ error: 'message must be a string' });
+    }
+    if (message.trim().length === 0) {
+      return res.status(400).json({ error: 'message must not be empty' });
+    }
+    if (message.length > MAX_CHAT_MESSAGE_LENGTH) {
+      return res.status(400).json({ error: `message must not exceed ${MAX_CHAT_MESSAGE_LENGTH} characters` });
+    }
 
+    const sanitizedMessage = message.trim();
     const profile = getProfile(req.user.id);
 
-    // Save user message to history
-    appendChatMessage(req.user.id, { role: 'user', content: message, timestamp: new Date().toISOString() });
+    appendChatMessage(req.user.id, {
+      role: 'user',
+      content: sanitizedMessage,
+      timestamp: new Date().toISOString(),
+    });
 
-    // Set up SSE headers
+    // SSE headers
     res.setHeader('Content-Type', 'text/event-stream');
     res.setHeader('Cache-Control', 'no-cache');
     res.setHeader('Connection', 'keep-alive');
@@ -53,34 +85,25 @@ router.post('/message', authenticate, async (req, res) => {
     const client = getAnthropicClient();
 
     if (!client) {
-      // Mock streaming: send a canned response word by word
-      const mockResponse = `That's a great question, ${profile?.buddyName || 'friend'}! Let me break it down for you in simple terms. In personal finance, the most important first step is understanding where your money goes each month. Try tracking your expenses for a week — you might be surprised by what you find! Once you know your spending patterns, you can start making small adjustments that add up over time. Remember, building good financial habits is a marathon, not a sprint.`;
-
+      const mockResponse = `That's a great question, ${profile?.buddyName || 'friend'}! Let me break it down simply. In personal finance, understanding where your money goes is the essential first step. Try tracking your expenses for a week — you might be surprised by what you find! Once you know your spending patterns, you can start making small adjustments that add up over time. Building good financial habits is a marathon, not a sprint.`;
       const words = mockResponse.split(' ');
       for (let i = 0; i < words.length; i++) {
         const chunk = (i === 0 ? '' : ' ') + words[i];
         res.write(`data: ${JSON.stringify({ type: 'content_block_delta', text: chunk })}\n\n`);
         await new Promise((resolve) => setTimeout(resolve, 30));
       }
-
       res.write(`data: ${JSON.stringify({ type: 'message_stop' })}\n\n`);
       appendChatMessage(req.user.id, { role: 'assistant', content: mockResponse, timestamp: new Date().toISOString() });
       return res.end();
     }
 
-    // Build messages array from history
-    const messages = [];
-    if (history && Array.isArray(history)) {
-      for (const msg of history.slice(-20)) {
-        messages.push({ role: msg.role, content: msg.content });
-      }
-    }
-    messages.push({ role: 'user', content: message });
+    const messages = sanitizeHistory(history);
+    messages.push({ role: 'user', content: sanitizedMessage });
 
     let fullResponse = '';
 
     const stream = client.messages.stream({
-      model: 'claude-sonnet-4-20250514',
+      model: CLAUDE_MODEL,
       max_tokens: 1024,
       system: buildSystemPrompt(profile),
       messages,
@@ -93,7 +116,11 @@ router.post('/message', authenticate, async (req, res) => {
 
     stream.on('end', () => {
       res.write(`data: ${JSON.stringify({ type: 'message_stop' })}\n\n`);
-      appendChatMessage(req.user.id, { role: 'assistant', content: fullResponse, timestamp: new Date().toISOString() });
+      appendChatMessage(req.user.id, {
+        role: 'assistant',
+        content: fullResponse,
+        timestamp: new Date().toISOString(),
+      });
       res.end();
     });
 
@@ -104,10 +131,7 @@ router.post('/message', authenticate, async (req, res) => {
     });
   } catch (err) {
     console.error('Chat message error:', err);
-    // If headers already sent, just end
-    if (res.headersSent) {
-      return res.end();
-    }
+    if (res.headersSent) return res.end();
     res.status(500).json({ error: 'Internal server error' });
   }
 });
@@ -123,9 +147,7 @@ router.get('/suggestions', authenticate, (req, res) => {
       'What is the difference between saving and investing?',
     ];
 
-    if (!profile) {
-      return res.json({ suggestions: baseSuggestions });
-    }
+    if (!profile) return res.json({ suggestions: baseSuggestions });
 
     const suggestions = [];
 
@@ -134,12 +156,12 @@ router.get('/suggestions', authenticate, (req, res) => {
     } else if (profile.knowledgeLevel === 'intermediate') {
       suggestions.push('What are the pros and cons of growth vs. value investing?');
     } else {
-      suggestions.push('How do I evaluate a company\'s price-to-earnings ratio?');
+      suggestions.push("How do I evaluate a company's price-to-earnings ratio?");
     }
 
-    if (profile.goals && profile.goals.includes('retirement')) {
+    if (profile.goals?.includes('retirement')) {
       suggestions.push('How much should I be saving for retirement at my age?');
-    } else if (profile.goals && profile.goals.includes('emergency_fund')) {
+    } else if (profile.goals?.includes('emergency_fund')) {
       suggestions.push('How do I build an emergency fund from scratch?');
     } else {
       suggestions.push('What are the best ways to save money each month?');

@@ -1,4 +1,6 @@
 import { create } from 'zustand';
+import { useAuthStore } from './authStore';
+import { api } from '@/lib/api';
 
 export interface ChatMessage {
   role: 'user' | 'assistant';
@@ -9,16 +11,19 @@ export interface ChatMessage {
 interface ChatState {
   messages: ChatMessage[];
   isStreaming: boolean;
+  error: string | null;
   suggestions: string[];
 
   sendMessage: (message: string) => Promise<void>;
   fetchSuggestions: () => Promise<void>;
   clearMessages: () => void;
+  clearError: () => void;
 }
 
 export const useChatStore = create<ChatState>((set, get) => ({
   messages: [],
   isStreaming: false,
+  error: null,
   suggestions: [
     'How should I start investing?',
     'Explain my budget breakdown',
@@ -28,39 +33,44 @@ export const useChatStore = create<ChatState>((set, get) => ({
   ],
 
   sendMessage: async (message) => {
+    if (!message.trim()) return;
+
     const userMsg: ChatMessage = {
       role: 'user',
-      content: message,
+      content: message.trim(),
       timestamp: new Date().toISOString(),
     };
-
-    set((state) => ({
-      messages: [...state.messages, userMsg],
-      isStreaming: true,
-    }));
-
     const assistantMsg: ChatMessage = {
       role: 'assistant',
       content: '',
       timestamp: new Date().toISOString(),
     };
 
+    // Add both messages atomically to avoid race conditions
     set((state) => ({
-      messages: [...state.messages, assistantMsg],
+      messages: [...state.messages, userMsg, assistantMsg],
+      isStreaming: true,
+      error: null,
     }));
 
     try {
-      const token = localStorage.getItem('finance-buddy-token');
+      // Use the auth store as single source of truth for the token
+      const token = useAuthStore.getState().token;
+      const history = get().messages.slice(-20, -2); // exclude the two messages we just added
+
       const response = await fetch('/api/v1/chat/message', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
           ...(token ? { Authorization: `Bearer ${token}` } : {}),
         },
-        body: JSON.stringify({ message }),
+        body: JSON.stringify({ message: message.trim(), history }),
       });
 
-      if (!response.ok) throw new Error('Chat request failed');
+      if (!response.ok) {
+        const errorData = await response.json().catch(() => ({}));
+        throw new Error((errorData as { error?: string }).error || `Request failed: ${response.status}`);
+      }
 
       const reader = response.body?.getReader();
       const decoder = new TextDecoder();
@@ -70,60 +80,51 @@ export const useChatStore = create<ChatState>((set, get) => ({
         while (!done) {
           const { value, done: readerDone } = await reader.read();
           done = readerDone;
-          if (value) {
-            const chunk = decoder.decode(value, { stream: true });
-            // Parse SSE data
-            const lines = chunk.split('\n');
-            for (const line of lines) {
-              if (line.startsWith('data: ')) {
-                const data = line.slice(6);
-                if (data === '[DONE]') continue;
-                try {
-                  const parsed = JSON.parse(data);
-                  const text = parsed.content || parsed.text || data;
-                  set((state) => {
-                    const msgs = [...state.messages];
-                    const last = msgs[msgs.length - 1];
-                    if (last.role === 'assistant') {
-                      msgs[msgs.length - 1] = {
-                        ...last,
-                        content: last.content + text,
-                      };
-                    }
-                    return { messages: msgs };
-                  });
-                } catch {
-                  // If not JSON, treat as plain text chunk
-                  set((state) => {
-                    const msgs = [...state.messages];
-                    const last = msgs[msgs.length - 1];
-                    if (last.role === 'assistant') {
-                      msgs[msgs.length - 1] = {
-                        ...last,
-                        content: last.content + data,
-                      };
-                    }
-                    return { messages: msgs };
-                  });
-                }
+          if (!value) continue;
+
+          const chunk = decoder.decode(value, { stream: true });
+          const lines = chunk.split('\n');
+
+          for (const line of lines) {
+            if (!line.startsWith('data: ')) continue;
+
+            const rawData = line.slice(6).trim();
+            if (!rawData || rawData === '[DONE]') continue;
+
+            try {
+              const parsed = JSON.parse(rawData) as { type: string; text?: string; error?: string };
+
+              if (parsed.type === 'content_block_delta' && typeof parsed.text === 'string') {
+                // Append only the typed text delta to the last (assistant) message
+                set((state) => {
+                  const msgs = [...state.messages];
+                  const lastIdx = msgs.length - 1;
+                  if (msgs[lastIdx]?.role === 'assistant') {
+                    msgs[lastIdx] = { ...msgs[lastIdx], content: msgs[lastIdx].content + parsed.text };
+                  }
+                  return { messages: msgs };
+                });
               }
+              // message_stop signals end — handled by reader loop completing
+            } catch {
+              // Malformed SSE chunk — skip silently
             }
           }
         }
       }
-    } catch {
-      // On error, provide a fallback response
+    } catch (err) {
+      const message = err instanceof Error ? err.message : 'Connection failed. Please try again.';
       set((state) => {
         const msgs = [...state.messages];
-        const last = msgs[msgs.length - 1];
-        if (last.role === 'assistant' && !last.content) {
-          msgs[msgs.length - 1] = {
-            ...last,
-            content:
-              "I'm having trouble connecting right now. Please try again in a moment!",
+        const lastIdx = msgs.length - 1;
+        // If the assistant message is still empty, replace it with a friendly error
+        if (msgs[lastIdx]?.role === 'assistant' && !msgs[lastIdx].content) {
+          msgs[lastIdx] = {
+            ...msgs[lastIdx],
+            content: "I'm having trouble connecting right now. Please try again in a moment!",
           };
         }
-        return { messages: msgs };
+        return { messages: msgs, error: message };
       });
     } finally {
       set({ isStreaming: false });
@@ -132,22 +133,15 @@ export const useChatStore = create<ChatState>((set, get) => ({
 
   fetchSuggestions: async () => {
     try {
-      const token = localStorage.getItem('finance-buddy-token');
-      const response = await fetch('/api/v1/chat/suggestions', {
-        headers: {
-          ...(token ? { Authorization: `Bearer ${token}` } : {}),
-        },
-      });
-      if (response.ok) {
-        const data = await response.json();
-        if (data.suggestions) {
-          set({ suggestions: data.suggestions });
-        }
+      const data = await api<{ suggestions: string[] }>('/chat/suggestions');
+      if (Array.isArray(data.suggestions) && data.suggestions.length > 0) {
+        set({ suggestions: data.suggestions });
       }
     } catch {
-      // keep default suggestions
+      // keep default suggestions on failure
     }
   },
 
   clearMessages: () => set({ messages: [] }),
+  clearError: () => set({ error: null }),
 }));

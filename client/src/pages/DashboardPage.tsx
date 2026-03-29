@@ -15,6 +15,8 @@ import {
   CreditCard,
   Shield,
   Landmark,
+  DollarSign,
+  Banknote,
 } from 'lucide-react';
 import {
   BarChart,
@@ -81,6 +83,8 @@ export default function DashboardPage() {
     { label: 'Start Lesson', icon: GraduationCap, color: 'bg-accent-500', to: '/learn' },
     { label: 'Credit Cards', icon: CreditCard, color: 'bg-amber-500', to: '/credit-cards' },
     { label: 'Fraud Protection', icon: Shield, color: 'bg-red-500', to: '/fraud-protection' },
+    { label: 'Add Income', icon: DollarSign, color: 'bg-emerald-500', to: '/budget' },
+    { label: 'View Loans', icon: Banknote, color: 'bg-orange-500', to: '/loans' },
   ];
 
   return (

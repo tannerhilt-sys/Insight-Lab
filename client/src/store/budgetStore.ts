@@ -12,10 +12,10 @@ export interface BudgetEntry {
 
 export interface BudgetGoal {
   id: string;
-  name: string;
+  label: string;
   targetAmount: number;
   currentAmount: number;
-  deadline: string;
+  deadline: string | null;
 }
 
 interface BudgetTotals {
@@ -30,13 +30,15 @@ interface BudgetState {
   goals: BudgetGoal[];
   insight: string | null;
   isLoading: boolean;
+  error: string | null;
 
   fetchEntries: (month?: string) => Promise<void>;
   addEntry: (data: Omit<BudgetEntry, 'id'>) => Promise<void>;
   deleteEntry: (id: string) => Promise<void>;
   fetchInsight: () => Promise<void>;
   fetchGoals: () => Promise<void>;
-  addGoal: (data: Omit<BudgetGoal, 'id' | 'currentAmount'>) => Promise<void>;
+  addGoal: (data: Pick<BudgetGoal, 'label' | 'targetAmount' | 'deadline'>) => Promise<void>;
+  clearError: () => void;
 }
 
 export const useBudgetStore = create<BudgetState>((set, get) => ({
@@ -45,21 +47,33 @@ export const useBudgetStore = create<BudgetState>((set, get) => ({
   goals: [],
   insight: null,
   isLoading: false,
+  error: null,
 
   fetchEntries: async (month) => {
-    set({ isLoading: true });
+    set({ isLoading: true, error: null });
     try {
-      const query = month ? `?month=${month}` : '';
-      const data = await api<{ entries: BudgetEntry[]; totals: BudgetTotals }>(
+      const query = month ? `?month=${encodeURIComponent(month)}` : '';
+      // Server returns { entries, totalIncome, totalExpenses, netSavings }
+      const data = await api<BudgetEntry[] & { entries: BudgetEntry[]; totalIncome: number; totalExpenses: number; netSavings: number }>(
         `/budget/entries${query}`,
       );
-      set({ entries: data.entries, totals: data.totals, isLoading: false });
-    } catch {
-      set({ isLoading: false });
+      set({
+        entries: data.entries,
+        totals: {
+          totalIncome: data.totalIncome,
+          totalExpenses: data.totalExpenses,
+          netSavings: data.netSavings,
+        },
+        isLoading: false,
+      });
+    } catch (err) {
+      const message = err instanceof Error ? err.message : 'Failed to load budget entries';
+      set({ isLoading: false, error: message });
     }
   },
 
   addEntry: async (data) => {
+    set({ error: null });
     try {
       const entry = await api<BudgetEntry>('/budget/entries', {
         method: 'POST',
@@ -67,24 +81,27 @@ export const useBudgetStore = create<BudgetState>((set, get) => ({
       });
       set((state) => {
         const entries = [...state.entries, entry];
-        const totals = recalcTotals(entries);
-        return { entries, totals };
+        return { entries, totals: recalcTotals(entries) };
       });
-    } catch {
-      // error handled by caller
+    } catch (err) {
+      const message = err instanceof Error ? err.message : 'Failed to add entry';
+      set({ error: message });
+      throw err;
     }
   },
 
   deleteEntry: async (id) => {
+    set({ error: null });
     try {
       await api(`/budget/entries/${id}`, { method: 'DELETE' });
       set((state) => {
         const entries = state.entries.filter((e) => e.id !== id);
-        const totals = recalcTotals(entries);
-        return { entries, totals };
+        return { entries, totals: recalcTotals(entries) };
       });
-    } catch {
-      // error handled by caller
+    } catch (err) {
+      const message = err instanceof Error ? err.message : 'Failed to delete entry';
+      set({ error: message });
+      throw err;
     }
   },
 
@@ -93,33 +110,39 @@ export const useBudgetStore = create<BudgetState>((set, get) => ({
       const data = await api<{ insight: string }>('/budget/insight');
       set({ insight: data.insight });
     } catch {
-      set({
-        insight:
-          "I notice you're spending quite a bit on dining out. Consider meal prepping to save around $200/month!",
-      });
+      // Keep existing insight rather than overwriting with misleading hardcoded text
+      if (!get().insight) {
+        set({ insight: 'Add your income and expenses to get personalized budget insights.' });
+      }
     }
   },
 
   fetchGoals: async () => {
     try {
-      const data = await api<{ goals: BudgetGoal[] }>('/budget/goals');
-      set({ goals: data.goals });
+      // Server returns BudgetGoal[] directly
+      const goals = await api<BudgetGoal[]>('/budget/goals');
+      set({ goals: Array.isArray(goals) ? goals : [] });
     } catch {
-      // use empty goals
+      // keep existing goals
     }
   },
 
   addGoal: async (data) => {
+    set({ error: null });
     try {
       const goal = await api<BudgetGoal>('/budget/goals', {
         method: 'POST',
         body: JSON.stringify(data),
       });
       set((state) => ({ goals: [...state.goals, goal] }));
-    } catch {
-      // error handled by caller
+    } catch (err) {
+      const message = err instanceof Error ? err.message : 'Failed to add goal';
+      set({ error: message });
+      throw err;
     }
   },
+
+  clearError: () => set({ error: null }),
 }));
 
 function recalcTotals(entries: BudgetEntry[]): BudgetTotals {

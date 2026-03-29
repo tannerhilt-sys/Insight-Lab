@@ -3,22 +3,48 @@ import bcrypt from 'bcryptjs';
 import { v4 as uuidv4 } from 'uuid';
 import { getUserByEmail, addUser, getUser } from '../data/store.js';
 import { authenticate, signToken } from '../middleware/auth.js';
+import { MAX_BUDDY_NAME_LENGTH } from '../constants.js';
 
 const router = Router();
+
+const EMAIL_REGEX = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+const MIN_PASSWORD_LENGTH = 8;
+const MAX_PASSWORD_LENGTH = 128;
+
+function validateSignupInput(email, password, buddyName) {
+  if (!email || !password) {
+    return 'Email and password are required';
+  }
+  if (!EMAIL_REGEX.test(email)) {
+    return 'Please provide a valid email address';
+  }
+  if (password.length < MIN_PASSWORD_LENGTH) {
+    return `Password must be at least ${MIN_PASSWORD_LENGTH} characters`;
+  }
+  if (password.length > MAX_PASSWORD_LENGTH) {
+    return 'Password is too long';
+  }
+  if (buddyName && buddyName.trim().length > MAX_BUDDY_NAME_LENGTH) {
+    return `Buddy name must be ${MAX_BUDDY_NAME_LENGTH} characters or fewer`;
+  }
+  return null;
+}
 
 // POST /signup
 router.post('/signup', async (req, res) => {
   try {
     const { email, password, buddyName, ageConfirmed } = req.body;
 
-    if (!email || !password) {
-      return res.status(400).json({ error: 'Email and password are required' });
-    }
-    if (!ageConfirmed) {
-      return res.status(400).json({ error: 'You must confirm you are old enough to use this app' });
+    const validationError = validateSignupInput(email, password, buddyName);
+    if (validationError) {
+      return res.status(400).json({ error: validationError });
     }
 
-    const existing = getUserByEmail(email);
+    if (!ageConfirmed) {
+      return res.status(400).json({ error: 'You must confirm you are 16 or older to use this app' });
+    }
+
+    const existing = getUserByEmail(email.toLowerCase().trim());
     if (existing) {
       return res.status(409).json({ error: 'An account with this email already exists' });
     }
@@ -26,10 +52,10 @@ router.post('/signup', async (req, res) => {
     const hashedPassword = await bcrypt.hash(password, 10);
     const user = {
       id: uuidv4(),
-      email,
+      email: email.toLowerCase().trim(),
       password: hashedPassword,
-      buddyName: buddyName || 'Buddy',
-      ageConfirmed: !!ageConfirmed,
+      buddyName: buddyName ? buddyName.trim() : 'Buddy',
+      ageConfirmed: true,
       createdAt: new Date().toISOString(),
     };
 
@@ -51,14 +77,19 @@ router.post('/login', async (req, res) => {
     if (!email || !password) {
       return res.status(400).json({ error: 'Email and password are required' });
     }
-
-    const user = getUserByEmail(email);
-    if (!user) {
-      return res.status(401).json({ error: 'Invalid email or password' });
+    if (typeof email !== 'string' || typeof password !== 'string') {
+      return res.status(400).json({ error: 'Invalid input' });
     }
 
-    const valid = await bcrypt.compare(password, user.password);
-    if (!valid) {
+    const user = getUserByEmail(email.toLowerCase().trim());
+
+    // Always run bcrypt.compare to prevent timing attacks that reveal whether an email exists
+    const dummyHash = '$2a$10$invalidhashpaddingtomatchlength00000000000000000000000';
+    const valid = user
+      ? await bcrypt.compare(password, user.password)
+      : await bcrypt.compare(password, dummyHash).then(() => false);
+
+    if (!user || !valid) {
       return res.status(401).json({ error: 'Invalid email or password' });
     }
 
@@ -70,13 +101,13 @@ router.post('/login', async (req, res) => {
   }
 });
 
-// GET /me (authenticated)
+// GET /me
 router.get('/me', authenticate, (req, res) => {
   try {
     const user = getUser(req.user.id);
     if (!user) return res.status(404).json({ error: 'User not found' });
 
-    const { password, ...safe } = user;
+    const { password: _password, ...safe } = user;
     res.json({ user: safe });
   } catch (err) {
     console.error('Get me error:', err);

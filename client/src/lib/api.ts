@@ -1,4 +1,5 @@
 const BASE_URL = '/api/v1';
+const REQUEST_TIMEOUT_MS = 30_000;
 
 interface ApiOptions extends RequestInit {
   skipAuth?: boolean;
@@ -16,10 +17,7 @@ class ApiError extends Error {
   }
 }
 
-export async function api<T = unknown>(
-  path: string,
-  options: ApiOptions = {},
-): Promise<T> {
+export async function api<T = unknown>(path: string, options: ApiOptions = {}): Promise<T> {
   const { skipAuth, ...fetchOptions } = options;
 
   const headers: Record<string, string> = {
@@ -34,29 +32,45 @@ export async function api<T = unknown>(
     }
   }
 
-  const response = await fetch(`${BASE_URL}${path}`, {
-    ...fetchOptions,
-    headers,
-  });
+  const controller = new AbortController();
+  const timeoutId = setTimeout(() => controller.abort(), REQUEST_TIMEOUT_MS);
 
-  if (!response.ok) {
-    let data: unknown;
-    try {
-      data = await response.json();
-    } catch {
-      data = null;
+  try {
+    const response = await fetch(`${BASE_URL}${path}`, {
+      ...fetchOptions,
+      headers,
+      signal: controller.signal,
+    });
+
+    clearTimeout(timeoutId);
+
+    if (!response.ok) {
+      let data: unknown;
+      try {
+        data = await response.json();
+      } catch {
+        data = null;
+      }
+      // Server returns errors as { error: string }
+      const message =
+        (data as { error?: string })?.error ||
+        (data as { message?: string })?.message ||
+        `Request failed with status ${response.status}`;
+      throw new ApiError(message, response.status, data);
     }
-    const message =
-      (data as { message?: string })?.message ||
-      `Request failed with status ${response.status}`;
-    throw new ApiError(message, response.status, data);
-  }
 
-  if (response.status === 204) {
-    return undefined as T;
-  }
+    if (response.status === 204) {
+      return undefined as T;
+    }
 
-  return response.json() as Promise<T>;
+    return response.json() as Promise<T>;
+  } catch (err) {
+    clearTimeout(timeoutId);
+    if (err instanceof Error && err.name === 'AbortError') {
+      throw new ApiError('Request timed out. Please try again.', 408);
+    }
+    throw err;
+  }
 }
 
 export { ApiError };

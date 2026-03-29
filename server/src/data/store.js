@@ -1,34 +1,69 @@
 // In-memory data store for Finance Buddy
-// All data lives here — no database required for this draft.
+// Primary maps index by id. Secondary index maps (userIndex.*) index id sets by userId
+// for O(1) per-user lookups instead of O(n) full-table scans.
 
 const store = {
-  users: new Map(),          // id -> user object
-  profiles: new Map(),       // userId -> profile object
-  budgetEntries: new Map(),  // id -> entry object
-  savingsGoals: new Map(),   // id -> goal object
-  holdings: new Map(),       // id -> holding object
+  users: new Map(),        // id -> user
+  usersByEmail: new Map(), // email -> user  (secondary index for fast login lookup)
+  profiles: new Map(),     // userId -> profile
+
+  budgetEntries: new Map(),  // id -> entry
+  savingsGoals: new Map(),   // id -> goal
+  holdings: new Map(),       // id -> holding
   watchlist: new Map(),      // id -> watchlist item
   insightCards: new Map(),   // id -> card
-  chatHistory: new Map(),    // userId -> messages array
+  chatHistory: new Map(),    // userId -> messages[]
+
+  // Secondary userId -> Set<id> indexes for O(1) per-user collection lookups
+  userIndex: {
+    budgetEntries: new Map(), // userId -> Set<entryId>
+    savingsGoals: new Map(),  // userId -> Set<goalId>
+    holdings: new Map(),      // userId -> Set<holdingId>
+    watchlist: new Map(),     // userId -> Set<itemId>
+    insightCards: new Map(),  // userId -> Set<cardId>
+  },
 };
 
-// --------------- Helper functions ---------------
+/** Register an id in a userId secondary index. */
+function indexByUser(index, userId, id) {
+  if (!index.has(userId)) index.set(userId, new Set());
+  index.get(userId).add(id);
+}
+
+/** Remove an id from a userId secondary index. */
+function deindexByUser(index, userId, id) {
+  index.get(userId)?.delete(id);
+}
+
+/** Retrieve all items from a primary map whose ids are in the user's index set. */
+function getByUserIndex(primaryMap, index, userId) {
+  const ids = index.get(userId);
+  if (!ids || ids.size === 0) return [];
+  const results = [];
+  for (const id of ids) {
+    const item = primaryMap.get(id);
+    if (item) results.push(item);
+  }
+  return results;
+}
+
+// --------------- Users ---------------
 
 export function getUserByEmail(email) {
-  for (const user of store.users.values()) {
-    if (user.email === email) return user;
-  }
-  return null;
+  return store.usersByEmail.get(email) || null;
 }
 
 export function addUser(user) {
   store.users.set(user.id, user);
+  store.usersByEmail.set(user.email, user);
   return user;
 }
 
 export function getUser(id) {
   return store.users.get(id) || null;
 }
+
+// --------------- Profiles ---------------
 
 export function getProfile(userId) {
   return store.profiles.get(userId) || null;
@@ -39,16 +74,15 @@ export function setProfile(userId, profile) {
   return profile;
 }
 
+// --------------- Budget Entries ---------------
+
 export function getBudgetEntries(userId) {
-  const entries = [];
-  for (const entry of store.budgetEntries.values()) {
-    if (entry.userId === userId) entries.push(entry);
-  }
-  return entries;
+  return getByUserIndex(store.budgetEntries, store.userIndex.budgetEntries, userId);
 }
 
 export function addBudgetEntry(entry) {
   store.budgetEntries.set(entry.id, entry);
+  indexByUser(store.userIndex.budgetEntries, entry.userId, entry.id);
   return entry;
 }
 
@@ -64,85 +98,84 @@ export function updateBudgetEntry(id, updates) {
 }
 
 export function deleteBudgetEntry(id) {
+  const entry = store.budgetEntries.get(id);
+  if (entry) deindexByUser(store.userIndex.budgetEntries, entry.userId, id);
   return store.budgetEntries.delete(id);
 }
 
+// --------------- Savings Goals ---------------
+
 export function getSavingsGoals(userId) {
-  const goals = [];
-  for (const goal of store.savingsGoals.values()) {
-    if (goal.userId === userId) goals.push(goal);
-  }
-  return goals;
+  return getByUserIndex(store.savingsGoals, store.userIndex.savingsGoals, userId);
 }
 
 export function addSavingsGoal(goal) {
   store.savingsGoals.set(goal.id, goal);
+  indexByUser(store.userIndex.savingsGoals, goal.userId, goal.id);
   return goal;
 }
 
+// --------------- Holdings ---------------
+
 export function getHoldings(userId) {
-  const items = [];
-  for (const h of store.holdings.values()) {
-    if (h.userId === userId) items.push(h);
-  }
-  return items;
+  return getByUserIndex(store.holdings, store.userIndex.holdings, userId);
 }
 
 export function getHoldingByTicker(userId, ticker) {
-  for (const h of store.holdings.values()) {
-    if (h.userId === userId && h.ticker === ticker) return h;
-  }
-  return null;
+  const userHoldings = getByUserIndex(store.holdings, store.userIndex.holdings, userId);
+  return userHoldings.find((h) => h.ticker === ticker) || null;
 }
 
 export function addHolding(holding) {
   store.holdings.set(holding.id, holding);
+  indexByUser(store.userIndex.holdings, holding.userId, holding.id);
   return holding;
 }
 
 export function removeHolding(id) {
+  const holding = store.holdings.get(id);
+  if (holding) deindexByUser(store.userIndex.holdings, holding.userId, id);
   return store.holdings.delete(id);
 }
 
+// --------------- Watchlist ---------------
+
 export function getWatchlist(userId) {
-  const items = [];
-  for (const w of store.watchlist.values()) {
-    if (w.userId === userId) items.push(w);
-  }
-  return items;
+  return getByUserIndex(store.watchlist, store.userIndex.watchlist, userId);
 }
 
 export function addWatchlistItem(item) {
   store.watchlist.set(item.id, item);
+  indexByUser(store.userIndex.watchlist, item.userId, item.id);
   return item;
 }
 
 export function removeWatchlistByTicker(userId, ticker) {
-  for (const [id, w] of store.watchlist.entries()) {
-    if (w.userId === userId && w.ticker === ticker) {
-      store.watchlist.delete(id);
-      return true;
-    }
-  }
-  return false;
+  const userItems = getByUserIndex(store.watchlist, store.userIndex.watchlist, userId);
+  const item = userItems.find((w) => w.ticker === ticker);
+  if (!item) return false;
+  deindexByUser(store.userIndex.watchlist, userId, item.id);
+  store.watchlist.delete(item.id);
+  return true;
 }
 
+// --------------- Insight Cards ---------------
+
 export function getInsightCards(userId) {
-  const cards = [];
-  for (const c of store.insightCards.values()) {
-    if (c.userId === userId) cards.push(c);
-  }
-  return cards;
+  return getByUserIndex(store.insightCards, store.userIndex.insightCards, userId);
 }
 
 export function addInsightCard(card) {
   store.insightCards.set(card.id, card);
+  indexByUser(store.userIndex.insightCards, card.userId, card.id);
   return card;
 }
 
 export function getInsightCard(id) {
   return store.insightCards.get(id) || null;
 }
+
+// --------------- Chat History ---------------
 
 export function getChatHistory(userId) {
   return store.chatHistory.get(userId) || [];

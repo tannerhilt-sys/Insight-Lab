@@ -10,12 +10,69 @@ import {
   getHoldings,
   getProfile,
 } from '../data/store.js';
+import { CLAUDE_MODEL, VALID_INSIGHT_TYPES } from '../constants.js';
 
 const router = Router();
+
+const VALID_PRIORITIES = ['high', 'medium', 'low'];
 
 function getAnthropicClient() {
   if (!process.env.ANTHROPIC_API_KEY) return null;
   return new Anthropic();
+}
+
+/** Safely parse a JSON array from an AI response string. Returns null on failure. */
+function parseInsightJson(text) {
+  try {
+    const match = text.match(/\[[\s\S]*\]/);
+    if (!match) return null;
+    const parsed = JSON.parse(match[0]);
+    return Array.isArray(parsed) ? parsed : null;
+  } catch {
+    return null;
+  }
+}
+
+function buildFallbackCards(userId, totalExpenses, holdings, holdingTickers) {
+  return [
+    {
+      id: uuidv4(),
+      userId,
+      type: 'BUDGET',
+      title: 'Track Your Spending Patterns',
+      body: totalExpenses > 0
+        ? `You've spent $${totalExpenses.toFixed(2)} this period. Categorizing your expenses can reveal quick savings opportunities — even cutting $50/month in one category adds up to $600/year.`
+        : 'Start logging your expenses to get personalized budget insights. Knowing where your money goes is the first step to financial health.',
+      priority: 'high',
+      status: 'ACTIVE',
+      createdAt: new Date().toISOString(),
+      updatedAt: new Date().toISOString(),
+    },
+    {
+      id: uuidv4(),
+      userId,
+      type: 'PORTFOLIO',
+      title: holdings.length > 0 ? 'Diversify Your Portfolio' : 'Start Your Investment Journey',
+      body: holdings.length > 0
+        ? `You currently hold ${holdings.length} position(s): ${holdingTickers}. A diversified portfolio across sectors typically reduces volatility. Consider adding an index fund like SPY for broad market exposure.`
+        : "You haven't made any paper trades yet. Try buying a few shares of an index fund like SPY. Paper trading is a great way to learn without risking real money.",
+      priority: 'medium',
+      status: 'ACTIVE',
+      createdAt: new Date().toISOString(),
+      updatedAt: new Date().toISOString(),
+    },
+    {
+      id: uuidv4(),
+      userId,
+      type: 'MARKET',
+      title: 'Market Insight: Think Long-Term',
+      body: 'The S&P 500 has historically returned ~10% annually over long periods. Rather than reacting to daily movements, focus on consistent investing through dollar-cost averaging — buying a fixed amount on a regular schedule regardless of price.',
+      priority: 'low',
+      status: 'ACTIVE',
+      createdAt: new Date().toISOString(),
+      updatedAt: new Date().toISOString(),
+    },
+  ];
 }
 
 // GET / — return user's insight cards
@@ -62,7 +119,7 @@ router.post('/:id/dismiss', authenticate, (req, res) => {
   }
 });
 
-// POST /generate — generate new insight cards
+// POST /generate
 router.post('/generate', authenticate, async (req, res) => {
   try {
     const profile = getProfile(req.user.id);
@@ -74,15 +131,20 @@ router.post('/generate', authenticate, async (req, res) => {
     const holdingTickers = holdings.map((h) => h.ticker).join(', ');
 
     const client = getAnthropicClient();
-
-    let cards;
+    let cards = null;
 
     if (client) {
       try {
         const message = await client.messages.create({
-          model: 'claude-sonnet-4-20250514',
+          model: CLAUDE_MODEL,
           max_tokens: 1024,
-          system: 'You are Finance Buddy. Generate exactly 3 financial insight cards in JSON format. Each card should have: type (BUDGET, PORTFOLIO, or MARKET), title (short), body (2-3 sentences of actionable, educational advice), and priority (high, medium, low). Return a JSON array of objects. Only output the JSON array, nothing else.',
+          system: `You are Finance Buddy. Generate exactly 3 financial insight cards as a JSON array.
+Each object must have:
+- type: one of ${VALID_INSIGHT_TYPES.join(', ')}
+- title: short string (max 60 chars)
+- body: 2-3 sentences of actionable, educational advice
+- priority: one of high, medium, low
+Return ONLY the JSON array. No explanation, no markdown fences.`,
           messages: [
             {
               role: 'user',
@@ -98,71 +160,32 @@ router.post('/generate', authenticate, async (req, res) => {
           ],
         });
 
-        const text = message.content[0].text;
-        const jsonMatch = text.match(/\[[\s\S]*\]/);
-        if (jsonMatch) {
-          const parsed = JSON.parse(jsonMatch[0]);
-          cards = parsed.map((c) => ({
-            id: uuidv4(),
-            userId: req.user.id,
-            type: c.type || 'BUDGET',
-            title: c.title,
-            body: c.body,
-            priority: c.priority || 'medium',
-            status: 'ACTIVE',
-            createdAt: new Date().toISOString(),
-            updatedAt: new Date().toISOString(),
-          }));
+        const responseText = message.content?.[0]?.text;
+        if (responseText) {
+          const parsed = parseInsightJson(responseText);
+          if (parsed && parsed.length > 0) {
+            cards = parsed.map((c) => ({
+              id: uuidv4(),
+              userId: req.user.id,
+              type: VALID_INSIGHT_TYPES.includes(c.type) ? c.type : 'BUDGET',
+              title: typeof c.title === 'string' ? c.title.slice(0, 60) : 'Insight',
+              body: typeof c.body === 'string' ? c.body : '',
+              priority: VALID_PRIORITIES.includes(c.priority) ? c.priority : 'medium',
+              status: 'ACTIVE',
+              createdAt: new Date().toISOString(),
+              updatedAt: new Date().toISOString(),
+            }));
+          }
         }
       } catch (apiErr) {
-        console.error('Claude insight generation error:', apiErr.message);
+        console.error('Claude insight generation error:', apiErr instanceof Error ? apiErr.message : apiErr);
       }
     }
 
-    // Fallback mock cards
     if (!cards || cards.length === 0) {
-      cards = [
-        {
-          id: uuidv4(),
-          userId: req.user.id,
-          type: 'BUDGET',
-          title: 'Track Your Spending Patterns',
-          body: totalExpenses > 0
-            ? `You've spent $${totalExpenses.toFixed(2)} this period. Try categorizing your expenses to identify areas where you can save. Even small reductions in daily spending can add up to significant savings over time.`
-            : 'Start logging your expenses to get personalized budget insights. Knowing where your money goes is the first step to financial health.',
-          priority: 'high',
-          status: 'ACTIVE',
-          createdAt: new Date().toISOString(),
-          updatedAt: new Date().toISOString(),
-        },
-        {
-          id: uuidv4(),
-          userId: req.user.id,
-          type: 'PORTFOLIO',
-          title: holdings.length > 0 ? 'Diversify Your Portfolio' : 'Start Your Investment Journey',
-          body: holdings.length > 0
-            ? `You currently hold ${holdings.length} position(s): ${holdingTickers}. Consider whether your portfolio is diversified across different sectors to reduce risk. A mix of stocks, bonds, and index funds is generally recommended for beginners.`
-            : 'You haven\'t made any paper trades yet. Try buying a few shares of an index fund like SPY to get started. Paper trading is a great way to learn without risking real money.',
-          priority: 'medium',
-          status: 'ACTIVE',
-          createdAt: new Date().toISOString(),
-          updatedAt: new Date().toISOString(),
-        },
-        {
-          id: uuidv4(),
-          userId: req.user.id,
-          type: 'MARKET',
-          title: 'Market Insight: Think Long-Term',
-          body: 'Markets fluctuate daily, but historically the S&P 500 has returned about 10% annually over long periods. Focus on your long-term goals rather than short-term market movements. Consistent investing over time — known as dollar-cost averaging — can help smooth out market volatility.',
-          priority: 'low',
-          status: 'ACTIVE',
-          createdAt: new Date().toISOString(),
-          updatedAt: new Date().toISOString(),
-        },
-      ];
+      cards = buildFallbackCards(req.user.id, totalExpenses, holdings, holdingTickers);
     }
 
-    // Save cards to store
     for (const card of cards) {
       addInsightCard(card);
     }

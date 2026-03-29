@@ -1,21 +1,27 @@
 import { create } from 'zustand';
 import { api } from '@/lib/api';
 
+// Matches what server/src/routes/market.js actually returns
 export interface StockQuote {
   ticker: string;
-  name: string;
+  companyName: string;   // server sends companyName, not name
+  sector: string;
   price: number;
   change: number;
   changePercent: number;
   high: number;
   low: number;
+  open: number;
+  previousClose: number;
   volume: number;
+  marketCap: number;
+  timestamp: string;
 }
 
 export interface SearchResult {
   ticker: string;
-  name: string;
-  exchange: string;
+  companyName: string;  // server sends companyName, not name
+  sector: string;       // server sends sector, not exchange
 }
 
 export interface NewsItem {
@@ -23,8 +29,9 @@ export interface NewsItem {
   title: string;
   summary: string;
   source: string;
-  url: string;
+  category: string;
   publishedAt: string;
+  tickers: string[];
 }
 
 interface MarketState {
@@ -32,28 +39,33 @@ interface MarketState {
   searchResults: SearchResult[];
   news: NewsItem[];
   isSearching: boolean;
+  error: string | null;
 
   fetchQuote: (ticker: string) => Promise<StockQuote | null>;
   searchStocks: (query: string) => Promise<void>;
   fetchNews: () => Promise<void>;
+  clearError: () => void;
 }
 
-export const useMarketStore = create<MarketState>((set, get) => ({
+export const useMarketStore = create<MarketState>((set) => ({
   quotes: new Map(),
   searchResults: [],
   news: [],
   isSearching: false,
+  error: null,
 
   fetchQuote: async (ticker) => {
     try {
-      const quote = await api<StockQuote>(`/market/quote/${ticker}`);
+      const quote = await api<StockQuote>(`/market/quote/${encodeURIComponent(ticker)}`);
       set((state) => {
         const quotes = new Map(state.quotes);
-        quotes.set(ticker, quote);
+        quotes.set(ticker.toUpperCase(), quote);
         return { quotes };
       });
       return quote;
-    } catch {
+    } catch (err) {
+      const message = err instanceof Error ? err.message : 'Failed to fetch quote';
+      set({ error: message });
       return null;
     }
   },
@@ -63,14 +75,15 @@ export const useMarketStore = create<MarketState>((set, get) => ({
       set({ searchResults: [] });
       return;
     }
-    set({ isSearching: true });
+    set({ isSearching: true, error: null });
     try {
       const data = await api<{ results: SearchResult[] }>(
         `/market/search?q=${encodeURIComponent(query)}`,
       );
       set({ searchResults: data.results, isSearching: false });
-    } catch {
-      set({ isSearching: false });
+    } catch (err) {
+      const message = err instanceof Error ? err.message : 'Search failed';
+      set({ isSearching: false, error: message });
     }
   },
 
@@ -79,7 +92,9 @@ export const useMarketStore = create<MarketState>((set, get) => ({
       const data = await api<{ news: NewsItem[] }>('/market/news');
       set({ news: data.news });
     } catch {
-      // keep empty
+      // keep existing news; non-critical
     }
   },
+
+  clearError: () => set({ error: null }),
 }));
