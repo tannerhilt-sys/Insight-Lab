@@ -440,12 +440,33 @@ Beyond stock investment, a comprehensive set of tools covering major personal fi
 - **Personalized recommendations** based on location, balance range, and feature priorities.
 - **Switching guide:** Step-by-step guidance including direct deposit transfer checklists and automatic payment migration.
 
-#### 7.5b Credit Card Comparison
-- **Card matching engine** based on spending habits, credit score range, and reward preferences.
-- **Criteria:** APR (intro and ongoing), annual fees, rewards structure (cashback, points, miles), sign-up bonuses, foreign transaction fees, balance transfer offers, credit limit ranges.
-- **Category-specific recommendations:** Travel, groceries, dining, gas, business, students, credit building.
-- **Cost calculator:** Estimated annual cost or benefit based on projected spending.
-- **Credit score impact guidance** on timing applications.
+#### 7.5b Smart Credit Card Hub
+
+- **Smart card recommendations engine** powered by AI analysis of user spending habits across categories: food & dining, travel, shopping, gas & transport.
+- **Category-specific card matching:**
+  - Best cards for dining/food (e.g., cards with 3-5% cashback on restaurants and groceries)
+  - Best cards for travel (points multipliers, lounge access, no foreign transaction fees)
+  - Best cards for shopping (e.g., store-specific cards, general cashback)
+  - Best cards for gas & transportation
+- **Affordable credit limit guidance:**
+  - Income-based credit limit calculator (recommended: 20-30% of annual income as total credit limit)
+  - Tips on requesting credit limit increases at the right time
+  - Explanation of how credit limits are determined by issuers
+- **Credit score education center:**
+  - How to build and maintain good credit (interactive checklist)
+  - Credit utilization guide with the 30% rule explained visually
+  - Why and how to maintain multiple credit cards (recommended 2-3 for beginners: one for daily use, one for category rewards, one as backup)
+  - Comprehensive credit score boosting strategies with impact ratings (High/Medium/Low):
+    - Pay bills on time every month (High)
+    - Keep credit utilization below 30% (High)
+    - Don't close old credit accounts (Medium)
+    - Limit hard credit inquiries (Medium)
+    - Diversify credit types over time (Low)
+    - Become an authorized user on a family member's card (Medium)
+    - Dispute errors on credit reports (High)
+- **Credit score simulator:** "What-if" scenario tool showing how actions affect credit score (e.g., "Pay off $2,000 in debt" → estimated +15-25 points)
+- **Criteria comparison:** APR (intro and ongoing), annual fees, rewards structure (cashback, points, miles), sign-up bonuses, foreign transaction fees, balance transfer offers, credit limit ranges.
+- **Cost calculator:** Estimated annual cost or benefit based on projected spending patterns.
 
 #### 7.5c Savings Plans
 - **Goal-based savings:** Emergency fund, vacation, down payment, retirement with target amounts and timelines.
@@ -454,13 +475,41 @@ Beyond stock investment, a comprehensive set of tools covering major personal fi
 - **Milestones and progress tracking:** Visual progress bars, celebrations, and projected completion dates.
 - **Emergency fund calculator** based on monthly expenses and risk factors.
 
-#### 7.5d Budgeting Tools (Extended)
+---
+
+#### 7.5d Banking Hub
+
+- **Bank account management:** View checking and savings account balances, recent transactions, and account details in one place.
+- **Bank comparison engine:** Compare checking accounts, savings accounts, CDs, and money market accounts across major banks and credit unions.
+- **Comparison criteria:** APY/interest rates, monthly fees, minimum balance requirements, ATM network size, branch availability, mobile banking features, customer service ratings, FDIC/NCUA insurance status.
+- **Personalized bank recommendations** based on user location, balance range, and feature priorities.
+- **Bank switching guide:** Step-by-step guidance including direct deposit transfer checklists and automatic payment migration.
+
+#### 7.5e Roth IRA Education & Tracking
+
+- **Roth IRA explainer:** Clear, beginner-friendly explanation of what a Roth IRA is, key benefits (tax-free growth, flexible withdrawals, no required minimum distributions), and who should consider one.
+- **Contribution tracker:** Track annual contributions against the IRS limit ($7,000 for 2026), with visual progress bar.
+- **Investment allocation display:** Pie chart showing portfolio allocation across asset classes (US stocks, bonds, international, cash).
+- **Key rules reference:** Contribution limits, income limits, withdrawal rules, and the 5-year rule — all in plain language.
+- **Compound interest projector:** Interactive calculator showing how early Roth IRA contributions grow over time (e.g., "$200/month starting at age 22 could grow to $500,000+ by age 65").
+
+#### 7.5f 401K Education & Optimization
+
+- **401K overview dashboard:** Employer name, current balance, employer match details, and vesting schedule.
+- **Contribution optimizer:** Interactive slider showing employee contribution percentage (1-25% of salary) with employer match visualization.
+- **Vesting schedule tracker:** Visual timeline showing vesting progress (e.g., Year 1: 25%, Year 2: 50%, Year 3: 75%, Year 4: 100%).
+- **Fund comparison table:** Available fund options with historical returns, expense ratios, and risk levels.
+- **Traditional vs. Roth 401K comparison:** Side-by-side pros and cons to help users choose.
+- **Tax advantage calculator:** Show estimated tax savings based on contribution amount and tax bracket.
+- **"Maximize Your Match" AI insight:** Alert users when they're not contributing enough to get the full employer match (e.g., "You're leaving $2,400/year on the table").
+
+#### 7.5g Budgeting Tools (Extended)
 See Section 6.3 for core budgeting. Additional advanced features:
 - **Spending nudges:** Gentle prompts tied to budget goals.
 - **AI spending insights:** Pattern analysis with actionable suggestions.
 - **Debt payoff planner** with snowball/avalanche methods.
 
-#### 7.5e General Financial Guidance & Education
+#### 7.5h General Financial Guidance & Education
 - **Financial literacy hub:** Articles, videos, and interactive tutorials on investing, taxes, insurance, retirement planning.
 - **Searchable glossary** integrated throughout the app with contextual tooltips.
 - **Life event guidance:** Buying a home, getting married, having a child, changing jobs, retirement.
@@ -498,6 +547,48 @@ Young users struggle more with **behavior** than knowledge. This is a major diff
 - **AI-generated encouragement** tied to real progress.
 - **Levels, XP, badges** for gamification.
 - **Goal tracking:** Save toward named goals (e.g., "New laptop," "Emergency fund").
+
+---
+
+### 7.9 Fraud Protection Center
+
+A dedicated security and fraud protection hub to help users safeguard their financial accounts and identity.
+
+#### Emergency Fraud Reporting
+
+- **Prominent fraud hotline numbers** displayed for immediate access:
+  - Bank fraud hotline
+  - Credit card fraud reporting
+  - FTC Identity Theft hotline (1-877-438-4338)
+  - Credit bureau fraud departments (Equifax: 1-800-525-6285, Experian: 1-888-397-3742, TransUnion: 1-800-680-7289)
+- **One-tap copy** for all phone numbers for quick dialing.
+- **Step-by-step fraud response guide:** What to do if you suspect fraud, in priority order.
+
+#### Security Score & Monitoring
+
+- **Security score dashboard (0-100):** Aggregated score based on password strength, 2FA status, account monitoring, and alert configuration.
+- **Real-time security activity feed:** Recent logins, password changes, suspicious transaction flags, and credit monitoring alerts.
+- **Account protection status:** Visual indicator showing overall protection level (Protected / At Risk / Compromised).
+
+#### Protection Checklist
+
+Interactive checklist for users to track their financial security setup:
+- Enable two-factor authentication on all financial accounts
+- Set up transaction alerts for unusual activity
+- Review account statements monthly
+- Use unique, strong passwords for each financial account
+- Enable biometric login where available
+- Set up credit monitoring services
+- Freeze credit when not actively applying for credit
+- Check credit report at least annually (free via AnnualCreditReport.com)
+
+#### Fraud Prevention Education
+
+- **Phishing scam recognition:** How to identify fake emails, texts, and phone calls.
+- **Card skimming protection:** Safeguards at ATMs and gas pumps.
+- **Identity theft prevention:** Warning signs and proactive measures.
+- **Online shopping safety:** Secure payment practices and red flags.
+- **Social engineering awareness:** How scammers manipulate victims and how to resist.
 
 ---
 
