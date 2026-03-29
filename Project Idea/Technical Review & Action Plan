@@ -1,8 +1,7 @@
-# Finance Buddy — Technical Review & Action Plan
-**Date:** March 29, 2026
-**Author:** Code review via full codebase analysis
-**Audience:** All team members
-**Purpose:** Identify critical gaps and define next steps before demo/submission
+## Overview
+Full codebase review completed -- every server route, client page, store, and project doc was read. See [`Project Idea/Technical Review & Action Plan`](https://github.com/tannerhilt-sys/Insight-Lab/blob/main/Project%20Idea/Technical%20Review%20%26%20Action%20Plan) for the full writeup.
+
+**Everyone please read the full document before working on tasks.**
 
 ---
 
@@ -10,42 +9,38 @@
 
 ### 1.1 Regulatory Risk (CRITICAL)
 
-The app generates personalized buy/sell/hold recommendations based on user profiles
-(risk tolerance, goals, holdings). Under the **SEC Investment Advisers Act of 1940**,
-this could classify Finance Buddy as an **Investment Advisor**, requiring:
+The app generates **personalized buy/sell/hold recommendations** based on user profiles (risk tolerance, goals, holdings). Under the **SEC Investment Advisers Act of 1940**, this could classify Finance Buddy as an **Investment Advisor**, requiring:
 
 - **RIA (Registered Investment Advisor) registration**, or
 - **Broker-dealer licensing** under FINRA
 
-Calling the app "educational" does NOT protect us if the AI gives personalized stock
-advice. Regulators evaluate what the software does, not how we label it.
+Calling the app "educational" does NOT protect us if the AI gives personalized stock advice. **Regulators evaluate what the software does, not how we label it.**
 
 Other applicable regulations:
 - State securities laws (vary by state)
 - FCA (UK) and MiFID II (EU) if expanding internationally
 - GDPR / CCPA for data privacy (especially for minors)
 
-### 1.2 What's Missing in the Code Right Now
+### 1.2 What is Missing in the Code Right Now
 
 | Issue | Location | Severity |
 |-------|----------|----------|
-| No Terms of Service page | Referenced in LoginPage.tsx signup checkbox but doesn't exist | HIGH |
+| No Terms of Service page | Referenced in `LoginPage.tsx` signup checkbox but page does not exist | HIGH |
 | No Privacy Policy | Not implemented anywhere | HIGH |
-| Age inconsistency: signup says 13+, README/Master Plan says 16+ | LoginPage.tsx vs README vs Master Plan | HIGH |
-| No visible financial disclaimer in UI | Disclaimers only exist inside AI system prompt (chat.js) — users never see them | HIGH |
+| Age inconsistency: signup says 13+, README/Master Plan says 16+ | `LoginPage.tsx` vs `README` vs Master Plan | HIGH |
+| No visible financial disclaimer in UI | Disclaimers only exist inside AI system prompt (`chat.js`) -- users never see them | HIGH |
 | No GDPR/CCPA compliance | No data export, deletion, or consent management | MEDIUM |
 | No audit trail | Recommendations not logged for compliance | MEDIUM |
-| Insecure JWT secret | Defaults to "dev-secret-change-me" in auth.js | MEDIUM |
+| Insecure JWT secret | Defaults to `dev-secret-change-me` in `auth.js` | MEDIUM |
 | No parental consent flow for minors | Required if minimum age is 16-17 | LOW (hackathon) |
 | No data retention policy | Chat history stored indefinitely in memory | LOW (hackathon) |
 
-### 1.3 Recommended Fix (Hackathon Scope)
+### 1.3 Hackathon Fix
 
-1. Add a **persistent disclaimer banner** across all pages:
-   "This is an educational simulator. Not financial advice. No real money is involved. Paper trading only."
-2. Fix the age requirement to **16+** everywhere (LoginPage.tsx, README, Master Plan)
+1. Add a **persistent disclaimer banner** across all pages: _"This is an educational simulator. Not financial advice. No real money is involved. Paper trading only."_
+2. Fix the age requirement to **16+** everywhere (`LoginPage.tsx`, `README`, Master Plan)
 3. Add a basic Terms of Service / Privacy Policy page (even a placeholder with key points)
-4. Ensure the AI system prompt NEVER says "you should buy X" — always frame as educational
+4. Ensure the AI system prompt NEVER says "you should buy X" -- always frame as educational
 
 ### 1.4 Long-Term (Post-Hackathon)
 
@@ -61,38 +56,35 @@ Other applicable regulations:
 
 ### 2.1 Current State
 
-The app uses **Claude API (claude-sonnet-4)** with prompt engineering. No custom model
-is trained. The AI receives user context (holdings, budget, risk tolerance) and generates
-responses. Without an API key, it falls back to hardcoded mock responses.
+The app uses **Claude API (`claude-sonnet-4-20250514`)** with prompt engineering -- no custom model. The AI receives user context (holdings, budget, risk tolerance) and generates responses. Without an `ANTHROPIC_API_KEY`, it falls back to hardcoded mock responses in `chat.js`, `insights.js`, and `portfolio.js`.
 
 ### 2.2 What Input Data Would a Custom Model Need?
 
-If we build the ML recommendation engine described in the Master Plan, here's what
-training data looks like:
+If we build the ML recommendation engine described in the Master Plan (Phase 4), here is what training data looks like:
 
 #### Structured Data (tabular)
 
 | Category | Features | Source | Volume |
 |----------|----------|--------|--------|
-| Price History | Open, High, Low, Close, Volume (OHLCV) — daily | Yahoo Finance, Polygon.io, Alpha Vantage | ~2.5M rows (500 stocks x 10 years) |
-| Technical Indicators | RSI, MACD, Bollinger Bands, SMA, EMA | Derived from price data | Same rows, +20 columns |
-| Fundamentals | P/E, EPS, revenue, debt/equity, market cap, dividends | SEC EDGAR, Financial Modeling Prep | ~400K rows (500 stocks x 40 quarters) |
-| Macroeconomic | Interest rates, CPI, GDP, unemployment, Fed decisions | FRED (Federal Reserve) | ~180K rows (50 indicators x 10 years daily) |
-| Sector/Index | S&P 500, NASDAQ, Dow, sector ETF performance | Yahoo Finance | ~36.5K rows |
+| **Price History** | Open, High, Low, Close, Volume (OHLCV) daily | Yahoo Finance, Polygon.io, Alpha Vantage | ~2.5M rows (500 stocks x 10 years) |
+| **Technical Indicators** | RSI, MACD, Bollinger Bands, SMA, EMA | Derived from price data | Same rows, +20 columns |
+| **Fundamentals** | P/E, EPS, revenue, debt/equity, market cap, dividends | SEC EDGAR, Financial Modeling Prep | ~400K rows (500 stocks x 40 quarters) |
+| **Macroeconomic** | Interest rates, CPI, GDP, unemployment, Fed decisions | FRED (Federal Reserve) | ~180K rows (50 indicators x 10 years daily) |
+| **Sector/Index** | S&P 500, NASDAQ, Dow, sector ETF performance | Yahoo Finance | ~36.5K rows |
 
 #### Unstructured Data (text)
 
 | Category | Source | Volume |
 |----------|--------|--------|
-| News headlines & articles | NewsAPI, Finnhub, Reuters | ~365K articles (100/day x 10 years) |
+| News headlines and articles | NewsAPI, Finnhub, Reuters | ~365K articles (100/day x 10 years) |
 | Earnings call transcripts | SEC EDGAR, Seeking Alpha | ~8K transcripts (500 stocks x 4/year x 4 years) |
 | SEC filings (10-K, 10-Q) | SEC EDGAR | ~4K filings |
 
 #### Total Dataset Size
 
-- Structured: **~3-5 million rows**, 50-100 features per row → ~2-5 GB
-- Unstructured: **~375K+ documents** → ~1-2 GB
-- Combined: **~4-7 GB** for a solid training set
+- **Structured**: ~3-5 million rows, 50-100 features per row = **2-5 GB**
+- **Unstructured**: ~375K+ documents = **1-2 GB**
+- **Combined**: **~4-7 GB** for a solid training set
 
 #### Recommended Lookback Period
 
@@ -104,11 +96,11 @@ training data looks like:
 
 | Model | Best For | Complexity | Hackathon? |
 |-------|----------|------------|------------|
-| XGBoost / LightGBM | Tabular buy/hold/sell classification | Low | No |
-| LSTM | Time-series price trend prediction | Medium | No |
-| Transformer | Long-range pattern capture | High | No |
-| Ensemble (all above) | Production-quality predictions | High | No |
-| Claude API + rules | MVP recommendations | Low | YES |
+| **XGBoost / LightGBM** | Tabular buy/hold/sell classification | Low | No |
+| **LSTM** | Time-series price trend prediction | Medium | No |
+| **Transformer** | Long-range pattern capture | High | No |
+| **Ensemble (all above)** | Production-quality predictions | High | No |
+| **Claude API + rules** | MVP recommendations | Low | **YES** |
 
 ### 2.4 Hackathon Recommendation
 
@@ -122,25 +114,25 @@ training data looks like:
 
 ## 3. What Should the Output Be?
 
-### 3.1 Current Output (in the code)
+### 3.1 Current Output (in the code now)
 
-The app generates simple insight cards with 4 fields:
+`server/src/routes/insights.js` generates simple insight cards with only 4 fields:
+```json
+{ "type": "BUDGET", "title": "...", "body": "...", "priority": "high" }
 ```
-{ type, title, body, priority }
-```
-Example: "Dining expenses up 23% — consider cooking at home more"
+Example: _"Dining expenses up 23% -- consider cooking at home more"_
 
 ### 3.2 Target Output (what we should build toward)
 
-Each AI recommendation should produce:
+Each AI recommendation should produce a richer structure:
 
-```
+```json
 {
   "action":        "BUY | SELL | HOLD",
   "ticker":        "AAPL",
-  "confidence":    0.82,           // 82% confidence
-  "risk_level":    "MEDIUM",       // LOW | MEDIUM | HIGH
-  "risk_pct":      0.23,           // 23% estimated probability of loss
+  "confidence":    0.82,
+  "risk_level":    "MEDIUM",
+  "risk_pct":      0.23,
   "expected_return": {
     "best_case":   "+12%",
     "expected":    "+5%",
@@ -154,79 +146,69 @@ Each AI recommendation should produce:
   ],
   "contrarian_signals": ["High P/E relative to sector"],
   "benchmark":     "Outperforming S&P 500 by 3.2% over 90 days",
-  "educational_note": "A P/E ratio of 28 means investors pay $28 for every $1..."
+  "educational_note": "A P/E ratio of 28 means investors pay $28 for every $1 of earnings..."
 }
 ```
 
-### 3.3 Why This Structure Matters
+### 3.3 Why Each Field Matters
 
-- **confidence + risk_pct** → Required by Master Plan's "Risk & Probability Metrics"
-- **rationale + key_factors** → Legal shield (explainability) + educational mission
-- **contrarian_signals** → Shows balanced analysis, not blind optimism
-- **educational_note** → Core differentiator: every recommendation teaches something
-- **benchmark** → Context for whether this is actually a good opportunity
+- **confidence + risk_pct** -- Required by Master Plan "Risk & Probability Metrics"
+- **rationale + key_factors** -- Legal shield (explainability) + educational mission
+- **contrarian_signals** -- Shows balanced analysis, not blind optimism
+- **educational_note** -- Core differentiator: every recommendation teaches something
+- **benchmark** -- Context for whether this is actually a good opportunity
+- **expected_return ranges** -- Honest about uncertainty, not promising guaranteed gains
 
-### 3.4 Hackathon Action Items
+### 3.4 Files to Change
 
-- [ ] Update insight card schema in `server/src/routes/insights.js` to include confidence and risk
-- [ ] Update the Claude prompt in insights.js to return structured JSON with these fields
-- [ ] Update `client/src/components/InsightCard.tsx` to display confidence/risk badges
-- [ ] Keep the current 3-card format but make each card richer
+- Update insight card schema in `server/src/routes/insights.js`
+- Update the Claude prompt in `insights.js` to return structured JSON with these fields
+- Update `client/src/components/InsightCard.tsx` to display confidence/risk badges
+- Keep the current 3-card format but make each card richer
 
 ---
 
 ## 4. How to Combine Market Information
 
-### 4.1 Current State
+### 4.1 Current State (100% Mock)
 
-ALL market data is mock/simulated:
-- `server/src/routes/market.js` has 20 hardcoded stocks with random price generation
-- `server/src/routes/portfolio.js` uses `simulateCurrentPrice()` with random variation
+- `server/src/routes/market.js` -- 20 hardcoded stocks, `generateQuote()` returns random prices with +/-2% variation
+- `server/src/routes/portfolio.js` -- `simulateCurrentPrice()` uses random variation (+/-5%)
 - News articles are hardcoded with fake timestamps
 - No real API calls to any market data provider
 
 ### 4.2 Target Architecture
 
 ```
-┌──────────────────────────────────────────────────┐
-│              EXTERNAL DATA SOURCES               │
-│  Polygon.io  |  Alpha Vantage  |  NewsAPI        │
-└──────────────────┬───────────────────────────────┘
-                   │
-                   ▼
-┌──────────────────────────────────────────────────┐
-│           MARKET DATA SERVICE (server)           │
-│  - Fetch real quotes (cache 60s)                 │
-│  - Fetch real news                               │
-│  - Calculate technical indicators                │
-└──────────────────┬───────────────────────────────┘
-                   │
-                   ▼
-┌──────────────────────────────────────────────────┐
-│           CONTEXT BUILDER                        │
-│  Combine:                                        │
-│  - Real market data (prices, trends, news)       │
-│  - User holdings & watchlist                     │
-│  - User profile (risk, goals, knowledge level)   │
-│  - User budget & savings data                    │
-└──────────────────┬───────────────────────────────┘
-                   │
-                   ▼
-┌──────────────────────────────────────────────────┐
-│           AI ENGINE (Claude API)                 │
-│  System prompt + real data context               │
-│  → Generates explainable recommendations         │
-│  → Personalized to user's level                  │
-└──────────────────┬───────────────────────────────┘
-                   │
-                   ▼
-┌──────────────────────────────────────────────────┐
-│           OUTPUT TO USER                         │
-│  - Insight cards with confidence/risk            │
-│  - Chat responses with real numbers              │
-│  - Portfolio performance with real prices         │
-│  - News feed with real articles                  │
-└──────────────────────────────────────────────────┘
+  EXTERNAL DATA SOURCES
+  Polygon.io  |  Alpha Vantage  |  NewsAPI
+                   |
+                   v
+  MARKET DATA SERVICE (server)
+  - Fetch real quotes (cache 60s)
+  - Fetch real news
+  - Calculate technical indicators
+                   |
+                   v
+  CONTEXT BUILDER
+  Combine:
+  - Real market data (prices, trends, news)
+  - User holdings & watchlist
+  - User profile (risk, goals, knowledge level)
+  - User budget & savings data
+                   |
+                   v
+  AI ENGINE (Claude API)
+  System prompt + real data context
+  -> Generates explainable recommendations
+  -> Personalized to user level
+                   |
+                   v
+  OUTPUT TO USER
+  - Insight cards with confidence/risk
+  - Chat responses with real numbers
+  - Portfolio performance with real prices
+  - News feed with real articles
 ```
 
 ### 4.3 Files That Need to Change
@@ -236,44 +218,60 @@ ALL market data is mock/simulated:
 | `server/src/routes/market.js` | `generateQuote()` returns random prices | Call Polygon.io API, cache results |
 | `server/src/routes/portfolio.js` | `simulateCurrentPrice()` random variation | Use real prices from market service |
 | `server/src/routes/insights.js` | Sends mock portfolio data to Claude | Include real prices + recent price changes |
-| `server/src/routes/chat.js` | No market context in prompts | Inject real portfolio P&L into system prompt |
+| `server/src/routes/chat.js` | No market context in system prompt | Inject real portfolio P&L into system prompt |
 | `server/.env` | `POLYGON_API_KEY=your-polygon-api-key` | Add real API key |
 | `client/src/store/marketStore.ts` | Fetches from mock endpoints | No change needed (endpoints stay the same) |
 
-### 4.4 Hackathon Action Items
+---
 
-- [ ] Sign up for Polygon.io free tier (5 calls/min, delayed quotes — enough for demo)
-- [ ] Replace `generateQuote()` with real API call + 60-second cache
-- [ ] Replace `simulateCurrentPrice()` with cached real prices
-- [ ] Add real market data context to Claude prompts in chat.js and insights.js
-- [ ] Keep hardcoded news as fallback if NewsAPI quota runs out
+## P0 -- Must Do Before Demo
+
+- [ ] **Add disclaimer banner to all pages** -- _"This is an educational simulator. Not financial advice. No real money. Paper trading only."_ _(30 min)_
+- [ ] **Fix age requirement** -- `LoginPage.tsx` says 13+, but README and Master Plan say 16+. Align everything to **16+**. _(15 min)_
+- [ ] **Set up `ANTHROPIC_API_KEY`** in `server/.env` -- without this the AI chatbot gives hardcoded mock responses _(5 min)_
+
+## P1 -- High Impact for Demo
+
+- [ ] **Integrate Polygon.io for real stock quotes** -- Replace mock `generateQuote()` in `server/src/routes/market.js` with real API calls. Free tier = 5 calls/min with delayed quotes. _(2 hrs)_
+- [ ] **Enrich insight cards** -- Add confidence score, risk level, risk %, and rationale to output schema in `server/src/routes/insights.js` + update `InsightCard.tsx` to display them _(2 hrs)_
+- [ ] **Feed real data into Claude prompts** -- Inject real portfolio P&L and market context into system prompts in `chat.js` and `insights.js` _(1 hr)_
+
+## P2 -- Nice to Have
+
+- [ ] **Add basic Terms of Service / Privacy Policy page** _(1 hr)_
+- [ ] **Polish onboarding flow** for judge first impressions _(1 hr)_
+- [ ] **Document ML roadmap** in pitch deck -- show Phase 4 vision (LSTM, XGBoost, Transformer ensemble trained on ~3-5M rows of market data) _(30 min)_
+
+## P3 -- Stretch
+
+- [ ] **Double-confirmation flow** for stock recommendations (from Master Plan) _(2 hrs)_
+- [ ] **Real news feed** via NewsAPI _(1 hr)_
 
 ---
 
-## 5. Priority Matrix for Hackathon
+## Key Decisions Needed
 
-| Priority | Task | Impact | Effort |
-|----------|------|--------|--------|
-| P0 | Add disclaimer banner to UI | Blocks legal risk | 30 min |
-| P0 | Fix age requirement (13 → 16 everywhere) | Consistency | 15 min |
-| P0 | Set up ANTHROPIC_API_KEY in .env | Enables core feature | 5 min |
-| P1 | Plug in Polygon.io for real stock quotes | Makes demo impressive | 2 hrs |
-| P1 | Enrich insight cards (confidence, risk) | Shows depth of thinking | 2 hrs |
-| P1 | Feed real data into Claude prompts | AI gives meaningful answers | 1 hr |
-| P2 | Add basic Terms/Privacy page | Completeness | 1 hr |
-| P2 | Improve onboarding flow for judges | First impressions | 1 hr |
-| P3 | Document ML roadmap for pitch | Shows vision | 30 min |
+1. **API Keys** -- Do we have Anthropic + Polygon.io keys? Who is setting them up?
+2. **Demo script** -- Suggested: signup -> onboard -> dashboard -> chat AI -> portfolio -> recommendation -> learn page
+3. **Who is presenting?** Pitch should emphasize: education-first, explainable AI, user always in control
+4. **Real vs mock data** -- Are we plugging in Polygon.io or keeping mock for the demo?
+5. **Double-confirmation** -- Should we implement the two-step trade confirmation? High impact for judges (~2 hrs)
 
 ---
 
-## 6. Questions for Team Discussion
+## AI Limitations to Acknowledge in Pitch
 
-1. Do we have an Anthropic API key? Without it, the AI chatbot is useless for the demo.
-2. Do we want to integrate Polygon.io free tier for real stock data, or keep mock data?
-3. Who is presenting? The pitch should emphasize: education-first, explainable AI, user control.
-4. Should we add the double-confirmation flow for stock recommendations? (High impact for judges, ~2 hrs work)
-5. What's our demo script? Suggested flow: signup → onboard → dashboard → chat with AI → view portfolio → get recommendation → learn page
+From the project docs, these are documented weaknesses of AI stock prediction that judges may ask about:
 
----
+1. AI cannot predict the future -- only detects patterns
+2. Lacks contextual understanding of market meaning
+3. False signals are common (false positives/negatives)
+4. Overfitting is a major hidden risk
+5. Black swan events break AI models
+6. Data quality directly impacts output quality
+7. Lacks intuition and judgment
+8. Crowding effect diminishes returns as more traders use similar models
+9. Timing remains extremely difficult
+10. AI is not truly autonomous -- humans responsible for final decisions
 
-*This document should be reviewed by all team members before the demo. Update action items as they are completed.*
+**Knowing these and being upfront about them is a STRENGTH in the pitch, not a weakness.**
