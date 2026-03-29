@@ -268,6 +268,10 @@ This design means every Claude response is **personalized** without the user hav
 
 **Fallback behavior:** If the Anthropic API returns a 429 (rate limit) or 5xx error, all AI endpoints fall back to pre-written mock responses. The UI continues to function — the user sees a subtle "AI offline" badge. This ensures zero hard crashes during demo.
 
+**Prompt Injection Mitigation:** The system prompt and user-supplied content are structurally separated at the API call layer — the system prompt is passed as the `system` parameter (Claude's trusted role layer), while user messages are passed in the `messages` array as the `user` role. User-supplied strings (chat input, buddy name, description fields) are never interpolated directly into the system prompt; they appear only in the structured context block under clearly labeled keys (e.g., `"buddyName": "Finn"`) so Claude processes them as data, not as instructions. The `sanitizeHistory()` function on the server validates that every history item has a role of `user` or `assistant` and a string content field — malformed or oversized entries are silently dropped before being appended to the messages array. This role-separation architecture means a malicious user cannot override the system prompt by typing injection phrases into the chat box.
+
+**20ms Context Assembly SLA:** The context assembly pipeline runs synchronously before the `anthropic.messages.stream()` call is initiated. It reads from four in-memory Maps (user profile, budget entries for current month, portfolio holdings, conversation history slice) — each lookup is O(1) or O(n) on a small bounded array (max 20 history items). In production with PostgreSQL, these reads would be batched into a single multi-table query with a 20ms query timeout enforced via pg-pool's `query_timeout` option. If assembly exceeds the budget, context degrades gracefully: portfolio holdings are dropped first (lowest-priority context), then budget category details, preserving the user profile and conversation history which are highest-signal for personalization.
+
 ---
 
 ## 5. Features — Full Specification
