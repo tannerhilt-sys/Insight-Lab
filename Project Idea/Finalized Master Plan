@@ -640,6 +640,8 @@ At 50,000 users with the same conversion rates: **~$564,000 ARR** — sufficient
 
 **Definition of done:** All 16 pages functional, Claude API integrated with streaming chat, paper trading with simulated market, budget tracking, all educational pages, onboarding flow, mobile-responsive UI.
 
+**Pre-hackathon investment and 24-hour window scope:** Approximately 80–100 hours of pre-hackathon work were invested across architecture design, React component scaffolding, API route stubs, design system setup, and mobile app foundation. This front-loaded investment meant the 24-hour hackathon window was not spent on setup — it was used exclusively for integration: wiring Claude API streaming to the live chat surface, completing the portfolio analytics endpoint (HHI, diversification score, sector allocation), connecting the React Native mobile app screens to the live backend, building the sell double-confirmation flow, hardening SSE reconnection with exponential backoff, and running the full 8-minute demo dry run. The pre-hackathon phase produced the skeleton; the hackathon window produced the working product. This sequencing is why the demo shows 12 functional features across two platforms rather than 3 polished pages.
+
 **What was built:**
 - React/Node monorepo, 7 API route groups, Zustand stores for auth/budget/portfolio/chat/market, SSE streaming chat, JWT authentication, demo user seeded on startup
 - Portfolio analytics endpoint — sector allocation, Herfindahl-Hirschman Index (HHI) concentration score (0–100), diversification score (1–10), top holdings by weight
