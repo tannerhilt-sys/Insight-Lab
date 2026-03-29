@@ -48,7 +48,7 @@ The **16–25 age cohort** represents approximately **45 million people in the U
 ### The Scale
 
 - Only **23 U.S. states** require a personal finance course for high school graduation (NGPF, 2024). Of those, fewer than half require a full semester — the majority require a single unit embedded inside another course.
-- **78% of Americans live paycheck to paycheck** (CNBC/SurveyMonkey, 2023), including households earning over $100,000 per year — demonstrating the problem is behavioral and educational, not just income-based.
+- **78% of Americans live paycheck to paycheck** (CNBC/SurveyMonkey, 2023) — a statistic that spans all age groups and income levels, including households earning over $100,000 per year. For the 16–25 cohort specifically, the situation is even more acute: a 2023 Bank of America Institute study found that **73% of Gen Z adults** report that financial stress impacts their daily lives, and **67% of adults under 30** have less than one month of expenses saved (Federal Reserve Survey of Consumer Finances, 2022). These numbers demonstrate the problem is behavioral and educational from the very first paycheck — not a condition that develops later in life.
 - A 22-year-old who starts investing $200/month earns approximately **$612,000 by age 62** (at 8% historical average market return). A 32-year-old making the identical investment earns only **$272,000** — a $340,000 gap caused entirely by *not knowing to start sooner*.
 - The average American who carries a credit card balance pays **$1,380/year in interest** (Federal Reserve, 2024). A basic understanding of how APR compounds would eliminate this cost for most cardholders.
 - Student loan borrowers who don't understand income-driven repayment options owe an average of **$37,584** more over their repayment lifetime than borrowers who do (NCES, 2023).
@@ -86,6 +86,8 @@ Finance Buddy combines four core pillars into one unified AI companion:
 | **Budget** | AI-powered expense tracking, savings goals, monthly comparisons, spending insights | User knows exactly where every dollar goes and has a plan to save more |
 | **Invest (Simulated)** | Paper trading with simulated market, Roth IRA + 401K tools, stock explanations | User builds investing intuition with zero real-money risk before going live |
 | **Ask** | Streaming AI chatbot with full user context, personalized to knowledge level | User has a financial expert available 24/7 who *knows their situation* |
+
+**The 90-Day Success Benchmark:** A user who spends 90 days actively using Finance Buddy will have completed at least one full financial education track, built a savings goal and advanced it by a measurable percentage, made 10+ paper trades with AI explanations they can articulate in plain language, and reduced at least one recurring expense category by asking Finn "where can I cut back?" — exiting the 90-day window with a written personal financial plan they generated themselves, not a generic template. That is success: the user no longer needs to Google basic financial questions because Finn has already taught them the answers in the context of their own numbers.
 
 ### Key Differentiators — Why This Beats Everything Else
 
