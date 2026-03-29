@@ -49,7 +49,23 @@ function sanitizeHistory(history) {
     .map((msg) => ({ role: msg.role, content: msg.content.slice(0, MAX_CHAT_MESSAGE_LENGTH) }));
 }
 
-// POST /message — SSE streaming response
+/**
+ * POST /message
+ * Send a chat message and receive a streaming SSE response from Claude.
+ * The system prompt is personalized using the user's onboarding profile
+ * (knowledge level, goals, risk tolerance).
+ *
+ * SSE event format: data: {"type":"content_block_delta","text":"..."}\n\n
+ * Terminal event:   data: {"type":"message_stop"}\n\n
+ * Error event:      data: {"type":"error","error":"..."}\n\n
+ *
+ * Falls back to a mock word-by-word stream when ANTHROPIC_API_KEY is absent.
+ *
+ * @body {string} message - User message (max 2000 chars)
+ * @body {ChatMessage[]} [history] - Prior conversation (max 20 items, each sanitized)
+ * @returns {200} text/event-stream
+ * @returns {400} Validation error (returns JSON before headers are sent)
+ */
 router.post('/message', authenticate, async (req, res) => {
   try {
     const { message, history } = req.body;
@@ -136,7 +152,13 @@ router.post('/message', authenticate, async (req, res) => {
   }
 });
 
-// GET /suggestions
+/**
+ * GET /suggestions
+ * Return 3 personalized starter prompts based on the user's knowledge level,
+ * goals, and risk tolerance from their onboarding profile.
+ * Falls back to generic suggestions for users without a profile.
+ * @returns {200} { suggestions: string[] }
+ */
 router.get('/suggestions', authenticate, (req, res) => {
   try {
     const profile = getProfile(req.user.id);
