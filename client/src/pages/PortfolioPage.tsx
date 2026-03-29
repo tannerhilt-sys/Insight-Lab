@@ -1,4 +1,4 @@
-import { useState, useEffect, useRef } from 'react';
+import { useState, useEffect, useRef, useCallback } from 'react';
 import {
   TrendingUp,
   TrendingDown,
@@ -10,7 +10,6 @@ import {
   ArrowUpRight,
   ArrowDownRight,
   Star,
-  StarOff,
   Sparkles,
   DollarSign,
   BarChart3,
@@ -18,6 +17,10 @@ import {
   Activity,
   Clock,
   Zap,
+  AlertTriangle,
+  CheckCircle,
+  Loader2,
+  PieChart,
 } from 'lucide-react';
 import {
   LineChart,
@@ -30,24 +33,8 @@ import {
 } from 'recharts';
 import Modal from '@/components/Modal';
 import { useAuthStore } from '@/store/authStore';
-import type { Holding, WatchlistItem } from '@/store/portfolioStore';
-
-// Mock data
-const mockHoldings: Holding[] = [
-  { id: '1', ticker: 'AAPL', companyName: 'Apple Inc.', shares: 10, avgCost: 175.20, currentPrice: 192.45, gainLoss: 172.50, gainLossPercent: 9.84 },
-  { id: '2', ticker: 'GOOGL', companyName: 'Alphabet Inc.', shares: 5, avgCost: 138.50, currentPrice: 155.72, gainLoss: 86.10, gainLossPercent: 12.44 },
-  { id: '3', ticker: 'MSFT', companyName: 'Microsoft Corp.', shares: 8, avgCost: 380.00, currentPrice: 415.60, gainLoss: 284.80, gainLossPercent: 9.37 },
-  { id: '4', ticker: 'TSLA', companyName: 'Tesla Inc.', shares: 3, avgCost: 260.00, currentPrice: 242.50, gainLoss: -52.50, gainLossPercent: -6.73 },
-  { id: '5', ticker: 'AMZN', companyName: 'Amazon.com Inc.', shares: 6, avgCost: 178.30, currentPrice: 195.80, gainLoss: 105.00, gainLossPercent: 9.81 },
-  { id: '6', ticker: 'NVDA', companyName: 'NVIDIA Corp.', shares: 4, avgCost: 480.00, currentPrice: 525.30, gainLoss: 181.20, gainLossPercent: 9.44 },
-];
-
-const mockWatchlist: WatchlistItem[] = [
-  { ticker: 'META', name: 'Meta Platforms', price: 512.40, change: 8.20, changePercent: 1.63 },
-  { ticker: 'NFLX', name: 'Netflix Inc.', price: 895.30, change: -12.50, changePercent: -1.38 },
-  { ticker: 'AMD', name: 'AMD Inc.', price: 168.75, change: 3.45, changePercent: 2.09 },
-  { ticker: 'DIS', name: 'Walt Disney Co.', price: 112.80, change: -1.20, changePercent: -1.05 },
-];
+import { usePortfolioStore } from '@/store/portfolioStore';
+import type { Holding } from '@/store/portfolioStore';
 
 const portfolioHistory = [
   { date: 'Oct', value: 10200 },
@@ -56,21 +43,6 @@ const portfolioHistory = [
   { date: 'Jan', value: 11200 },
   { date: 'Feb', value: 12100 },
   { date: 'Mar', value: 12847 },
-];
-
-const searchableStocks = [
-  { ticker: 'AAPL', name: 'Apple Inc.', price: 192.45 },
-  { ticker: 'GOOGL', name: 'Alphabet Inc.', price: 155.72 },
-  { ticker: 'META', name: 'Meta Platforms', price: 512.40 },
-  { ticker: 'NFLX', name: 'Netflix Inc.', price: 895.30 },
-  { ticker: 'AMZN', name: 'Amazon.com', price: 195.80 },
-  { ticker: 'TSLA', name: 'Tesla Inc.', price: 242.50 },
-  { ticker: 'NVDA', name: 'NVIDIA Corp.', price: 525.30 },
-  { ticker: 'MSFT', name: 'Microsoft Corp.', price: 415.60 },
-  { ticker: 'AMD', name: 'AMD Inc.', price: 168.75 },
-  { ticker: 'DIS', name: 'Walt Disney', price: 112.80 },
-  { ticker: 'JPM', name: 'JPMorgan Chase', price: 198.30 },
-  { ticker: 'V', name: 'Visa Inc.', price: 295.60 },
 ];
 
 // Live market simulation data
@@ -196,66 +168,114 @@ function useLiveMarket() {
 export default function PortfolioPage() {
   const user = useAuthStore((s) => s.user);
   const buddyName = user?.buddyName || 'Finance Buddy';
-  const [holdings, setHoldings] = useState(mockHoldings);
-  const [watchlist, setWatchlist] = useState(mockWatchlist);
+
+  const {
+    holdings,
+    watchlist,
+    analytics,
+    totalValue,
+    totalCost,
+    totalGainLoss,
+    isLoading,
+    error: portfolioError,
+    fetchHoldings,
+    fetchWatchlist,
+    fetchAnalytics,
+    buyStock,
+    sellStock: sellStockAction,
+    removeFromWatchlist: removeFromWatchlistAction,
+    clearError,
+  } = usePortfolioStore();
+
   const [showBuyModal, setShowBuyModal] = useState(false);
   const [showDetail, setShowDetail] = useState<Holding | null>(null);
+  const [showSellModal, setShowSellModal] = useState(false);
+  const [sellTarget, setSellTarget] = useState<Holding | null>(null);
+  const [sellShares, setSellShares] = useState('');
+  const [sellStep, setSellStep] = useState<'input' | 'confirm'>('input');
+  const [sellResult, setSellResult] = useState<{ proceeds: number; gainLoss: number } | null>(null);
   const [searchQuery, setSearchQuery] = useState('');
-  const [selectedStock, setSelectedStock] = useState<typeof searchableStocks[0] | null>(null);
+  const [selectedStock, setSelectedStock] = useState<{ ticker: string; name: string; price: number } | null>(null);
   const [shares, setShares] = useState('');
+  const [isBuying, setIsBuying] = useState(false);
+  const [isSelling, setIsSelling] = useState(false);
 
-  const totalValue = holdings.reduce((s, h) => s + h.currentPrice * h.shares, 0);
-  const totalGainLoss = holdings.reduce((s, h) => s + h.gainLoss, 0);
-  const totalCost = holdings.reduce((s, h) => s + h.avgCost * h.shares, 0);
   const totalGainLossPercent = totalCost > 0 ? (totalGainLoss / totalCost) * 100 : 0;
 
+  useEffect(() => {
+    fetchHoldings();
+    fetchWatchlist();
+    fetchAnalytics();
+  }, [fetchHoldings, fetchWatchlist, fetchAnalytics]);
+
+  // Get company name for a ticker from LIVE_STOCKS lookup
+  const getCompanyName = useCallback((ticker: string) => {
+    const stock = LIVE_STOCKS.find((s) => s.ticker === ticker);
+    return stock?.name ?? ticker;
+  }, []);
+
   const filteredStocks = searchQuery
-    ? searchableStocks.filter(
+    ? LIVE_STOCKS.filter(
         (s) =>
           s.ticker.toLowerCase().includes(searchQuery.toLowerCase()) ||
           s.name.toLowerCase().includes(searchQuery.toLowerCase()),
       )
     : [];
 
-  const handleBuy = () => {
+  const handleBuy = async () => {
     if (!selectedStock || !shares) return;
     const numShares = parseInt(shares);
-    const existing = holdings.find((h) => h.ticker === selectedStock.ticker);
-    if (existing) {
-      setHoldings((prev) =>
-        prev.map((h) =>
-          h.ticker === selectedStock.ticker
-            ? {
-                ...h,
-                shares: h.shares + numShares,
-                avgCost: (h.avgCost * h.shares + selectedStock.price * numShares) / (h.shares + numShares),
-              }
-            : h,
-        ),
-      );
-    } else {
-      setHoldings((prev) => [
-        ...prev,
-        {
-          id: Date.now().toString(),
-          ticker: selectedStock.ticker,
-          companyName: selectedStock.name,
-          shares: numShares,
-          avgCost: selectedStock.price,
-          currentPrice: selectedStock.price,
-          gainLoss: 0,
-          gainLossPercent: 0,
-        },
-      ]);
+    if (isNaN(numShares) || numShares <= 0) return;
+    setIsBuying(true);
+    try {
+      await buyStock(selectedStock.ticker, numShares, selectedStock.price);
+      await fetchHoldings();
+      await fetchAnalytics();
+      setShowBuyModal(false);
+      setSelectedStock(null);
+      setSearchQuery('');
+      setShares('');
+    } catch {
+      // error shown via portfolioError
+    } finally {
+      setIsBuying(false);
     }
-    setShowBuyModal(false);
-    setSelectedStock(null);
-    setSearchQuery('');
-    setShares('');
   };
 
-  const removeFromWatchlist = (ticker: string) => {
-    setWatchlist((prev) => prev.filter((w) => w.ticker !== ticker));
+  const openSellModal = (holding: Holding) => {
+    setSellTarget(holding);
+    setSellShares('');
+    setSellStep('input');
+    setSellResult(null);
+    setShowSellModal(true);
+  };
+
+  const handleSell = async () => {
+    if (!sellTarget || !sellShares) return;
+    const numShares = parseInt(sellShares);
+    if (isNaN(numShares) || numShares <= 0) return;
+    setIsSelling(true);
+    try {
+      const result = await sellStockAction(sellTarget.ticker, numShares);
+      await fetchAnalytics();
+      setSellResult({ proceeds: result.saleProceeds, gainLoss: result.realizedGainLoss });
+      setSellStep('input'); // reset for next time
+      setShowSellModal(false);
+      setSellTarget(null);
+      setSellShares('');
+    } catch {
+      // error shown via portfolioError
+    } finally {
+      setIsSelling(false);
+    }
+  };
+
+  const removeFromWatchlist = async (ticker: string) => {
+    try {
+      await removeFromWatchlistAction(ticker);
+    } catch {
+      // error shown via portfolioError
+    }
   };
 
   const { prices: livePrices, indices: liveIndices, trades: liveTrades } = useLiveMarket();
@@ -414,6 +434,15 @@ export default function PortfolioPage() {
         </div>
       </div>
 
+      {/* Error banner */}
+      {portfolioError && (
+        <div className="bg-red-50 border border-red-200 rounded-xl px-4 py-3 flex items-center gap-3">
+          <AlertTriangle className="w-4 h-4 text-red-500 shrink-0" />
+          <span className="text-sm text-red-700">{portfolioError}</span>
+          <button onClick={clearError} className="ml-auto text-red-400 hover:text-red-600"><X className="w-4 h-4" /></button>
+        </div>
+      )}
+
       {/* Summary */}
       <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
         <div className="card">
@@ -423,7 +452,11 @@ export default function PortfolioPage() {
             </div>
             <span className="text-sm text-slate-500">Total Value</span>
           </div>
-          <p className="text-3xl font-bold text-slate-900">${totalValue.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</p>
+          {isLoading ? (
+            <div className="h-9 w-32 bg-slate-100 animate-pulse rounded-lg" />
+          ) : (
+            <p className="text-3xl font-bold text-slate-900">${totalValue.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</p>
+          )}
         </div>
 
         <div className="card">
@@ -437,12 +470,18 @@ export default function PortfolioPage() {
             </div>
             <span className="text-sm text-slate-500">Total Gain/Loss</span>
           </div>
-          <p className={`text-3xl font-bold ${totalGainLoss >= 0 ? 'text-emerald-600' : 'text-red-500'}`}>
-            {totalGainLoss >= 0 ? '+' : ''}${totalGainLoss.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
-          </p>
-          <p className={`text-sm mt-1 ${totalGainLoss >= 0 ? 'text-emerald-500' : 'text-red-400'}`}>
-            {totalGainLossPercent >= 0 ? '+' : ''}{totalGainLossPercent.toFixed(2)}%
-          </p>
+          {isLoading ? (
+            <div className="h-9 w-32 bg-slate-100 animate-pulse rounded-lg" />
+          ) : (
+            <>
+              <p className={`text-3xl font-bold ${totalGainLoss >= 0 ? 'text-emerald-600' : 'text-red-500'}`}>
+                {totalGainLoss >= 0 ? '+' : ''}${totalGainLoss.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
+              </p>
+              <p className={`text-sm mt-1 ${totalGainLoss >= 0 ? 'text-emerald-500' : 'text-red-400'}`}>
+                {totalGainLossPercent >= 0 ? '+' : ''}{totalGainLossPercent.toFixed(2)}%
+              </p>
+            </>
+          )}
         </div>
 
         <div className="card">
@@ -500,10 +539,17 @@ export default function PortfolioPage() {
                 <th className="text-right py-3 px-4 text-sm font-medium text-slate-500">Price</th>
                 <th className="text-right py-3 px-4 text-sm font-medium text-slate-500">Gain/Loss</th>
                 <th className="text-right py-3 px-4 text-sm font-medium text-slate-500">%</th>
-                <th className="py-3 px-4"></th>
+                <th className="py-3 px-4 text-center text-sm font-medium text-slate-500">Actions</th>
               </tr>
             </thead>
             <tbody>
+              {holdings.length === 0 && !isLoading && (
+                <tr>
+                  <td colSpan={7} className="py-12 text-center text-slate-400 text-sm">
+                    No holdings yet. Buy your first stock above!
+                  </td>
+                </tr>
+              )}
               {holdings.map((h) => (
                 <tr
                   key={h.id}
@@ -513,12 +559,12 @@ export default function PortfolioPage() {
                   <td className="py-3 px-4">
                     <div>
                       <span className="font-semibold text-slate-900">{h.ticker}</span>
-                      <p className="text-xs text-slate-400">{h.companyName}</p>
+                      <p className="text-xs text-slate-400">{getCompanyName(h.ticker)}</p>
                     </div>
                   </td>
                   <td className="py-3 px-4 text-right text-sm font-medium text-slate-700">{h.shares}</td>
                   <td className="py-3 px-4 text-right text-sm text-slate-600">${h.avgCost.toFixed(2)}</td>
-                  <td className="py-3 px-4 text-right text-sm font-medium text-slate-900">${h.currentPrice.toFixed(2)}</td>
+                  <td className="py-3 px-4 text-right text-sm font-medium text-slate-900">${(h.currentPrice ?? 0).toFixed(2)}</td>
                   <td className={`py-3 px-4 text-right text-sm font-semibold ${h.gainLoss >= 0 ? 'text-emerald-600' : 'text-red-500'}`}>
                     {h.gainLoss >= 0 ? '+' : ''}${h.gainLoss.toFixed(2)}
                   </td>
@@ -539,12 +585,22 @@ export default function PortfolioPage() {
                     </span>
                   </td>
                   <td className="py-3 px-4">
-                    <button
-                      onClick={(e) => { e.stopPropagation(); setShowDetail(h); }}
-                      className="p-1.5 text-slate-400 hover:text-primary-600 rounded-lg hover:bg-primary-50 transition-colors"
-                    >
-                      <Eye className="w-4 h-4" />
-                    </button>
+                    <div className="flex items-center justify-center gap-1">
+                      <button
+                        onClick={(e) => { e.stopPropagation(); setShowDetail(h); }}
+                        className="p-1.5 text-slate-400 hover:text-primary-600 rounded-lg hover:bg-primary-50 transition-colors"
+                        title="View details"
+                      >
+                        <Eye className="w-4 h-4" />
+                      </button>
+                      <button
+                        onClick={(e) => { e.stopPropagation(); openSellModal(h); }}
+                        className="p-1.5 text-slate-400 hover:text-red-600 rounded-lg hover:bg-red-50 transition-colors"
+                        title="Sell shares"
+                      >
+                        <Minus className="w-4 h-4" />
+                      </button>
+                    </div>
                   </td>
                 </tr>
               ))}
@@ -553,6 +609,53 @@ export default function PortfolioPage() {
         </div>
       </div>
 
+      {/* Portfolio Analytics */}
+      {analytics && analytics.sectorAllocation.length > 0 && (
+        <div className="card">
+          <div className="flex items-center gap-2 mb-5">
+            <PieChart className="w-5 h-5 text-indigo-600" />
+            <h3 className="text-lg font-semibold text-slate-900">Portfolio Analytics</h3>
+            <span className="ml-auto text-xs text-slate-400">Diversification Score: <span className={`font-bold ${analytics.diversificationScore >= 7 ? 'text-emerald-600' : analytics.diversificationScore >= 4 ? 'text-amber-600' : 'text-red-500'}`}>{analytics.diversificationScore}/10</span></span>
+          </div>
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+            <div>
+              <p className="text-sm font-medium text-slate-700 mb-3">Sector Allocation</p>
+              <div className="space-y-2">
+                {analytics.sectorAllocation.map((s) => (
+                  <div key={s.sector} className="flex items-center gap-3">
+                    <span className="text-xs text-slate-500 w-28 shrink-0">{s.sector}</span>
+                    <div className="flex-1 bg-slate-100 rounded-full h-2">
+                      <div className="bg-indigo-500 h-2 rounded-full transition-all" style={{ width: `${s.percent}%` }} />
+                    </div>
+                    <span className="text-xs font-semibold text-slate-700 w-12 text-right">{s.percent}%</span>
+                  </div>
+                ))}
+              </div>
+            </div>
+            <div>
+              <p className="text-sm font-medium text-slate-700 mb-3">Top Holdings by Weight</p>
+              <div className="space-y-2">
+                {analytics.topHoldings.map((h) => (
+                  <div key={h.ticker} className="flex items-center justify-between p-2 bg-slate-50 rounded-lg">
+                    <span className="text-sm font-semibold text-slate-900">{h.ticker}</span>
+                    <div className="flex items-center gap-3">
+                      <span className="text-xs text-slate-500">${h.marketValue.toFixed(2)}</span>
+                      <span className={`text-xs font-bold px-2 py-0.5 rounded-full ${h.weight > 30 ? 'bg-amber-100 text-amber-700' : 'bg-emerald-50 text-emerald-700'}`}>{h.weight}%</span>
+                    </div>
+                  </div>
+                ))}
+              </div>
+              {analytics.concentrationScore > 40 && (
+                <p className="text-xs text-amber-600 mt-3 flex items-center gap-1">
+                  <AlertTriangle className="w-3 h-3" />
+                  High concentration detected. Consider diversifying across more sectors.
+                </p>
+              )}
+            </div>
+          </div>
+        </div>
+      )}
+
       {/* Watchlist */}
       <div className="card">
         <h3 className="text-lg font-semibold text-slate-900 mb-4 flex items-center gap-2">
@@ -560,7 +663,12 @@ export default function PortfolioPage() {
           Watchlist
         </h3>
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3">
-          {watchlist.map((item) => (
+          {watchlist.length === 0 && (
+            <p className="col-span-4 text-sm text-slate-400 py-4 text-center">No stocks on your watchlist yet.</p>
+          )}
+          {watchlist.map((item) => {
+            const liveData = livePrices[item.ticker];
+            return (
             <div
               key={item.ticker}
               className="p-4 bg-slate-50 rounded-xl border border-slate-100 hover:border-slate-200 transition-colors group"
@@ -574,16 +682,21 @@ export default function PortfolioPage() {
                   <X className="w-3.5 h-3.5" />
                 </button>
               </div>
-              <p className="text-xs text-slate-400 mb-2">{item.name}</p>
-              <p className="font-semibold text-slate-900">${item.price?.toFixed(2)}</p>
-              {item.changePercent !== undefined && (
-                <p className={`text-xs font-medium mt-1 flex items-center gap-0.5 ${item.changePercent >= 0 ? 'text-emerald-600' : 'text-red-500'}`}>
-                  {item.changePercent >= 0 ? <ArrowUpRight className="w-3 h-3" /> : <ArrowDownRight className="w-3 h-3" />}
-                  {item.changePercent >= 0 ? '+' : ''}{item.changePercent.toFixed(2)}%
-                </p>
+              <p className="text-xs text-slate-400 mb-2">{item.companyName}</p>
+              {liveData ? (
+                <>
+                  <p className="font-semibold text-slate-900">${liveData.price.toFixed(2)}</p>
+                  <p className={`text-xs font-medium mt-1 flex items-center gap-0.5 ${liveData.change >= 0 ? 'text-emerald-600' : 'text-red-500'}`}>
+                    {liveData.change >= 0 ? <ArrowUpRight className="w-3 h-3" /> : <ArrowDownRight className="w-3 h-3" />}
+                    {liveData.change >= 0 ? '+' : ''}{liveData.changePercent.toFixed(2)}%
+                  </p>
+                </>
+              ) : (
+                <p className="text-xs text-slate-400">Price data not available</p>
               )}
             </div>
-          ))}
+          );
+          })}
         </div>
       </div>
 
@@ -750,19 +863,22 @@ export default function PortfolioPage() {
             </div>
             {filteredStocks.length > 0 && !selectedStock && (
               <div className="mt-2 bg-white border border-slate-200 rounded-xl shadow-lg max-h-48 overflow-y-auto">
-                {filteredStocks.map((stock) => (
+                {filteredStocks.map((stock) => {
+                  const livePrice = livePrices[stock.ticker]?.price ?? stock.basePrice;
+                  return (
                   <button
                     key={stock.ticker}
-                    onClick={() => { setSelectedStock(stock); setSearchQuery(stock.ticker); }}
+                    onClick={() => { setSelectedStock({ ticker: stock.ticker, name: stock.name, price: livePrice }); setSearchQuery(stock.ticker); }}
                     className="w-full flex items-center justify-between px-4 py-3 hover:bg-slate-50 transition-colors"
                   >
                     <div className="text-left">
                       <span className="font-semibold text-slate-900">{stock.ticker}</span>
                       <p className="text-xs text-slate-400">{stock.name}</p>
                     </div>
-                    <span className="text-sm font-medium text-slate-700">${stock.price.toFixed(2)}</span>
+                    <span className="text-sm font-medium text-slate-700">${livePrice.toFixed(2)}</span>
                   </button>
-                ))}
+                  );
+                })}
               </div>
             )}
           </div>
@@ -802,19 +918,120 @@ export default function PortfolioPage() {
                 </div>
               )}
 
-              <button onClick={handleBuy} disabled={!shares || parseInt(shares) <= 0} className="btn-primary w-full">
-                Buy {shares || 0} Shares
+              <button onClick={handleBuy} disabled={!shares || parseInt(shares) <= 0 || isBuying} className="btn-primary w-full flex items-center justify-center gap-2">
+                {isBuying ? <><Loader2 className="w-4 h-4 animate-spin" /> Buying...</> : `Buy ${shares || 0} Shares`}
               </button>
             </>
           )}
         </div>
       </Modal>
 
+      {/* Sell Modal — double-confirmation flow */}
+      <Modal
+        isOpen={showSellModal}
+        onClose={() => { setShowSellModal(false); setSellTarget(null); setSellShares(''); setSellStep('input'); }}
+        title={sellTarget ? `Sell ${sellTarget.ticker}` : 'Sell Stock'}
+      >
+        {sellTarget && (
+          <div className="space-y-5">
+            {sellStep === 'input' && (
+              <>
+                <div className="p-4 bg-slate-50 rounded-xl">
+                  <div className="grid grid-cols-2 gap-3 text-sm">
+                    <div>
+                      <p className="text-slate-500">Ticker</p>
+                      <p className="font-semibold text-slate-900">{sellTarget.ticker}</p>
+                    </div>
+                    <div>
+                      <p className="text-slate-500">Shares Owned</p>
+                      <p className="font-semibold text-slate-900">{sellTarget.shares}</p>
+                    </div>
+                    <div>
+                      <p className="text-slate-500">Current Price</p>
+                      <p className="font-semibold text-slate-900">${(sellTarget.currentPrice ?? 0).toFixed(2)}</p>
+                    </div>
+                    <div>
+                      <p className="text-slate-500">Avg Cost</p>
+                      <p className="font-semibold text-slate-900">${sellTarget.avgCost.toFixed(2)}</p>
+                    </div>
+                  </div>
+                </div>
+                <div>
+                  <label className="block text-sm font-medium text-slate-700 mb-1.5">Shares to sell</label>
+                  <input
+                    type="number"
+                    value={sellShares}
+                    onChange={(e) => setSellShares(e.target.value)}
+                    className="input"
+                    placeholder={`Max: ${sellTarget.shares}`}
+                    min="1"
+                    max={sellTarget.shares}
+                  />
+                </div>
+                {sellShares && parseInt(sellShares) > 0 && parseInt(sellShares) <= sellTarget.shares && (
+                  <div className="p-4 bg-amber-50 rounded-xl border border-amber-100">
+                    <div className="flex justify-between text-sm mb-1">
+                      <span className="text-slate-500">Estimated Proceeds</span>
+                      <span className="font-semibold text-slate-900">
+                        ${((sellTarget.currentPrice ?? 0) * parseInt(sellShares)).toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
+                      </span>
+                    </div>
+                    <div className="flex justify-between text-sm">
+                      <span className="text-slate-500">Est. Gain/Loss</span>
+                      <span className={`font-semibold ${((sellTarget.currentPrice ?? 0) - sellTarget.avgCost) >= 0 ? 'text-emerald-600' : 'text-red-500'}`}>
+                        {((sellTarget.currentPrice ?? 0) - sellTarget.avgCost) >= 0 ? '+' : ''}
+                        ${(((sellTarget.currentPrice ?? 0) - sellTarget.avgCost) * parseInt(sellShares)).toFixed(2)}
+                      </span>
+                    </div>
+                  </div>
+                )}
+                <button
+                  onClick={() => { if (sellShares && parseInt(sellShares) > 0 && parseInt(sellShares) <= sellTarget.shares) setSellStep('confirm'); }}
+                  disabled={!sellShares || parseInt(sellShares) <= 0 || parseInt(sellShares) > sellTarget.shares}
+                  className="btn-primary w-full bg-amber-600 hover:bg-amber-700"
+                >
+                  Preview Sale
+                </button>
+              </>
+            )}
+
+            {sellStep === 'confirm' && (
+              <>
+                <div className="p-4 bg-red-50 rounded-xl border border-red-200">
+                  <div className="flex items-start gap-3">
+                    <AlertTriangle className="w-5 h-5 text-red-500 mt-0.5 shrink-0" />
+                    <div>
+                      <p className="font-semibold text-red-800 text-sm">Confirm Sale</p>
+                      <p className="text-xs text-red-600 mt-1">
+                        You are about to sell <strong>{sellShares} share(s)</strong> of <strong>{sellTarget.ticker}</strong> for approximately{' '}
+                        <strong>${((sellTarget.currentPrice ?? 0) * parseInt(sellShares)).toFixed(2)}</strong>. This action cannot be undone.
+                      </p>
+                    </div>
+                  </div>
+                </div>
+                <div className="flex gap-3">
+                  <button onClick={() => setSellStep('input')} className="flex-1 btn bg-slate-100 text-slate-700 hover:bg-slate-200">
+                    Go Back
+                  </button>
+                  <button
+                    onClick={handleSell}
+                    disabled={isSelling}
+                    className="flex-1 btn bg-red-600 text-white hover:bg-red-700 flex items-center justify-center gap-2"
+                  >
+                    {isSelling ? <><Loader2 className="w-4 h-4 animate-spin" /> Selling...</> : <><CheckCircle className="w-4 h-4" /> Confirm & Sell</>}
+                  </button>
+                </div>
+              </>
+            )}
+          </div>
+        )}
+      </Modal>
+
       {/* Stock Detail Modal */}
       <Modal
         isOpen={!!showDetail}
         onClose={() => setShowDetail(null)}
-        title={showDetail ? `${showDetail.ticker} - ${showDetail.companyName}` : ''}
+        title={showDetail ? `${showDetail.ticker} — ${getCompanyName(showDetail.ticker)}` : ''}
       >
         {showDetail && (
           <div className="space-y-5">
@@ -856,6 +1073,13 @@ export default function PortfolioPage() {
                 </div>
               </div>
             </div>
+            <button
+              onClick={() => { setShowDetail(null); openSellModal(showDetail); }}
+              className="w-full btn bg-red-50 text-red-700 hover:bg-red-100 border border-red-200 flex items-center justify-center gap-2"
+            >
+              <Minus className="w-4 h-4" />
+              Sell Shares
+            </button>
           </div>
         )}
       </Modal>
