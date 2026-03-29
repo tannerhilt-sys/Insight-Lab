@@ -9,6 +9,7 @@ import {
   Sparkles,
   CheckCircle,
 } from 'lucide-react';
+import { useAuthStore } from '@/store/authStore';
 
 const fundOptions = [
   { name: 'Target Date 2060', ticker: 'VTTSX', returns1Y: '12.4%', returns5Y: '9.8%', expense: '0.08%' },
@@ -28,6 +29,8 @@ const vestingSchedule = [
 const currentVestingYear = 3;
 
 export default function FourOhOneKPage() {
+  const user = useAuthStore((s) => s.user);
+  const buddyName = user?.buddyName || 'Finance Buddy';
   const [contributionRate, setContributionRate] = useState(6);
   const salary = 65000;
   const employeeContribution = (salary * contributionRate) / 100;
@@ -85,6 +88,39 @@ export default function FourOhOneKPage() {
           </div>
           <p className="text-3xl font-bold text-slate-900">$6,562.50</p>
           <p className="text-sm text-slate-400 mt-1">75% vested (Year 3)</p>
+        </div>
+      </div>
+
+      {/* AI Insight - Maximize Your Match */}
+      <div className="bg-gradient-to-r from-amber-50 to-orange-50 rounded-2xl p-6 border border-amber-200">
+        <div className="flex items-start gap-3">
+          <div className="p-2 bg-amber-100 rounded-xl">
+            <Sparkles className="w-5 h-5 text-amber-600" />
+          </div>
+          <div>
+            <h4 className="font-semibold text-amber-900">{buddyName}'s Tip: Maximize Your Match</h4>
+            <p className="text-sm text-slate-700 mt-1">
+              {contributionRate < 6 ? (
+                <>
+                  You're currently contributing {contributionRate}%, but your employer matches up to 6%. By increasing to 6%, you'd get an additional{' '}
+                  <span className="font-bold text-emerald-600">
+                    ${((6 - contributionRate) * salary / 100).toLocaleString()}/year
+                  </span>{' '}
+                  in free money. That's{' '}
+                  <span className="font-bold text-emerald-600">
+                    ${Math.round(((6 - contributionRate) * salary / 100) / 12).toLocaleString()}/month
+                  </span>{' '}
+                  you're leaving on the table!
+                </>
+              ) : (
+                <>
+                  Great job! You're contributing at least 6%, which means you're getting your full employer match of{' '}
+                  <span className="font-bold text-emerald-600">${employerMatch.toLocaleString()}/year</span> in free money. Consider increasing further for even more tax advantages. Every additional percent contributed reduces your taxable income by{' '}
+                  <span className="font-bold text-indigo-600">${(salary / 100).toLocaleString()}</span>.
+                </>
+              )}
+            </p>
+          </div>
         </div>
       </div>
 
@@ -320,38 +356,6 @@ export default function FourOhOneKPage() {
         </div>
       </div>
 
-      {/* AI Insight - Maximize Your Match */}
-      <div className="bg-gradient-to-r from-amber-50 to-orange-50 rounded-2xl p-6 border border-amber-200">
-        <div className="flex items-start gap-3">
-          <div className="p-2 bg-amber-100 rounded-xl">
-            <Sparkles className="w-5 h-5 text-amber-600" />
-          </div>
-          <div>
-            <h4 className="font-semibold text-amber-900">Maximize Your Match</h4>
-            <p className="text-sm text-slate-700 mt-1">
-              {contributionRate < 6 ? (
-                <>
-                  You're currently contributing {contributionRate}%, but your employer matches up to 6%. By increasing to 6%, you'd get an additional{' '}
-                  <span className="font-bold text-emerald-600">
-                    ${((6 - contributionRate) * salary / 100).toLocaleString()}/year
-                  </span>{' '}
-                  in free money. That's{' '}
-                  <span className="font-bold text-emerald-600">
-                    ${Math.round(((6 - contributionRate) * salary / 100) / 12).toLocaleString()}/month
-                  </span>{' '}
-                  you're leaving on the table!
-                </>
-              ) : (
-                <>
-                  Great job! You're contributing at least 6%, which means you're getting your full employer match of{' '}
-                  <span className="font-bold text-emerald-600">${employerMatch.toLocaleString()}/year</span> in free money. Consider increasing further for even more tax advantages. Every additional percent contributed reduces your taxable income by{' '}
-                  <span className="font-bold text-indigo-600">${(salary / 100).toLocaleString()}</span>.
-                </>
-              )}
-            </p>
-          </div>
-        </div>
-      </div>
     </div>
   );
 }

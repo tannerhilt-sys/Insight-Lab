@@ -1,4 +1,5 @@
 import { useState, useMemo } from 'react';
+import { useAuthStore } from '@/store/authStore';
 import {
   Plus,
   ChevronLeft,
@@ -63,6 +64,8 @@ const monthlyComparison = [
 ];
 
 export default function BudgetPage() {
+  const user = useAuthStore((s) => s.user);
+  const buddyName = user?.buddyName || 'Finance Buddy';
   const [entries, setEntries] = useState<BudgetEntry[]>(mockEntries);
   const [goals] = useState<BudgetGoal[]>(mockGoals);
   const [currentMonth, setCurrentMonth] = useState(new Date());
@@ -168,6 +171,34 @@ export default function BudgetPage() {
         </div>
       </div>
 
+      {/* AI Insight */}
+      <div className="card bg-gradient-to-r from-primary-50 to-purple-50 border-primary-200">
+        <div className="flex items-start gap-4">
+          <div className="p-3 bg-gradient-to-br from-primary-500 to-purple-500 rounded-xl shrink-0">
+            <Sparkles className="w-5 h-5 text-white" />
+          </div>
+          <div className="flex-1">
+            <h3 className="font-semibold text-slate-900 mb-1">{buddyName}'s Budget Insight</h3>
+            {showInsight ? (
+              <p className="text-sm text-slate-600 leading-relaxed">
+                Great news! Your spending this month is 12% lower than last month. Your biggest savings came from
+                reducing dining out expenses. I'd recommend putting that extra $200 towards your Emergency Fund goal --
+                you'd hit it a month earlier! Also, your Entertainment spending has been consistent, which shows good discipline.
+                One area to watch: Transportation costs have been creeping up. Consider carpooling or public transit to save an
+                additional $50-80/month.
+              </p>
+            ) : (
+              <p className="text-sm text-slate-500">Click below to get personalized insights about your spending.</p>
+            )}
+            {!showInsight && (
+              <button onClick={() => setShowInsight(true)} className="mt-3 btn-primary text-sm py-2">
+                Get {buddyName}'s Insight
+              </button>
+            )}
+          </div>
+        </div>
+      </div>
+
       {/* Charts */}
       <div className="grid grid-cols-1 xl:grid-cols-2 gap-6">
         {/* Pie Chart */}
@@ -215,34 +246,6 @@ export default function BudgetPage() {
               <Bar dataKey="expenses" fill="#f87171" radius={[6, 6, 0, 0]} name="Expenses" />
             </BarChart>
           </ResponsiveContainer>
-        </div>
-      </div>
-
-      {/* AI Insight */}
-      <div className="card bg-gradient-to-r from-primary-50 to-purple-50 border-primary-200">
-        <div className="flex items-start gap-4">
-          <div className="p-3 bg-gradient-to-br from-primary-500 to-purple-500 rounded-xl shrink-0">
-            <Sparkles className="w-5 h-5 text-white" />
-          </div>
-          <div className="flex-1">
-            <h3 className="font-semibold text-slate-900 mb-1">AI Budget Insight</h3>
-            {showInsight ? (
-              <p className="text-sm text-slate-600 leading-relaxed">
-                Great news! Your spending this month is 12% lower than last month. Your biggest savings came from
-                reducing dining out expenses. I'd recommend putting that extra $200 towards your Emergency Fund goal --
-                you'd hit it a month earlier! Also, your Entertainment spending has been consistent, which shows good discipline.
-                One area to watch: Transportation costs have been creeping up. Consider carpooling or public transit to save an
-                additional $50-80/month.
-              </p>
-            ) : (
-              <p className="text-sm text-slate-500">Click below to get personalized insights about your spending.</p>
-            )}
-            {!showInsight && (
-              <button onClick={() => setShowInsight(true)} className="mt-3 btn-primary text-sm py-2">
-                Get AI Insight
-              </button>
-            )}
-          </div>
         </div>
       </div>
 

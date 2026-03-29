@@ -43,7 +43,7 @@ export default function LoginPage() {
   return (
     <div className="min-h-screen flex">
       {/* Left hero section */}
-      <div className="hidden lg:flex lg:w-1/2 bg-gradient-to-br from-primary-600 via-primary-700 to-purple-800 relative overflow-hidden">
+      <div className="hidden lg:flex lg:w-1/2 bg-gradient-to-br from-blue-600 via-blue-700 to-blue-900 relative overflow-hidden">
         {/* Decorative circles */}
         <div className="absolute top-20 -left-20 w-72 h-72 bg-white/5 rounded-full" />
         <div className="absolute bottom-20 right-10 w-96 h-96 bg-white/5 rounded-full" />
@@ -51,14 +51,20 @@ export default function LoginPage() {
 
         <div className="relative z-10 flex flex-col justify-center px-16 text-white">
           <div className="flex items-center gap-3 mb-8">
-            <img src="/logo.svg" alt="Finance Buddy" className="h-12 brightness-0 invert" />
+            <div className="rounded-xl shadow-[0_0_20px_rgba(255,255,255,0.3)]">
+              <img src="/logo-icon.svg" alt="Finance Buddy" className="h-12" />
+            </div>
+            <div>
+              <h1 className="text-2xl font-bold leading-tight">Finance Buddy</h1>
+              <p className="text-sm text-blue-200">AI Financial Companion</p>
+            </div>
           </div>
 
           <h2 className="text-5xl font-extrabold leading-tight mb-6">
             Your AI Financial<br />Companion
           </h2>
 
-          <p className="text-lg text-primary-100 mb-12 max-w-md">
+          <p className="text-lg text-blue-100 mb-12 max-w-md">
             Take control of your finances with AI-powered insights, paper trading,
             budgeting tools, and personalized financial education.
           </p>
@@ -71,7 +77,7 @@ export default function LoginPage() {
                 </div>
                 <div>
                   <h3 className="font-semibold">{f.title}</h3>
-                  <p className="text-sm text-primary-200">{f.desc}</p>
+                  <p className="text-sm text-blue-200">{f.desc}</p>
                 </div>
               </div>
             ))}
@@ -84,7 +90,8 @@ export default function LoginPage() {
         <div className="w-full max-w-md">
           {/* Mobile logo */}
           <div className="lg:hidden flex items-center gap-3 mb-8">
-            <img src="/logo.svg" alt="Finance Buddy" className="h-10" />
+            <img src="/logo-icon.svg" alt="Finance Buddy" className="h-10" />
+            <h1 className="text-2xl font-bold text-slate-900">Finance Buddy</h1>
           </div>
 
           <h2 className="text-2xl font-bold text-slate-900 mb-2">
@@ -162,7 +169,7 @@ export default function LoginPage() {
                     type="checkbox"
                     checked={ageConfirmed}
                     onChange={(e) => setAgeConfirmed(e.target.checked)}
-                    className="mt-1 w-4 h-4 rounded border-slate-300 text-primary-600 focus:ring-primary-500"
+                    className="mt-1 w-4 h-4 rounded border-slate-300 text-blue-600 focus:ring-blue-500"
                     required
                   />
                   <span className="text-sm text-slate-600">
@@ -175,7 +182,7 @@ export default function LoginPage() {
             <button
               type="submit"
               disabled={isLoading}
-              className="btn-primary w-full flex items-center justify-center gap-2"
+              className="w-full flex items-center justify-center gap-2 bg-blue-600 text-white px-6 py-2.5 rounded-xl font-medium hover:bg-blue-700 transition-all focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 disabled:opacity-50 disabled:cursor-not-allowed"
             >
               {isLoading ? (
                 <div className="w-5 h-5 border-2 border-white/30 border-t-white rounded-full animate-spin" />
@@ -191,7 +198,7 @@ export default function LoginPage() {
           <div className="mt-6 text-center">
             <button
               onClick={toggleMode}
-              className="text-sm text-primary-600 hover:text-primary-700 font-medium"
+              className="text-sm text-blue-600 hover:text-blue-700 font-medium"
             >
               {isSignup
                 ? 'Already have an account? Sign in'

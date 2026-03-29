@@ -1,4 +1,5 @@
 import { useState } from 'react';
+import { useAuthStore } from '@/store/authStore';
 import {
   Landmark,
   PiggyBank,
@@ -108,6 +109,8 @@ const checkingComparisons = [
 
 export default function BankingPage() {
   const [showToast, setShowToast] = useState(false);
+  const user = useAuthStore((s) => s.user);
+  const buddyName = user?.buddyName || 'Finance Buddy';
 
   const handleLinkAccount = () => {
     setShowToast(true);
@@ -164,6 +167,24 @@ export default function BankingPage() {
         <Plus className="w-4 h-4" />
         Link New Account
       </button>
+
+      {/* AI Recommendation */}
+      <div className="bg-gradient-to-r from-indigo-50 to-purple-50 rounded-2xl p-6 border border-indigo-100">
+        <div className="flex items-start gap-3">
+          <div className="p-2 bg-indigo-100 rounded-xl">
+            <Sparkles className="w-5 h-5 text-indigo-600" />
+          </div>
+          <div>
+            <h3 className="font-semibold text-slate-900">{buddyName}'s Recommendation</h3>
+            <p className="text-sm text-slate-600 mt-1">
+              Based on your spending patterns and savings goals, we recommend <span className="font-semibold text-indigo-600">Ally Bank</span> for its high APY savings and zero fees. You could earn an extra <span className="font-semibold text-emerald-600">$498/year</span> in interest on your current savings balance.
+            </p>
+            <button className="mt-3 flex items-center gap-1 text-sm font-medium text-indigo-600 hover:text-indigo-700 transition-colors">
+              Learn more <ChevronRight className="w-4 h-4" />
+            </button>
+          </div>
+        </div>
+      </div>
 
       {/* Recent Transactions */}
       <div className="bg-white rounded-2xl shadow-sm border border-slate-100 overflow-hidden">
@@ -302,24 +323,6 @@ export default function BankingPage() {
               </div>
             </div>
           ))}
-        </div>
-      </div>
-
-      {/* AI Recommendation */}
-      <div className="bg-gradient-to-r from-indigo-50 to-purple-50 rounded-2xl p-6 border border-indigo-100">
-        <div className="flex items-start gap-3">
-          <div className="p-2 bg-indigo-100 rounded-xl">
-            <Sparkles className="w-5 h-5 text-indigo-600" />
-          </div>
-          <div>
-            <h3 className="font-semibold text-slate-900">AI Recommendation</h3>
-            <p className="text-sm text-slate-600 mt-1">
-              Based on your spending patterns and savings goals, we recommend <span className="font-semibold text-indigo-600">Ally Bank</span> for its high APY savings and zero fees. You could earn an extra <span className="font-semibold text-emerald-600">$498/year</span> in interest on your current savings balance.
-            </p>
-            <button className="mt-3 flex items-center gap-1 text-sm font-medium text-indigo-600 hover:text-indigo-700 transition-colors">
-              Learn more <ChevronRight className="w-4 h-4" />
-            </button>
-          </div>
         </div>
       </div>
     </div>

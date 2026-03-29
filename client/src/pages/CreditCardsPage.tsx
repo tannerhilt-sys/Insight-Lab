@@ -13,6 +13,7 @@ import {
   Star,
   Zap,
 } from 'lucide-react';
+import { useAuthStore } from '@/store/authStore';
 
 const cardRecommendations = [
   {
@@ -83,6 +84,8 @@ const checklist = [
 ];
 
 export default function CreditCardsPage() {
+  const user = useAuthStore((s) => s.user);
+  const buddyName = user?.buddyName || 'Finance Buddy';
   const [monthlyIncome, setMonthlyIncome] = useState(5000);
   const [expandedSection, setExpandedSection] = useState<string | null>(null);
   const [checklistState, setChecklistState] = useState<boolean[]>(new Array(checklist.length).fill(false));
@@ -256,7 +259,7 @@ export default function CreditCardsPage() {
       <div className="bg-gradient-to-r from-indigo-50 to-purple-50 rounded-2xl p-6 border border-indigo-100">
         <div className="flex items-center gap-2 mb-4">
           <Sparkles className="w-5 h-5 text-indigo-600" />
-          <h3 className="text-lg font-semibold text-slate-900">Personalized Tips to Improve Your Score</h3>
+          <h3 className="text-lg font-semibold text-slate-900">{buddyName}'s Tips to Improve Your Score</h3>
         </div>
         <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
           {[

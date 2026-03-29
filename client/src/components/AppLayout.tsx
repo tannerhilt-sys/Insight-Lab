@@ -17,19 +17,38 @@ import {
   Building2,
   CircleDollarSign,
   Receipt,
+  ChevronDown,
+  ChevronRight,
+  HandCoins,
 } from 'lucide-react';
 import { useAuthStore } from '@/store/authStore';
 
-const navItems = [
+interface NavItem {
+  to: string;
+  label: string;
+  icon: typeof LayoutDashboard;
+  children?: NavItem[];
+}
+
+const navItems: NavItem[] = [
   { to: '/dashboard', label: 'Dashboard', icon: LayoutDashboard },
   { to: '/budget', label: 'Budget', icon: Wallet },
   { to: '/expenses', label: 'Expenses', icon: Receipt },
-  { to: '/portfolio', label: 'Portfolio', icon: TrendingUp },
-  { to: '/banking', label: 'Banking', icon: Landmark },
-  { to: '/savings', label: 'Savings', icon: PiggyBank },
-  { to: '/roth-ira', label: 'Roth IRA', icon: CircleDollarSign },
-  { to: '/401k', label: '401K', icon: Building2 },
-  { to: '/credit-cards', label: 'Credit Cards', icon: CreditCard },
+  {
+    to: '/portfolio', label: 'Portfolio', icon: TrendingUp,
+    children: [
+      { to: '/roth-ira', label: 'Roth IRA', icon: CircleDollarSign },
+      { to: '/401k', label: '401K', icon: Building2 },
+    ],
+  },
+  {
+    to: '/banking', label: 'Banking', icon: Landmark,
+    children: [
+      { to: '/savings', label: 'Savings', icon: PiggyBank },
+      { to: '/credit-cards', label: 'Credit Cards', icon: CreditCard },
+      { to: '/loans', label: 'Loans', icon: HandCoins },
+    ],
+  },
   { to: '/fraud-protection', label: 'Fraud Protection', icon: Shield },
   { to: '/chat', label: 'Chat', icon: MessageCircle },
   { to: '/learn', label: 'Learn', icon: GraduationCap },
@@ -50,7 +69,11 @@ const pageTitles: Record<string, string> = {
   '/credit-cards': 'Smart Credit Cards',
   '/fraud-protection': 'Fraud Protection Center',
   '/expenses': 'My Expenses',
+  '/loans': 'Loans',
 };
+
+const portfolioPaths = ['/portfolio', '/roth-ira', '/401k'];
+const bankingPaths = ['/banking', '/savings', '/credit-cards', '/loans'];
 
 export default function AppLayout() {
   const [sidebarOpen, setSidebarOpen] = useState(false);
@@ -60,6 +83,23 @@ export default function AppLayout() {
 
   const buddyName = user?.buddyName || 'Finance Buddy';
   const pageTitle = pageTitles[location.pathname] || 'Finance Buddy';
+  const isDashboard = location.pathname === '/dashboard';
+
+  // Track which dropdowns are open
+  const [openDropdowns, setOpenDropdowns] = useState<Record<string, boolean>>(() => ({
+    '/portfolio': portfolioPaths.includes(location.pathname),
+    '/banking': bankingPaths.includes(location.pathname),
+  }));
+
+  const toggleDropdown = (key: string) => {
+    setOpenDropdowns((prev) => ({ ...prev, [key]: !prev[key] }));
+  };
+
+  const getGroupPaths = (item: NavItem): string[] => {
+    const paths = [item.to];
+    if (item.children) item.children.forEach((c) => paths.push(c.to));
+    return paths;
+  };
 
   return (
     <div className="flex h-screen overflow-hidden bg-slate-50">
@@ -94,29 +134,95 @@ export default function AppLayout() {
 
         {/* Navigation */}
         <nav className="flex-1 px-3 py-4 space-y-1 overflow-y-auto">
-          {navItems.map((item) => (
-            <NavLink
-              key={item.to}
-              to={item.to}
-              onClick={() => setSidebarOpen(false)}
-              className={({ isActive }) =>
-                `flex items-center gap-3 px-4 py-3 rounded-xl text-sm font-medium transition-all duration-200 ${
-                  isActive
-                    ? 'bg-primary-600/20 text-primary-300 shadow-sm'
-                    : 'text-slate-400 hover:text-slate-200 hover:bg-slate-800'
-                }`
-              }
-            >
-              <item.icon className="w-5 h-5 shrink-0" />
-              {item.label}
-            </NavLink>
-          ))}
+          {navItems.map((item) => {
+            if (item.children) {
+              const groupPaths = getGroupPaths(item);
+              const isChildActive = groupPaths.includes(location.pathname);
+              const isOpen = openDropdowns[item.to] ?? false;
+
+              return (
+                <div key={item.to}>
+                  {/* Parent toggle */}
+                  <button
+                    onClick={() => toggleDropdown(item.to)}
+                    className={`w-full flex items-center gap-3 px-4 py-3 rounded-xl text-sm font-medium transition-all duration-200 ${
+                      isChildActive && !isOpen
+                        ? 'bg-primary-600/20 text-primary-300 shadow-sm'
+                        : 'text-slate-400 hover:text-slate-200 hover:bg-slate-800'
+                    }`}
+                  >
+                    <item.icon className="w-5 h-5 shrink-0" />
+                    {item.label}
+                    <span className="ml-auto">
+                      {isOpen ? <ChevronDown className="w-4 h-4" /> : <ChevronRight className="w-4 h-4" />}
+                    </span>
+                  </button>
+
+                  {/* Children */}
+                  {isOpen && (
+                    <div className="mt-1 ml-4 pl-4 border-l border-slate-700 space-y-1">
+                      {/* Parent's own page */}
+                      <NavLink
+                        to={item.to}
+                        onClick={() => setSidebarOpen(false)}
+                        className={({ isActive }) =>
+                          `flex items-center gap-3 px-4 py-2.5 rounded-xl text-sm font-medium transition-all duration-200 ${
+                            isActive
+                              ? 'bg-primary-600/20 text-primary-300 shadow-sm'
+                              : 'text-slate-400 hover:text-slate-200 hover:bg-slate-800'
+                          }`
+                        }
+                      >
+                        <item.icon className="w-4 h-4 shrink-0" />
+                        {item.to === '/banking' ? 'My Bank' : item.label}
+                      </NavLink>
+                      {item.children.map((child) => (
+                        <NavLink
+                          key={child.to}
+                          to={child.to}
+                          onClick={() => setSidebarOpen(false)}
+                          className={({ isActive }) =>
+                            `flex items-center gap-3 px-4 py-2.5 rounded-xl text-sm font-medium transition-all duration-200 ${
+                              isActive
+                                ? 'bg-primary-600/20 text-primary-300 shadow-sm'
+                                : 'text-slate-400 hover:text-slate-200 hover:bg-slate-800'
+                            }`
+                          }
+                        >
+                          <child.icon className="w-4 h-4 shrink-0" />
+                          {child.label}
+                        </NavLink>
+                      ))}
+                    </div>
+                  )}
+                </div>
+              );
+            }
+
+            return (
+              <NavLink
+                key={item.to}
+                to={item.to}
+                onClick={() => setSidebarOpen(false)}
+                className={({ isActive }) =>
+                  `flex items-center gap-3 px-4 py-3 rounded-xl text-sm font-medium transition-all duration-200 ${
+                    isActive
+                      ? 'bg-primary-600/20 text-primary-300 shadow-sm'
+                      : 'text-slate-400 hover:text-slate-200 hover:bg-slate-800'
+                  }`
+                }
+              >
+                <item.icon className="w-5 h-5 shrink-0" />
+                {item.label}
+              </NavLink>
+            );
+          })}
         </nav>
 
         {/* User Info */}
         <div className="px-4 py-4 border-t border-slate-800">
           <div className="flex items-center gap-3">
-            <div className="w-9 h-9 rounded-full bg-gradient-to-br from-primary-400 to-purple-500 flex items-center justify-center text-sm font-bold">
+            <div className="w-9 h-9 rounded-full bg-gradient-to-br from-blue-500 to-blue-700 flex items-center justify-center text-sm font-bold">
               {buddyName.charAt(0).toUpperCase()}
             </div>
             <div className="flex-1 min-w-0">
@@ -147,9 +253,12 @@ export default function AppLayout() {
             <Menu className="w-5 h-5" />
           </button>
           <h2 className="text-lg font-semibold text-slate-900">{pageTitle}</h2>
-          <div className="ml-auto text-sm text-slate-500">
-            Hey, <span className="font-medium text-slate-700">{user?.email?.split('@')[0] || 'there'}</span>!
-          </div>
+          {isDashboard && (
+            <button className="ml-auto flex items-center gap-2 px-4 py-2 bg-blue-600 text-white text-sm font-medium rounded-xl hover:bg-blue-700 transition-all shadow-sm">
+              <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4" /></svg>
+              Download App
+            </button>
+          )}
         </header>
 
         {/* Page content */}

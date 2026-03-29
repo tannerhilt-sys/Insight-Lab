@@ -44,6 +44,7 @@ import {
   ResponsiveContainer,
 } from 'recharts';
 import Modal from '@/components/Modal';
+import { useAuthStore } from '@/store/authStore';
 
 /* ------------------------------------------------------------------ */
 /*  Types                                                              */
@@ -219,6 +220,8 @@ const emptyForm = {
 };
 
 export default function ExpensesPage() {
+  const user = useAuthStore((s) => s.user);
+  const buddyName = user?.buddyName || 'Finance Buddy';
   const [expenses, setExpenses] = useState<Expense[]>(INITIAL_EXPENSES);
   const [showModal, setShowModal] = useState(false);
   const [editingId, setEditingId] = useState<string | null>(null);
@@ -431,7 +434,7 @@ export default function ExpensesPage() {
       <div className="card">
         <h3 className="text-lg font-semibold text-slate-900 mb-4 flex items-center gap-2">
           <Sparkles className="w-5 h-5 text-amber-500" />
-          Spending Insights
+          {buddyName}'s Spending Insights
         </h3>
         <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
           {/* Top 3 Areas to Save */}

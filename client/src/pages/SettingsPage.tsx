@@ -12,6 +12,7 @@ import { useAuthStore } from '@/store/authStore';
 
 export default function SettingsPage() {
   const user = useAuthStore((s) => s.user);
+  const updateBuddyName = useAuthStore((s) => s.updateBuddyName);
 
   const [buddyName, setBuddyName] = useState(user?.buddyName || 'Finance Buddy');
   const [email, setEmail] = useState(user?.email || '');
@@ -29,6 +30,7 @@ export default function SettingsPage() {
   });
 
   const handleSave = () => {
+    updateBuddyName(buddyName);
     setSaved(true);
     setTimeout(() => setSaved(false), 2000);
   };

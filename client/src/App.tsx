@@ -18,6 +18,7 @@ import FourOhOneKPage from '@/pages/FourOhOneKPage';
 import CreditCardsPage from '@/pages/CreditCardsPage';
 import FraudProtectionPage from '@/pages/FraudProtectionPage';
 import ExpensesPage from '@/pages/ExpensesPage';
+import LoansPage from '@/pages/LoansPage';
 
 function RootRedirect() {
   const isAuthenticated = useAuthStore((s) => s.isAuthenticated);
@@ -62,6 +63,7 @@ export default function App() {
           <Route path="/credit-cards" element={<CreditCardsPage />} />
           <Route path="/fraud-protection" element={<FraudProtectionPage />} />
           <Route path="/expenses" element={<ExpensesPage />} />
+          <Route path="/loans" element={<LoansPage />} />
         </Route>
 
         {/* Catch all */}

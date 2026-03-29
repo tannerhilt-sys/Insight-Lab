@@ -1,4 +1,5 @@
 import { useState } from 'react';
+import { useAuthStore } from '@/store/authStore';
 import {
   PiggyBank,
   Target,
@@ -100,6 +101,8 @@ const monthlySavingsData = [
 ];
 
 export default function SavingsPage() {
+  const user = useAuthStore((s) => s.user);
+  const buddyName = user?.buddyName || 'Finance Buddy';
   const [monthlyExpenses, setMonthlyExpenses] = useState(2700);
 
   return (
@@ -135,6 +138,24 @@ export default function SavingsPage() {
           </div>
           <p className="text-3xl font-bold">$312.47</p>
           <p className="text-purple-200 text-sm mt-1">From high-yield accounts</p>
+        </div>
+      </div>
+
+      {/* AI Savings Insight */}
+      <div className="bg-gradient-to-r from-indigo-50 to-purple-50 rounded-2xl p-6 border border-indigo-100">
+        <div className="flex items-start gap-3">
+          <div className="p-2 bg-indigo-100 rounded-xl">
+            <Sparkles className="w-5 h-5 text-indigo-600" />
+          </div>
+          <div>
+            <h4 className="font-semibold text-indigo-900">{buddyName}'s Savings Insight</h4>
+            <p className="text-sm text-slate-700 mt-1">
+              At your current savings rate of <span className="font-bold text-indigo-600">$850/month</span>, you'll reach your Emergency Fund goal by{' '}
+              <span className="font-bold text-indigo-600">July 2026</span>. Consider increasing by{' '}
+              <span className="font-bold text-emerald-600">$150/month</span> to hit it by May instead! You're doing great
+              — your savings rate is in the top 30% of users your age.
+            </p>
+          </div>
         </div>
       </div>
 
@@ -381,24 +402,6 @@ export default function SavingsPage() {
             <Line type="monotone" dataKey="trend" stroke="#10b981" strokeWidth={2} dot={false} name="Trend" />
           </ComposedChart>
         </ResponsiveContainer>
-      </div>
-
-      {/* AI Savings Insight */}
-      <div className="bg-gradient-to-r from-indigo-50 to-purple-50 rounded-2xl p-6 border border-indigo-100">
-        <div className="flex items-start gap-3">
-          <div className="p-2 bg-indigo-100 rounded-xl">
-            <Sparkles className="w-5 h-5 text-indigo-600" />
-          </div>
-          <div>
-            <h4 className="font-semibold text-indigo-900">AI Savings Insight</h4>
-            <p className="text-sm text-slate-700 mt-1">
-              At your current savings rate of <span className="font-bold text-indigo-600">$850/month</span>, you'll reach your Emergency Fund goal by{' '}
-              <span className="font-bold text-indigo-600">July 2026</span>. Consider increasing by{' '}
-              <span className="font-bold text-emerald-600">$150/month</span> to hit it by May instead! You're doing great
-              — your savings rate is in the top 30% of users your age.
-            </p>
-          </div>
-        </div>
       </div>
     </div>
   );

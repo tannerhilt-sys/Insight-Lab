@@ -29,6 +29,7 @@ import {
   ResponsiveContainer,
 } from 'recharts';
 import Modal from '@/components/Modal';
+import { useAuthStore } from '@/store/authStore';
 import type { Holding, WatchlistItem } from '@/store/portfolioStore';
 
 // Mock data
@@ -193,6 +194,8 @@ function useLiveMarket() {
 }
 
 export default function PortfolioPage() {
+  const user = useAuthStore((s) => s.user);
+  const buddyName = user?.buddyName || 'Finance Buddy';
   const [holdings, setHoldings] = useState(mockHoldings);
   const [watchlist, setWatchlist] = useState(mockWatchlist);
   const [showBuyModal, setShowBuyModal] = useState(false);
@@ -840,7 +843,7 @@ export default function PortfolioPage() {
               <div className="flex items-start gap-3">
                 <Sparkles className="w-5 h-5 text-primary-600 mt-0.5 shrink-0" />
                 <div>
-                  <h4 className="font-semibold text-slate-900 text-sm mb-1">AI Analysis</h4>
+                  <h4 className="font-semibold text-slate-900 text-sm mb-1">{buddyName}'s Analysis</h4>
                   <p className="text-sm text-slate-600 leading-relaxed">
                     {showDetail.ticker} has shown {showDetail.gainLossPercent >= 0 ? 'positive' : 'negative'} momentum
                     with a {Math.abs(showDetail.gainLossPercent).toFixed(1)}% {showDetail.gainLossPercent >= 0 ? 'gain' : 'loss'} from

@@ -174,7 +174,7 @@ export default function DashboardPage() {
               3 new
             </span>
           </div>
-          <p className="text-sm text-slate-500 mb-1">AI Insights</p>
+          <p className="text-sm text-slate-500 mb-1">{buddyName}'s Tips</p>
           <p className="text-lg font-semibold text-slate-900 leading-snug">
             "You're on track to save $1.5k this month!"
           </p>
@@ -264,7 +264,7 @@ export default function DashboardPage() {
 
       {/* AI Insights */}
       <div>
-        <h2 className="text-lg font-semibold text-slate-900 mb-4">AI Insights</h2>
+        <h2 className="text-lg font-semibold text-slate-900 mb-4">{buddyName}'s Insights</h2>
         <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-4">
           {insights
             .filter((_, i) => !dismissedInsights.includes(i))

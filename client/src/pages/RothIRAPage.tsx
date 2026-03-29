@@ -1,4 +1,5 @@
 import { useState } from 'react';
+import { useAuthStore } from '@/store/authStore';
 import {
   DollarSign,
   TrendingUp,
@@ -9,6 +10,9 @@ import {
   ArrowUpRight,
   ArrowDownRight,
   Clock,
+  Lock,
+  CheckCircle,
+  AlertTriangle,
 } from 'lucide-react';
 import {
   PieChart,
@@ -82,8 +86,12 @@ const growthData = [
 ];
 
 export default function RothIRAPage() {
+  const user = useAuthStore((s) => s.user);
+  const buddyName = user?.buddyName || 'Finance Buddy';
   const [selectedCategory, setSelectedCategory] = useState<string | null>(null);
-  const [rothContributed] = useState(3500);
+  const [rothContributed, setRothContributed] = useState(3500);
+  const [contributeAmount, setContributeAmount] = useState('');
+  const [showContributeSuccess, setShowContributeSuccess] = useState(false);
   const rothLimit = 7000;
   const rothPercent = Math.round((rothContributed / rothLimit) * 100);
   const remaining = rothLimit - rothContributed;
@@ -99,8 +107,8 @@ export default function RothIRAPage() {
         <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
           {[
             { title: 'Tax-Free Growth', desc: 'Your investments grow without being taxed' },
-            { title: 'Flexible Withdrawals', desc: 'Withdraw contributions anytime without penalty' },
-            { title: 'No RMDs', desc: 'No required minimum distributions in retirement' },
+            { title: 'Retirement Ready', desc: 'Tax-free and penalty-free withdrawals after age 59½ (if account is 5+ years old)' },
+            { title: 'After-Tax Contributions', desc: 'You contribute money you\'ve already paid taxes on — so qualified withdrawals are 100% tax-free' },
           ].map((b) => (
             <div key={b.title} className="bg-white/10 backdrop-blur-sm rounded-xl p-4">
               <h4 className="font-semibold mb-1">{b.title}</h4>
@@ -159,9 +167,30 @@ export default function RothIRAPage() {
         </div>
       </div>
 
+      {/* AI Insight */}
+      <div className="bg-gradient-to-r from-indigo-50 to-purple-50 rounded-2xl p-6 border border-indigo-100">
+        <div className="flex items-start gap-3">
+          <div className="p-2 bg-indigo-100 rounded-xl">
+            <Sparkles className="w-5 h-5 text-indigo-600" />
+          </div>
+          <div>
+            <h4 className="font-semibold text-indigo-900">{buddyName}'s Insight</h4>
+            <p className="text-sm text-slate-700 mt-1">
+              Starting a Roth IRA at age 22 with $200/month could grow to{' '}
+              <span className="font-bold text-emerald-600">$500,000+</span> by age 65, assuming an 8% average annual return. That's the power of compound interest working for over 40 years! You've already contributed{' '}
+              <span className="font-bold text-indigo-600">${rothContributed.toLocaleString()}</span> this year
+              — consider setting up automatic monthly contributions of{' '}
+              <span className="font-bold text-indigo-600">${monthlyNeeded}/mo</span> to max out your limit before year-end.
+            </p>
+          </div>
+        </div>
+      </div>
+
       {/* Contribution Tracker */}
       <div className="bg-white rounded-2xl shadow-sm border border-slate-100 p-6">
-        <h3 className="font-semibold text-slate-900 mb-4">2026 Contribution Tracker</h3>
+        <div className="flex items-center justify-between mb-4">
+          <h3 className="font-semibold text-slate-900">2026 Contribution Tracker</h3>
+        </div>
         <div className="flex items-end gap-2 mb-2">
           <span className="text-3xl font-bold text-indigo-600">${rothContributed.toLocaleString()}</span>
           <span className="text-slate-400 text-sm mb-1">of ${rothLimit.toLocaleString()} limit</span>
@@ -175,7 +204,7 @@ export default function RothIRAPage() {
         <p className="text-sm text-slate-500 mb-4">
           ${remaining.toLocaleString()} remaining &middot; {rothPercent}% complete
         </p>
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
           <div className="bg-indigo-50 rounded-xl p-4">
             <p className="text-xs text-slate-500 mb-1">Remaining to Max Out</p>
             <p className="text-xl font-bold text-indigo-600">${remaining.toLocaleString()}</p>
@@ -184,6 +213,133 @@ export default function RothIRAPage() {
             <p className="text-xs text-slate-500 mb-1">Monthly Contribution Needed</p>
             <p className="text-xl font-bold text-purple-600">${monthlyNeeded}/mo</p>
             <p className="text-xs text-slate-400 mt-1">To max out by December</p>
+          </div>
+          <div className="bg-emerald-50 rounded-xl p-4">
+            <p className="text-xs text-slate-500 mb-1">Next Auto-Contribution</p>
+            <p className="text-xl font-bold text-emerald-600">$389</p>
+            <p className="text-xs text-slate-400 mt-1">April 1, 2026</p>
+          </div>
+        </div>
+      </div>
+
+      {/* Add Funds */}
+      <div className="bg-white rounded-2xl shadow-sm border border-slate-100 p-6">
+        <h3 className="font-semibold text-slate-900 mb-4">Add Funds to Roth IRA</h3>
+
+        {showContributeSuccess && (
+          <div className="mb-4 p-4 bg-emerald-50 border border-emerald-200 rounded-xl flex items-center gap-2 text-emerald-700 text-sm animate-[fadeIn_0.3s_ease-out]">
+            <CheckCircle className="w-5 h-5 shrink-0" />
+            <span>Contribution added successfully! Your new balance has been updated.</span>
+          </div>
+        )}
+
+        <div className="flex flex-col sm:flex-row gap-3 mb-4">
+          <div className="relative flex-1">
+            <span className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-500 font-medium">$</span>
+            <input
+              type="number"
+              value={contributeAmount}
+              onChange={(e) => setContributeAmount(e.target.value)}
+              placeholder="0.00"
+              min="1"
+              max={remaining}
+              className="w-full pl-8 pr-4 py-3 border border-slate-200 rounded-xl text-lg font-semibold focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-transparent"
+            />
+          </div>
+          <div className="flex gap-2">
+            {[100, 250, 500].map((amt) => (
+              <button
+                key={amt}
+                onClick={() => setContributeAmount(amt.toString())}
+                className="px-4 py-3 bg-slate-100 text-slate-700 rounded-xl text-sm font-medium hover:bg-slate-200 transition-colors"
+              >
+                ${amt}
+              </button>
+            ))}
+          </div>
+          <button
+            onClick={() => {
+              const amt = parseFloat(contributeAmount);
+              if (amt > 0 && amt <= remaining) {
+                setRothContributed((prev) => prev + amt);
+                setContributeAmount('');
+                setShowContributeSuccess(true);
+                setTimeout(() => setShowContributeSuccess(false), 3000);
+              }
+            }}
+            disabled={!contributeAmount || parseFloat(contributeAmount) <= 0 || parseFloat(contributeAmount) > remaining}
+            className="px-6 py-3 bg-indigo-600 text-white rounded-xl font-medium hover:bg-indigo-700 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+          >
+            Contribute
+          </button>
+        </div>
+
+        {contributeAmount && parseFloat(contributeAmount) > 0 && (
+          <div className="p-3 bg-indigo-50 rounded-xl text-sm text-indigo-700">
+            Contributing <strong>${parseFloat(contributeAmount).toLocaleString()}</strong> will bring your total to <strong>${(rothContributed + parseFloat(contributeAmount)).toLocaleString()}</strong> ({Math.round(((rothContributed + parseFloat(contributeAmount)) / rothLimit) * 100)}% of limit)
+          </div>
+        )}
+
+        {parseFloat(contributeAmount) > remaining && (
+          <div className="mt-2 p-3 bg-red-50 rounded-xl text-sm text-red-700 flex items-center gap-2">
+            <AlertTriangle className="w-4 h-4 shrink-0" />
+            This exceeds your remaining annual limit of ${remaining.toLocaleString()}
+          </div>
+        )}
+      </div>
+
+      {/* Withdrawal Status - Locked */}
+      <div className="bg-white rounded-2xl shadow-sm border border-red-200 p-6">
+        <div className="flex items-start gap-4">
+          <div className="p-3 bg-red-100 rounded-xl shrink-0">
+            <Lock className="w-6 h-6 text-red-600" />
+          </div>
+          <div className="flex-1">
+            <div className="flex items-center gap-2 mb-1">
+              <h3 className="font-semibold text-slate-900">Withdrawals Locked</h3>
+              <span className="text-xs font-semibold px-2 py-0.5 bg-red-100 text-red-700 rounded-full">Under 59½</span>
+            </div>
+            <p className="text-sm text-slate-600 mb-4">
+              Your Roth IRA earnings are locked until you reach age 59½ and the account has been open for at least 5 years.
+              Early withdrawals of <strong>earnings</strong> may be subject to a 10% penalty plus income taxes.
+            </p>
+
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-3 mb-4">
+              <div className="p-3 bg-slate-50 rounded-xl">
+                <p className="text-xs text-slate-500 mb-1">Your Age</p>
+                <p className="text-lg font-bold text-slate-900">24</p>
+              </div>
+              <div className="p-3 bg-slate-50 rounded-xl">
+                <p className="text-xs text-slate-500 mb-1">Penalty-Free At</p>
+                <p className="text-lg font-bold text-slate-900">Age 59½</p>
+              </div>
+              <div className="p-3 bg-slate-50 rounded-xl">
+                <p className="text-xs text-slate-500 mb-1">Years Until Eligible</p>
+                <p className="text-lg font-bold text-red-600">35.5 years</p>
+              </div>
+            </div>
+
+            <div className="w-full bg-slate-100 rounded-full h-3 mb-2">
+              <div className="bg-gradient-to-r from-red-400 to-red-500 h-3 rounded-full" style={{ width: '40%' }} />
+            </div>
+            <div className="flex justify-between text-xs text-slate-400">
+              <span>Age 24 (now)</span>
+              <span>5-year rule met: Nov 2028</span>
+              <span>Age 59½</span>
+            </div>
+
+            <div className="mt-4 p-3 bg-amber-50 rounded-xl border border-amber-200">
+              <div className="flex items-start gap-2">
+                <AlertTriangle className="w-4 h-4 text-amber-600 mt-0.5 shrink-0" />
+                <div>
+                  <p className="text-sm text-amber-800 font-medium">Early Withdrawal Exceptions</p>
+                  <p className="text-xs text-amber-700 mt-1">
+                    Contributions (not earnings) can be withdrawn anytime without penalty. Certain exceptions exist for earnings:
+                    first-time home purchase (up to $10,000), qualified education expenses, disability, and unreimbursed medical expenses.
+                  </p>
+                </div>
+              </div>
+            </div>
           </div>
         </div>
       </div>
@@ -411,25 +567,6 @@ export default function RothIRAPage() {
                 </div>
               ))}
             </div>
-          </div>
-        </div>
-      </div>
-
-      {/* AI Insight */}
-      <div className="bg-gradient-to-r from-indigo-50 to-purple-50 rounded-2xl p-6 border border-indigo-100">
-        <div className="flex items-start gap-3">
-          <div className="p-2 bg-indigo-100 rounded-xl">
-            <Sparkles className="w-5 h-5 text-indigo-600" />
-          </div>
-          <div>
-            <h4 className="font-semibold text-indigo-900">AI Insight</h4>
-            <p className="text-sm text-slate-700 mt-1">
-              Starting a Roth IRA at age 22 with $200/month could grow to{' '}
-              <span className="font-bold text-emerald-600">$500,000+</span> by age 65, assuming an 8% average annual return. That's the power of compound interest working for over 40 years! You've already contributed{' '}
-              <span className="font-bold text-indigo-600">${rothContributed.toLocaleString()}</span> this year
-              — consider setting up automatic monthly contributions of{' '}
-              <span className="font-bold text-indigo-600">${monthlyNeeded}/mo</span> to max out your limit before year-end.
-            </p>
           </div>
         </div>
       </div>
