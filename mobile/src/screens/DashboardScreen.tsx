@@ -1,52 +1,55 @@
-import React, { useState } from 'react';
-import { View, Text, ScrollView, StyleSheet, TouchableOpacity, Dimensions } from 'react-native';
+import React, { useState, useEffect } from 'react';
+import { View, Text, ScrollView, StyleSheet, TouchableOpacity, ActivityIndicator } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { colors } from '../lib/colors';
 import { useAuthStore } from '../store/authStore';
+import { api } from '../lib/api';
 
-const { width: SCREEN_WIDTH } = Dimensions.get('window');
+interface BudgetSummary {
+  totalIncome: number;
+  totalExpenses: number;
+  netSavings: number;
+}
 
-const summaryCards = [
-  { title: 'Budget Health', value: '$4,200', badge: '+$1,500', icon: 'wallet-outline' as const, color: colors.emerald[500], bgColor: colors.emerald[50], screen: 'Budget' },
-  { title: 'Portfolio', value: '$12,847', badge: '+4.2%', icon: 'trending-up-outline' as const, color: colors.primary[600], bgColor: colors.primary[50], screen: 'Portfolio' },
-  { title: 'Emergency Fund', value: '$7,300', badge: '73%', icon: 'flag-outline' as const, color: colors.amber[500], bgColor: colors.amber[50], screen: 'Savings' },
-  { title: 'Banking', value: '$24,448', badge: '3 accts', icon: 'business-outline' as const, color: colors.blue[500], bgColor: colors.blue[50], screen: 'Banking' },
-];
+interface SavingsGoal {
+  id: string;
+  label: string;
+  targetAmount: number;
+  currentAmount: number;
+  deadline?: string;
+}
 
-const recentActivity = [
-  { id: '1', desc: 'Grocery shopping', amount: -87.52, time: '2h ago', positive: false },
-  { id: '2', desc: 'Freelance payment', amount: 450, time: '5h ago', positive: true },
-  { id: '3', desc: 'Bought 5 shares AAPL', amount: -875.50, time: '1d ago', positive: false },
-  { id: '4', desc: 'Netflix subscription', amount: -15.99, time: '2d ago', positive: false },
-  { id: '5', desc: 'Salary deposit', amount: 4200, time: '3d ago', positive: true },
-];
+interface InsightCard {
+  id: string;
+  type: string;
+  title: string;
+  body: string;
+  priority: string;
+}
 
-// Spending breakdown for donut visual
-const spendingBreakdown = [
-  { label: 'Housing', pct: 44, amount: 1200, color: colors.primary[600] },
-  { label: 'Food', pct: 19, amount: 510, color: colors.emerald[500] },
-  { label: 'Shopping', pct: 15, amount: 402, color: colors.amber[500] },
-  { label: 'Transport', pct: 10, amount: 268, color: colors.blue[500] },
-  { label: 'Other', pct: 12, amount: 320, color: colors.purple[500] },
-];
+interface BudgetEntry {
+  id: string;
+  type: 'income' | 'expense';
+  amount: number;
+  category: string;
+  description: string;
+  date: string;
+  createdAt: string;
+}
 
-// Weekly spending spark data
-const weeklySpend = [
-  { day: 'Mon', amount: 45 },
-  { day: 'Tue', amount: 120 },
-  { day: 'Wed', amount: 30 },
-  { day: 'Thu', amount: 87 },
-  { day: 'Fri', amount: 210 },
-  { day: 'Sat', amount: 65 },
-  { day: 'Sun', amount: 15 },
-];
-
-const topStocks = [
-  { symbol: 'AAPL', change: +2.34, pct: '+1.33%', positive: true },
-  { symbol: 'MSFT', change: +5.12, pct: '+1.37%', positive: true },
-  { symbol: 'TSLA', change: -3.67, pct: '-1.46%', positive: false },
-  { symbol: 'NVDA', change: +15.43, pct: '+1.79%', positive: true },
-];
+// Spending breakdown for stacked bar — derived from live entries
+const CATEGORY_COLORS: Record<string, string> = {
+  Housing: colors.primary[600],
+  Rent: colors.primary[600],
+  Food: colors.emerald[500],
+  Groceries: colors.emerald[500],
+  'Dining Out': colors.emerald[500],
+  Shopping: colors.amber[500],
+  Transportation: colors.blue[500],
+  Utilities: colors.red[400],
+  Entertainment: colors.purple[500],
+  Subscriptions: colors.slate[400],
+};
 
 const serviceGroups = [
   {
@@ -99,13 +102,86 @@ export default function DashboardScreen({ navigation }: Props) {
   const buddyName = user?.buddyName || 'Finance Buddy';
   const [expandedGroups, setExpandedGroups] = useState<number[]>([]);
 
-  const maxWeekly = Math.max(...weeklySpend.map((d) => d.amount));
+  const [budget, setBudget] = useState<BudgetSummary | null>(null);
+  const [recentEntries, setRecentEntries] = useState<BudgetEntry[]>([]);
+  const [topGoal, setTopGoal] = useState<SavingsGoal | null>(null);
+  const [insight, setInsight] = useState<InsightCard | null>(null);
+  const [loading, setLoading] = useState(true);
+
+  const now = new Date();
+  const monthStr = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}`;
+
+  useEffect(() => {
+    async function loadDashboard() {
+      setLoading(true);
+      try {
+        const [budgetData, goalsData, insightsData] = await Promise.allSettled([
+          api<BudgetSummary>(`/budget/entries?month=${monthStr}`),
+          api<SavingsGoal[]>('/budget/goals'),
+          api<{ cards: InsightCard[] }>('/insights'),
+        ]);
+
+        if (budgetData.status === 'fulfilled') {
+          const b = budgetData.value as any;
+          setBudget(b);
+          const entries: BudgetEntry[] = b.entries ?? [];
+          const sorted = [...entries].sort(
+            (a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime()
+          );
+          setRecentEntries(sorted.slice(0, 5));
+        }
+
+        if (goalsData.status === 'fulfilled') {
+          const goals = goalsData.value as SavingsGoal[];
+          if (goals.length > 0) {
+            // Show the goal closest to completion
+            const sorted = [...goals].sort(
+              (a, b) => b.currentAmount / b.targetAmount - a.currentAmount / a.targetAmount
+            );
+            setTopGoal(sorted[0]);
+          }
+        }
+
+        if (insightsData.status === 'fulfilled') {
+          const cards = (insightsData.value as { cards: InsightCard[] }).cards ?? [];
+          const high = cards.find((c) => c.priority === 'high') ?? cards[0] ?? null;
+          setInsight(high);
+        }
+      } finally {
+        setLoading(false);
+      }
+    }
+
+    loadDashboard();
+  }, [monthStr]);
 
   const toggleGroup = (i: number) => {
     setExpandedGroups((prev) =>
       prev.includes(i) ? prev.filter((x) => x !== i) : [...prev, i]
     );
   };
+
+  // Build spending breakdown from real entries
+  const spendingBreakdown = (() => {
+    if (!recentEntries.length) return [];
+    const map: Record<string, number> = {};
+    for (const e of recentEntries) {
+      if (e.type === 'expense') {
+        map[e.category] = (map[e.category] ?? 0) + e.amount;
+      }
+    }
+    const total = Object.values(map).reduce((s, v) => s + v, 0) || 1;
+    return Object.entries(map).map(([label, amount]) => ({
+      label,
+      pct: Math.round((amount / total) * 100),
+      amount,
+      color: CATEGORY_COLORS[label] ?? colors.slate[400],
+    }));
+  })();
+
+  const goalPct = topGoal
+    ? Math.round((topGoal.currentAmount / topGoal.targetAmount) * 100)
+    : 0;
 
   return (
     <ScrollView style={styles.container} showsVerticalScrollIndicator={false}>
@@ -122,175 +198,157 @@ export default function DashboardScreen({ navigation }: Props) {
         </View>
       </View>
 
-      {/* Summary Cards */}
-      <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={styles.cardsRow}>
-        {summaryCards.map((card, i) => (
-          <TouchableOpacity key={i} style={styles.summaryCard} onPress={() => navigation.navigate(card.screen)}>
-            <View style={styles.cardHeader}>
-              <View style={[styles.cardIcon, { backgroundColor: card.bgColor }]}>
-                <Ionicons name={card.icon} size={20} color={card.color} />
-              </View>
-              <View style={[styles.badge, { backgroundColor: card.bgColor }]}>
-                <Text style={[styles.badgeText, { color: card.color }]}>{card.badge}</Text>
-              </View>
-            </View>
-            <Text style={styles.cardLabel}>{card.title}</Text>
-            <Text style={styles.cardValue}>{card.value}</Text>
-          </TouchableOpacity>
-        ))}
-      </ScrollView>
-
-      {/* ====== VISUAL SECTION: Monthly Spending Breakdown ====== */}
-      <View style={styles.vizCard}>
-        <Text style={styles.vizTitle}>Monthly Spending</Text>
-        <Text style={styles.vizSubtitle}>$2,700 of $4,200 budget</Text>
-        {/* Horizontal stacked bar */}
-        <View style={styles.stackedBar}>
-          {spendingBreakdown.map((seg, i) => (
-            <View key={i} style={[styles.stackedSegment, { flex: seg.pct, backgroundColor: seg.color }]} />
-          ))}
+      {loading ? (
+        <View style={styles.loadingBox}>
+          <ActivityIndicator size="large" color={colors.primary[600]} />
+          <Text style={styles.loadingText}>Loading your data...</Text>
         </View>
-        {/* Legend */}
-        <View style={styles.legendGrid}>
-          {spendingBreakdown.map((seg, i) => (
-            <View key={i} style={styles.legendItem}>
-              <View style={[styles.legendDot, { backgroundColor: seg.color }]} />
-              <Text style={styles.legendLabel}>{seg.label}</Text>
-              <Text style={styles.legendValue}>${seg.amount}</Text>
-            </View>
-          ))}
-        </View>
-        {/* Budget remaining */}
-        <View style={styles.budgetRemaining}>
-          <Ionicons name="checkmark-circle" size={16} color={colors.emerald[500]} />
-          <Text style={styles.budgetRemainingText}>$1,500 remaining this month</Text>
-        </View>
-      </View>
-
-      {/* ====== VISUAL SECTION: Weekly Spending Bar Chart ====== */}
-      <View style={styles.vizCard}>
-        <View style={styles.vizHeaderRow}>
-          <View>
-            <Text style={styles.vizTitle}>This Week</Text>
-            <Text style={styles.vizSubtitle}>$572 spent across 7 days</Text>
-          </View>
-          <View style={styles.weekAvgBadge}>
-            <Text style={styles.weekAvgText}>Avg $82/day</Text>
-          </View>
-        </View>
-        <View style={styles.barChart}>
-          {weeklySpend.map((day, i) => {
-            const height = Math.max((day.amount / maxWeekly) * 100, 6);
-            const isHighest = day.amount === maxWeekly;
-            return (
-              <View key={i} style={styles.barCol}>
-                <Text style={[styles.barValue, isHighest && { color: colors.primary[600], fontWeight: '700' }]}>
-                  ${day.amount}
-                </Text>
-                <View style={styles.barTrack}>
-                  <View
-                    style={[
-                      styles.barFill,
-                      { height: `${height}%` },
-                      isHighest ? { backgroundColor: colors.primary[600] } : { backgroundColor: colors.primary[300] },
-                    ]}
-                  />
+      ) : (
+        <>
+          {/* Summary Cards */}
+          <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={styles.cardsRow}>
+            <TouchableOpacity style={styles.summaryCard} onPress={() => navigation.navigate('Budget')}>
+              <View style={styles.cardHeader}>
+                <View style={[styles.cardIcon, { backgroundColor: colors.emerald[50] }]}>
+                  <Ionicons name="wallet-outline" size={20} color={colors.emerald[500]} />
                 </View>
-                <Text style={[styles.barDay, isHighest && { color: colors.primary[600], fontWeight: '700' }]}>{day.day}</Text>
+                <View style={[styles.badge, { backgroundColor: colors.emerald[50] }]}>
+                  <Text style={[styles.badgeText, { color: colors.emerald[500] }]}>
+                    {budget ? `+$${budget.netSavings.toLocaleString()}` : '--'}
+                  </Text>
+                </View>
               </View>
-            );
-          })}
-        </View>
-      </View>
-
-      {/* ====== VISUAL SECTION: Portfolio Movers ====== */}
-      <View style={styles.vizCard}>
-        <View style={styles.vizHeaderRow}>
-          <View>
-            <Text style={styles.vizTitle}>Portfolio Movers</Text>
-            <Text style={styles.vizSubtitle}>Today's top changes</Text>
-          </View>
-          <TouchableOpacity style={styles.seeAllBtn} onPress={() => navigation.navigate('Portfolio')}>
-            <Text style={styles.seeAllText}>See All</Text>
-            <Ionicons name="chevron-forward" size={14} color={colors.primary[600]} />
-          </TouchableOpacity>
-        </View>
-        <View style={styles.stocksRow}>
-          {topStocks.map((stock, i) => (
-            <TouchableOpacity key={i} style={styles.stockChip} onPress={() => navigation.navigate('Portfolio')}>
-              <Text style={styles.stockSymbol}>{stock.symbol}</Text>
-              <View style={[styles.stockChangeBadge, { backgroundColor: stock.positive ? colors.emerald[50] : colors.red[50] }]}>
-                <Ionicons
-                  name={stock.positive ? 'arrow-up' : 'arrow-down'}
-                  size={10}
-                  color={stock.positive ? colors.emerald[500] : colors.red[400]}
-                />
-                <Text style={[styles.stockChangeText, { color: stock.positive ? colors.emerald[500] : colors.red[400] }]}>
-                  {stock.pct}
-                </Text>
-              </View>
+              <Text style={styles.cardLabel}>Budget Health</Text>
+              <Text style={styles.cardValue}>
+                {budget ? `$${budget.totalIncome.toLocaleString()}` : '--'}
+              </Text>
             </TouchableOpacity>
-          ))}
-        </View>
-      </View>
 
-      {/* ====== AI Insight Banner ====== */}
-      <TouchableOpacity style={styles.insightBanner} onPress={() => navigation.navigate('Chat')}>
-        <View style={styles.insightIcon}>
-          <Ionicons name="sparkles" size={20} color={colors.purple[600]} />
-        </View>
-        <View style={{ flex: 1 }}>
-          <Text style={styles.insightTitle}>AI Insight</Text>
-          <Text style={styles.insightBody}>
-            You're on track to save $1.5k this month! Dining expenses are up 23% — consider cooking at home more.
-          </Text>
-        </View>
-        <Ionicons name="chevron-forward" size={16} color={colors.purple[400]} />
-      </TouchableOpacity>
+            {topGoal && (
+              <TouchableOpacity style={styles.summaryCard} onPress={() => navigation.navigate('Savings')}>
+                <View style={styles.cardHeader}>
+                  <View style={[styles.cardIcon, { backgroundColor: colors.amber[50] }]}>
+                    <Ionicons name="flag-outline" size={20} color={colors.amber[500]} />
+                  </View>
+                  <View style={[styles.badge, { backgroundColor: colors.amber[50] }]}>
+                    <Text style={[styles.badgeText, { color: colors.amber[500] }]}>{goalPct}%</Text>
+                  </View>
+                </View>
+                <Text style={styles.cardLabel}>{topGoal.label}</Text>
+                <Text style={styles.cardValue}>${topGoal.currentAmount.toLocaleString()}</Text>
+              </TouchableOpacity>
+            )}
 
-      {/* ====== VISUAL SECTION: Savings Progress Ring ====== */}
-      <View style={styles.savingsCard}>
-        <View style={styles.savingsLeft}>
-          <View style={styles.ringOuter}>
-            <View style={styles.ringInner}>
-              <Text style={styles.ringPct}>73%</Text>
+            <TouchableOpacity style={styles.summaryCard} onPress={() => navigation.navigate('Portfolio')}>
+              <View style={styles.cardHeader}>
+                <View style={[styles.cardIcon, { backgroundColor: colors.primary[50] }]}>
+                  <Ionicons name="trending-up-outline" size={20} color={colors.primary[600]} />
+                </View>
+              </View>
+              <Text style={styles.cardLabel}>Portfolio</Text>
+              <Text style={styles.cardValue}>Paper</Text>
+            </TouchableOpacity>
+          </ScrollView>
+
+          {/* Monthly Spending Breakdown */}
+          {spendingBreakdown.length > 0 && (
+            <View style={styles.vizCard}>
+              <Text style={styles.vizTitle}>Monthly Spending</Text>
+              <Text style={styles.vizSubtitle}>
+                ${(budget?.totalExpenses ?? 0).toLocaleString()} of ${(budget?.totalIncome ?? 0).toLocaleString()} income
+              </Text>
+              <View style={styles.stackedBar}>
+                {spendingBreakdown.map((seg, i) => (
+                  <View key={i} style={[styles.stackedSegment, { flex: seg.pct, backgroundColor: seg.color }]} />
+                ))}
+              </View>
+              <View style={styles.legendGrid}>
+                {spendingBreakdown.map((seg, i) => (
+                  <View key={i} style={styles.legendItem}>
+                    <View style={[styles.legendDot, { backgroundColor: seg.color }]} />
+                    <Text style={styles.legendLabel}>{seg.label}</Text>
+                    <Text style={styles.legendValue}>${seg.amount.toLocaleString()}</Text>
+                  </View>
+                ))}
+              </View>
+              {(budget?.netSavings ?? 0) > 0 && (
+                <View style={styles.budgetRemaining}>
+                  <Ionicons name="checkmark-circle" size={16} color={colors.emerald[500]} />
+                  <Text style={styles.budgetRemainingText}>
+                    ${budget!.netSavings.toLocaleString()} saved this month
+                  </Text>
+                </View>
+              )}
             </View>
-          </View>
-        </View>
-        <View style={styles.savingsRight}>
-          <Text style={styles.savingsTitle}>Emergency Fund</Text>
-          <Text style={styles.savingsAmount}>$7,300 <Text style={styles.savingsOf}>of $10,000</Text></Text>
-          <View style={styles.savingsMiniBar}>
-            <View style={[styles.savingsMiniBarFill, { width: '73%' }]} />
-          </View>
-          <Text style={styles.savingsEta}>~6 months to goal at $450/mo</Text>
-        </View>
-      </View>
+          )}
 
-      {/* ====== Recent Activity ====== */}
-      <Text style={styles.sectionTitle}>Recent Activity</Text>
-      <View style={styles.activityCard}>
-        {recentActivity.map((item) => (
-          <View key={item.id} style={styles.activityRow}>
-            <View style={[styles.activityDot, { backgroundColor: item.positive ? colors.emerald[100] : colors.red[100] }]}>
-              <Ionicons
-                name={item.positive ? 'arrow-up' : 'arrow-down'}
-                size={14}
-                color={item.positive ? colors.emerald[500] : colors.red[400]}
-              />
-            </View>
-            <View style={{ flex: 1 }}>
-              <Text style={styles.activityDesc}>{item.desc}</Text>
-              <Text style={styles.activityTime}>{item.time}</Text>
-            </View>
-            <Text style={[styles.activityAmount, { color: item.positive ? colors.emerald[500] : colors.red[400] }]}>
-              {item.positive ? '+' : ''}${Math.abs(item.amount).toLocaleString('en-US', { minimumFractionDigits: 2 })}
-            </Text>
-          </View>
-        ))}
-      </View>
+          {/* AI Insight Banner */}
+          {insight && (
+            <TouchableOpacity style={styles.insightBanner} onPress={() => navigation.navigate('Chat')}>
+              <View style={styles.insightIcon}>
+                <Ionicons name="sparkles" size={20} color={colors.purple[600]} />
+              </View>
+              <View style={{ flex: 1 }}>
+                <Text style={styles.insightTitle}>{insight.title}</Text>
+                <Text style={styles.insightBody} numberOfLines={2}>{insight.body}</Text>
+              </View>
+              <Ionicons name="chevron-forward" size={16} color={colors.purple[400]} />
+            </TouchableOpacity>
+          )}
 
-      {/* ====== SERVICES DROPDOWN SECTION ====== */}
+          {/* Savings Goal Ring */}
+          {topGoal && (
+            <View style={styles.savingsCard}>
+              <View style={styles.savingsLeft}>
+                <View style={styles.ringOuter}>
+                  <View style={styles.ringInner}>
+                    <Text style={styles.ringPct}>{goalPct}%</Text>
+                  </View>
+                </View>
+              </View>
+              <View style={styles.savingsRight}>
+                <Text style={styles.savingsTitle}>{topGoal.label}</Text>
+                <Text style={styles.savingsAmount}>
+                  ${topGoal.currentAmount.toLocaleString()}{' '}
+                  <Text style={styles.savingsOf}>of ${topGoal.targetAmount.toLocaleString()}</Text>
+                </Text>
+                <View style={styles.savingsMiniBar}>
+                  <View style={[styles.savingsMiniBarFill, { width: `${goalPct}%` }]} />
+                </View>
+              </View>
+            </View>
+          )}
+
+          {/* Recent Activity */}
+          {recentEntries.length > 0 && (
+            <>
+              <Text style={styles.sectionTitle}>Recent Activity</Text>
+              <View style={styles.activityCard}>
+                {recentEntries.map((item) => (
+                  <View key={item.id} style={styles.activityRow}>
+                    <View style={[styles.activityDot, { backgroundColor: item.type === 'income' ? colors.emerald[100] : colors.red[100] }]}>
+                      <Ionicons
+                        name={item.type === 'income' ? 'arrow-up' : 'arrow-down'}
+                        size={14}
+                        color={item.type === 'income' ? colors.emerald[500] : colors.red[400]}
+                      />
+                    </View>
+                    <View style={{ flex: 1 }}>
+                      <Text style={styles.activityDesc}>{item.description}</Text>
+                      <Text style={styles.activityTime}>{item.category}</Text>
+                    </View>
+                    <Text style={[styles.activityAmount, { color: item.type === 'income' ? colors.emerald[500] : colors.red[400] }]}>
+                      {item.type === 'income' ? '+' : '-'}${item.amount.toLocaleString('en-US', { minimumFractionDigits: 2 })}
+                    </Text>
+                  </View>
+                ))}
+              </View>
+            </>
+          )}
+        </>
+      )}
+
+      {/* All Services Dropdown */}
       <Text style={styles.sectionTitle}>All Services</Text>
       {serviceGroups.map((group, gi) => {
         const expanded = expandedGroups.includes(gi);
@@ -342,6 +400,9 @@ const styles = StyleSheet.create({
   welcomeSubtitle: { fontSize: 14, color: colors.slate[500], marginTop: 2 },
   settingsBtn: { padding: 10, backgroundColor: '#fff', borderRadius: 12, shadowColor: '#000', shadowOffset: { width: 0, height: 1 }, shadowOpacity: 0.06, shadowRadius: 3, elevation: 2 },
 
+  loadingBox: { alignItems: 'center', justifyContent: 'center', paddingVertical: 60 },
+  loadingText: { fontSize: 14, color: colors.slate[500], marginTop: 12 },
+
   cardsRow: { paddingHorizontal: 16, paddingVertical: 12, gap: 12 },
   summaryCard: { width: 160, backgroundColor: '#fff', borderRadius: 16, padding: 16, shadowColor: '#000', shadowOffset: { width: 0, height: 1 }, shadowOpacity: 0.05, shadowRadius: 4, elevation: 2 },
   cardHeader: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginBottom: 12 },
@@ -353,12 +414,9 @@ const styles = StyleSheet.create({
 
   sectionTitle: { fontSize: 17, fontWeight: '700', color: colors.slate[900], paddingHorizontal: 20, marginTop: 16, marginBottom: 12 },
 
-  // ====== Spending Breakdown Visual ======
   vizCard: { marginHorizontal: 16, marginBottom: 12, backgroundColor: '#fff', borderRadius: 18, padding: 18, shadowColor: '#000', shadowOffset: { width: 0, height: 2 }, shadowOpacity: 0.06, shadowRadius: 8, elevation: 3 },
   vizTitle: { fontSize: 16, fontWeight: '700', color: colors.slate[900] },
   vizSubtitle: { fontSize: 13, color: colors.slate[500], marginTop: 1 },
-  vizHeaderRow: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: 14 },
-
   stackedBar: { flexDirection: 'row', height: 14, borderRadius: 7, overflow: 'hidden', gap: 2, marginTop: 14 },
   stackedSegment: { borderRadius: 7, minWidth: 4 },
   legendGrid: { flexDirection: 'row', flexWrap: 'wrap', marginTop: 12, gap: 4 },
@@ -369,32 +427,11 @@ const styles = StyleSheet.create({
   budgetRemaining: { flexDirection: 'row', alignItems: 'center', gap: 6, marginTop: 12, paddingTop: 12, borderTopWidth: 1, borderTopColor: colors.slate[100] },
   budgetRemainingText: { fontSize: 13, fontWeight: '600', color: colors.emerald[500] },
 
-  // ====== Weekly Bar Chart ======
-  weekAvgBadge: { backgroundColor: colors.primary[50], paddingHorizontal: 10, paddingVertical: 4, borderRadius: 10 },
-  weekAvgText: { fontSize: 12, fontWeight: '600', color: colors.primary[600] },
-  barChart: { flexDirection: 'row', alignItems: 'flex-end', gap: 6, marginTop: 4 },
-  barCol: { flex: 1, alignItems: 'center' },
-  barValue: { fontSize: 10, color: colors.slate[400], marginBottom: 4 },
-  barTrack: { width: '70%', height: 100, backgroundColor: colors.slate[50], borderRadius: 6, overflow: 'hidden', justifyContent: 'flex-end' },
-  barFill: { width: '100%', borderRadius: 6 },
-  barDay: { fontSize: 11, color: colors.slate[500], marginTop: 6, fontWeight: '500' },
-
-  // ====== Portfolio Movers ======
-  seeAllBtn: { flexDirection: 'row', alignItems: 'center', gap: 2 },
-  seeAllText: { fontSize: 13, fontWeight: '600', color: colors.primary[600] },
-  stocksRow: { flexDirection: 'row', gap: 8 },
-  stockChip: { flex: 1, backgroundColor: colors.slate[50], borderRadius: 12, padding: 12, alignItems: 'center' },
-  stockSymbol: { fontSize: 14, fontWeight: '700', color: colors.slate[900], marginBottom: 6 },
-  stockChangeBadge: { flexDirection: 'row', alignItems: 'center', gap: 3, paddingHorizontal: 8, paddingVertical: 3, borderRadius: 8 },
-  stockChangeText: { fontSize: 12, fontWeight: '600' },
-
-  // ====== AI Insight ======
   insightBanner: { flexDirection: 'row', alignItems: 'center', gap: 12, marginHorizontal: 16, marginTop: 4, marginBottom: 4, backgroundColor: colors.purple[100] + '80', borderRadius: 16, padding: 16, borderWidth: 1, borderColor: colors.purple[100] },
   insightIcon: { width: 36, height: 36, borderRadius: 10, backgroundColor: '#fff', alignItems: 'center', justifyContent: 'center' },
   insightTitle: { fontSize: 14, fontWeight: '700', color: colors.purple[800], marginBottom: 2 },
   insightBody: { fontSize: 13, color: colors.slate[600], lineHeight: 18 },
 
-  // ====== Savings Ring ======
   savingsCard: { flexDirection: 'row', alignItems: 'center', gap: 16, marginHorizontal: 16, marginTop: 12, backgroundColor: '#fff', borderRadius: 18, padding: 18, shadowColor: '#000', shadowOffset: { width: 0, height: 2 }, shadowOpacity: 0.06, shadowRadius: 8, elevation: 3 },
   savingsLeft: {},
   ringOuter: { width: 72, height: 72, borderRadius: 36, borderWidth: 6, borderColor: colors.amber[400], alignItems: 'center', justifyContent: 'center', backgroundColor: colors.amber[50] },
@@ -406,9 +443,7 @@ const styles = StyleSheet.create({
   savingsOf: { fontWeight: '400', color: colors.slate[400] },
   savingsMiniBar: { height: 5, backgroundColor: colors.slate[100], borderRadius: 3, overflow: 'hidden', marginTop: 8 },
   savingsMiniBarFill: { height: '100%', backgroundColor: colors.amber[400], borderRadius: 3 },
-  savingsEta: { fontSize: 11, color: colors.slate[400], marginTop: 6 },
 
-  // ====== Activity ======
   activityCard: { marginHorizontal: 16, backgroundColor: '#fff', borderRadius: 16, padding: 4, shadowColor: '#000', shadowOffset: { width: 0, height: 1 }, shadowOpacity: 0.04, shadowRadius: 3, elevation: 1 },
   activityRow: { flexDirection: 'row', alignItems: 'center', gap: 12, padding: 12 },
   activityDot: { width: 32, height: 32, borderRadius: 16, alignItems: 'center', justifyContent: 'center' },
@@ -416,7 +451,6 @@ const styles = StyleSheet.create({
   activityTime: { fontSize: 11, color: colors.slate[400], marginTop: 1 },
   activityAmount: { fontSize: 14, fontWeight: '600' },
 
-  // ====== Service Dropdowns ======
   serviceGroup: { marginHorizontal: 16, marginBottom: 8, backgroundColor: '#fff', borderRadius: 14, overflow: 'hidden', shadowColor: '#000', shadowOffset: { width: 0, height: 1 }, shadowOpacity: 0.04, shadowRadius: 4, elevation: 2 },
   serviceGroupHeader: { flexDirection: 'row', alignItems: 'center', gap: 12, padding: 16 },
   serviceGroupIcon: { width: 38, height: 38, borderRadius: 12, alignItems: 'center', justifyContent: 'center' },

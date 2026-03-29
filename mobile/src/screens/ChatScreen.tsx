@@ -12,6 +12,11 @@ import {
 import { Ionicons } from '@expo/vector-icons';
 import { colors } from '../lib/colors';
 import { useAuthStore } from '../store/authStore';
+import { getToken } from '../lib/api';
+
+const API_BASE = Platform.OS === 'android'
+  ? 'http://10.0.2.2:3001/api/v1'
+  : 'http://localhost:3001/api/v1';
 
 interface Message {
   id: string;
@@ -41,30 +46,90 @@ export default function ChatScreen() {
   const scrollRef = useRef<ScrollView>(null);
   const user = useAuthStore((s) => s.user);
   const buddyName = user?.buddyName || 'Finance Buddy';
+  const abortRef = useRef<AbortController | null>(null);
 
   const sendMessage = async (text?: string) => {
     const content = text || input.trim();
-    if (!content) return;
+    if (!content || isTyping) return;
 
     const userMsg: Message = { id: Date.now().toString(), role: 'user', content };
-    setMessages((prev) => [...prev, userMsg]);
+    const assistantId = (Date.now() + 1).toString();
+    const assistantMsg: Message = { id: assistantId, role: 'assistant', content: '' };
+
+    setMessages((prev) => [...prev, userMsg, assistantMsg]);
     setInput('');
     setIsTyping(true);
 
-    // Simulate AI response (in production, this would call the API)
-    setTimeout(() => {
-      const responses: Record<string, string> = {
-        default: `Great question! As your AI financial buddy, I'd recommend starting with these steps:\n\n1. Build an emergency fund (3-6 months of expenses)\n2. Pay off high-interest debt first\n3. Start investing early — even small amounts compound over time\n4. Diversify your investments across different asset classes\n\nWould you like me to go deeper on any of these topics?`,
-      };
+    abortRef.current = new AbortController();
 
-      const aiMsg: Message = {
-        id: (Date.now() + 1).toString(),
-        role: 'assistant',
-        content: responses.default,
-      };
-      setMessages((prev) => [...prev, aiMsg]);
+    try {
+      const token = await getToken();
+      const history = messages
+        .filter((m) => m.role === 'user' || m.role === 'assistant')
+        .map((m) => ({ role: m.role, content: m.content }));
+
+      const response = await fetch(`${API_BASE}/chat/message`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          ...(token ? { Authorization: `Bearer ${token}` } : {}),
+        },
+        body: JSON.stringify({ message: content, history }),
+        signal: abortRef.current.signal,
+      });
+
+      if (!response.ok) {
+        throw new Error(`HTTP ${response.status}`);
+      }
+
+      const reader = response.body?.getReader();
+      if (!reader) throw new Error('No response body');
+
+      const decoder = new TextDecoder();
+      let buffer = '';
+
+      while (true) {
+        const { done, value } = await reader.read();
+        if (done) break;
+
+        buffer += decoder.decode(value, { stream: true });
+        const lines = buffer.split('\n');
+        buffer = lines.pop() ?? '';
+
+        for (const line of lines) {
+          if (!line.startsWith('data: ')) continue;
+          const raw = line.slice(6).trim();
+          if (!raw) continue;
+
+          try {
+            const parsed = JSON.parse(raw);
+            if (parsed.type === 'content_block_delta' && typeof parsed.text === 'string') {
+              setMessages((prev) =>
+                prev.map((m) =>
+                  m.id === assistantId ? { ...m, content: m.content + parsed.text } : m
+                )
+              );
+            } else if (parsed.type === 'message_stop') {
+              break;
+            }
+          } catch {
+            // skip malformed chunk
+          }
+        }
+      }
+    } catch (err: unknown) {
+      if (err instanceof Error && err.name === 'AbortError') return;
+      setMessages((prev) =>
+        prev.map((m) =>
+          m.id === assistantId
+            ? { ...m, content: "Sorry, I couldn't reach the server. Please check your connection and try again." }
+            : m
+        )
+      );
+    } finally {
       setIsTyping(false);
-    }, 1500);
+      abortRef.current = null;
+    }
   };
 
   return (
@@ -106,7 +171,7 @@ export default function ChatScreen() {
           </View>
         ))}
 
-        {isTyping && (
+        {isTyping && messages[messages.length - 1]?.content === '' && (
           <View style={[styles.messageBubble, styles.aiBubble]}>
             <View style={styles.bubbleAvatar}>
               <Ionicons name="sparkles" size={14} color={colors.purple[600]} />
@@ -143,7 +208,7 @@ export default function ChatScreen() {
           maxLength={500}
         />
         <TouchableOpacity
-          style={[styles.sendButton, !input.trim() && styles.sendButtonDisabled]}
+          style={[styles.sendButton, (!input.trim() || isTyping) && styles.sendButtonDisabled]}
           onPress={() => sendMessage()}
           disabled={!input.trim() || isTyping}
         >
