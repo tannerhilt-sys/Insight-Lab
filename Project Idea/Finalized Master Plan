@@ -1,0 +1,240 @@
+# Finance Buddy — Finalized Master Plan
+
+**AI Hackathon Submission — March 2026**
+**Team: Insight Lab**
+
+---
+
+## 1. Project Description
+
+**Finance Buddy** is an AI-first personal finance companion designed to teach young adults how to manage their money — from budgeting and saving to investing and credit building. Users name their own AI buddy, complete a personalized onboarding quiz, and receive a tailored financial education experience powered by the Anthropic Claude API. The app combines learning, budgeting, simulated paper trading, loan management, credit card guidance, and an always-available AI chatbot into one unified platform.
+
+Finance Buddy is **not a trading platform** and **not a robo-advisor**. It is a **financial education engine wrapped in a companion experience** — where AI is the product, not a feature.
+
+---
+
+## 2. The Problem
+
+**Financial illiteracy is one of the largest unsolved problems facing young adults today.**
+
+Personal finance is one of the most critical life skills — yet it is almost never taught. Most primary schools, high schools, and colleges don't include personal finance in their curriculum unless a student is specifically majoring in finance or business. The result is an entire generation entering adulthood with no understanding of budgeting, saving, investing, credit, taxes, or retirement planning.
+
+The reality for most young adults:
+
+- **Schools don't teach it.** Only 23 states in the U.S. require any personal finance coursework in high school, and even those requirements are often minimal — a single semester at most.
+- **Parents may not teach it either.** Many parents aren't financially literate themselves, or they come from backgrounds where money was never openly discussed. The cycle of financial illiteracy passes from generation to generation.
+- **Self-learning is overwhelming.** A motivated young person who turns to the internet finds thousands of conflicting opinions, jargon-heavy articles, predatory "get rich quick" content, and tools built for experienced investors — not beginners. Many get overwhelmed, give up, and never learn the fundamentals.
+- **Existing tools assume expertise.** Budgeting apps track numbers but never explain what they mean. Investment platforms assume fluency in financial jargon. Robo-advisors automate decisions without teaching the user anything.
+- **The cost of not learning is enormous.** Young adults who don't understand compound interest, credit scores, or tax-advantaged accounts lose tens or hundreds of thousands of dollars over their lifetime compared to those who start early. The gap between "knowing" and "not knowing" personal finance translates directly into generational wealth inequality.
+
+The result: most young people guess, avoid, or delay making financial decisions — and they pay for it for decades.
+
+**Finance Buddy exists to close this gap.**
+
+---
+
+## 3. Our Solution
+
+We are building an **AI-powered financial companion** that meets young adults where they are — with zero assumptions about prior knowledge. Finance Buddy combines four core pillars into one app:
+
+| Pillar | What It Does |
+|--------|-------------|
+| **Learn** | Adaptive financial education with AI-generated lessons, a course library of 20+ topics, XP/level gamification, and plain-language explanations of every concept from compound interest to ETFs. |
+| **Budget** | AI-powered budget tracking with expense categorization, spending insights, recurring expense management, savings goals with progress tracking, and personalized recommendations to optimize spending. |
+| **Invest (Simulated)** | Paper trading portfolio with simulated live market data, stock education, risk level explanations, Roth IRA and 401K management tools, and AI-explained recommendations — all with zero real money at risk. |
+| **Ask** | An always-available AI chatbot companion (named by the user) that answers personal finance questions, analyzes the user's budget and portfolio, and provides contextual guidance in plain language. |
+
+**Key differentiators:**
+- The AI companion is **named by the user** and referenced throughout the entire app, creating a personal relationship with financial learning
+- Every recommendation includes an **educational explanation** — the app teaches as it guides
+- The user **always controls every decision** — the AI advises, it never acts unilaterally
+- **Paper trading mode** lets users practice investing with zero risk before using real money
+- All AI responses include **both opportunities and risks** — no blind optimism
+
+---
+
+## 4. Architecture — How It Works Technically
+
+### System Overview
+
+Finance Buddy follows a **three-tier architecture**: a React frontend single-page application, a Node.js/Express REST API backend, and in-memory data storage (PostgreSQL planned for production).
+
+```
+┌─────────────────────────────────────────────────────────────────┐
+│                        CLIENT TIER                              │
+│  React 18 SPA (Vite + TypeScript + Tailwind CSS + Zustand)      │
+│  ┌──────────┬──────────┬──────────┬──────────┬────────────┐     │
+│  │Dashboard │ Budget   │Portfolio │  Chat    │   Learn    │     │
+│  │          │& Expenses│& Invest  │  (SSE)   │            │     │
+│  ├──────────┼──────────┼──────────┼──────────┼────────────┤     │
+│  │Banking   │Credit    │ Loans    │  Savings │ Fraud      │     │
+│  │& Accounts│ Cards    │          │  & Goals │ Protection │     │
+│  └──────────┴──────────┴──────────┴──────────┴────────────┘     │
+└───────────────────────────┬─────────────────────────────────────┘
+                            │ HTTPS / JWT Bearer
+┌───────────────────────────▼─────────────────────────────────────┐
+│                        API TIER                                 │
+│  Node.js 20 + Express 5 REST API                                │
+│  ┌──────────┬──────────┬──────────┬──────────┬────────────┐     │
+│  │Auth      │Budget    │Portfolio │Chat      │ AI Prompt  │     │
+│  │Middleware│Endpoints │Endpoints │Streaming │ Builder    │     │
+│  └──────────┴──────────┴──────────┴──────────┴────────────┘     │
+│                    │              │              │               │
+│          ┌────────▼──┐   ┌──────▼──────┐  ┌───▼──────────┐    │
+│          │ Data Store │   │ Polygon.io  │  │ Claude API   │    │
+│          │ (In-Memory)│   │ Market Data │  │ (Anthropic)  │    │
+│          └────────┬──┘   └─────────────┘  └──────────────┘    │
+└───────────────────┼─────────────────────────────────────────────┘
+                    │
+┌───────────────────▼─────────────────────────────────────────────┐
+│                        DATA TIER                                │
+│  PostgreSQL 15 (Production) / In-Memory (Hackathon Demo)        │
+│  Users · Profiles · Budgets · Holdings · InsightCards · Chat    │
+└─────────────────────────────────────────────────────────────────┘
+```
+
+### Technology Stack
+
+| Layer | Technology | Why |
+|-------|-----------|-----|
+| **Frontend** | React 18 + Vite + TypeScript | Fast development, strong typing, large ecosystem |
+| **Styling** | Tailwind CSS 3 | Rapid UI development with consistent design |
+| **State Management** | Zustand | Lightweight, no boilerplate, ideal for MVP |
+| **Charts** | Recharts | Interactive data visualization for budgets and portfolios |
+| **Backend** | Node.js 20 + Express 5 | Fast to scaffold, large middleware ecosystem |
+| **AI Inference** | Anthropic Claude API (Sonnet 4) | State-of-the-art reasoning with streaming support |
+| **Market Data** | Polygon.io (planned) | Real-time stock quotes and company data |
+| **Authentication** | JWT + bcrypt | Stateless sessions with secure password hashing |
+| **Icons** | Lucide React | Consistent, beautiful icon set throughout the app |
+
+### AI Integration
+
+All AI features are powered by the **Anthropic Claude API** (`claude-sonnet-4-20250514`). The backend acts as a trusted proxy — the frontend never holds an API key. AI is used for:
+
+- **Onboarding profile generation** — warm, personalized financial profile summaries
+- **Budget insights** — analyzing spending patterns and suggesting improvements
+- **Stock explanations** — explaining companies and market concepts in plain language
+- **Chat companion** — streaming conversational AI with full user context
+- **Insight cards** — personalized recommendations with educational explanations
+- **Recommendation rationale** — every suggestion includes the "why" and associated risks
+
+Chat responses use **Server-Sent Events (SSE)** for real-time streaming, giving users an interactive conversational experience.
+
+### Future ML Architecture (Phase 4)
+
+The long-term vision includes a custom **machine learning recommendation engine** trained on historical market data. This will use:
+
+- **Data sources**: ~3-5 million rows of price history, technical indicators, fundamentals, and macroeconomic data (~4-7 GB total)
+- **Model candidates**: LSTM for time-series prediction, XGBoost/LightGBM for buy/hold/sell classification, Transformer architectures for long-range pattern capture, and ensemble methods combining all approaches
+- **Training timeline**: 3-6+ months of research, data acquisition, and training
+- **Important caveat**: AI stock prediction has well-documented limitations (detailed in Section 8) — the app is transparent about these
+
+---
+
+## 5. Features
+
+### Feature 1: AI-Powered Personalized Onboarding
+Users name their AI companion, complete a financial profiling quiz (goals, knowledge level, risk tolerance, savings habits), and receive an AI-generated financial profile summary in plain language. This profile personalizes every subsequent interaction — lesson difficulty, recommendation style, and chatbot personality all adapt to the individual user.
+
+### Feature 2: Interactive Budget & Expense Tracker
+Full budget management with income/expense tracking, monthly comparisons, pie/bar chart breakdowns, AI-powered spending insights, savings goals with progress bars, and a dedicated expenses page with category deep-dives, recurring expense management, and spending velocity tracking.
+
+### Feature 3: Paper Trading Portfolio with Simulated Live Market
+A simulated stock market with 20+ stocks updating in real-time (every 2 seconds), a scrolling ticker bar, market index cards (S&P 500, Dow, NASDAQ, Russell 2000), live trade feed, and the ability to buy/sell stocks with zero real money at risk. Includes comprehensive investing education covering stocks, ETFs, P/E ratios, diversification, dollar-cost averaging, and risk levels.
+
+### Feature 4: Banking Hub with Multi-Account Management
+Link and switch between multiple bank accounts, view checking/savings balances and transactions per bank, compare savings and checking accounts across major institutions (Chase, Ally, Marcus, Discover), and receive AI recommendations tailored to each linked bank.
+
+### Feature 5: Credit Card Management & Score Education
+View active credit cards with balances, utilization bars, payment due dates, minimum payments, APR, and rewards breakdowns. Credit score display with factor breakdown (payment history, utilization, credit age, mix, inquiries), personalized improvement tips, score simulator with what-if scenarios, and a guided application flow for new cards with AI-powered pre-qualification advice.
+
+### Feature 6: Retirement Planning (Roth IRA & 401K)
+Roth IRA page with contribution tracker, interactive investment allocation pie chart showing actual stock holdings (click to drill down), compound growth projections, add-funds functionality, and a locked-withdrawal indicator showing the user is under 59½. 401K page with employer match optimizer, vesting schedule, fund comparison table, Traditional vs Roth comparison, and tax advantage calculator.
+
+### Feature 7: Savings Goals & High-Yield Account Recommendations
+Dedicated savings hub with total savings overview, goal-based progress tracking (emergency fund, vacation, car, college), HYSA comparisons, savings strategy education (50/30/20 rule, pay yourself first, automate), and monthly growth charts.
+
+### Feature 8: Loan Management & Payoff Strategies
+Comprehensive loan center covering Student Loans, Auto Loans, Mortgage, and Personal Loans — each with toggle on/off (hide irrelevant loan types), payoff progress bars, multiple payoff strategies (avalanche, snowball, refinancing, employer programs) with estimated impact, educational tips, key facts, and warnings about default consequences. AI provides prioritized payoff recommendations.
+
+### Feature 9: AI Chatbot Companion
+Always-available conversational AI that maintains user context (holdings, budget, goals, risk tolerance). Streams responses in real-time via SSE. Provides context-aware conversation starters. Explains financial concepts in plain language tailored to the user's knowledge level. Named by the user and referenced throughout the app for a personal experience.
+
+### Feature 10: Financial Education Hub with Course Library
+Six core lessons with progress tracking, XP/level gamification system, and an expandable course catalog of 20+ courses across 8 categories (Investing, Banking, Credit, Taxes, Insurance, Real Estate, Crypto, Business). Each course shows difficulty, duration, star ratings, student counts, and enrollment status. Search and category filtering for easy discovery.
+
+### Feature 11: Fraud Protection Center
+Security score dashboard, emergency fraud reporting numbers (FTC, Equifax, Experian, TransUnion) with one-tap copy, interactive security checklist, recent security activity feed, and fraud prevention education covering phishing, card skimming, identity theft, and online shopping safety.
+
+### Feature 12: Personalized AI Insights Across All Pages
+Every page features contextual AI recommendations from the user's named buddy — budget insights, portfolio analysis, savings tips, loan payoff strategies, credit score improvement advice, and banking recommendations. The AI name updates globally when changed in settings.
+
+---
+
+## 6. Team Plan — Who Is Doing What
+
+| Team Member | Role | Responsibilities |
+|-------------|------|-----------------|
+| **Sierra** | Full-Stack Developer / Demo Lead | Building the interactive web browser demo application — React frontend, Express backend, all pages (Dashboard, Budget, Expenses, Portfolio, Banking, Credit Cards, Loans, Savings, Roth IRA, 401K, Chat, Learn, Fraud Protection, Settings), AI integration with Claude API, live market simulation, and full UI/UX implementation |
+| **Tanner** | Mobile App Developer | Creating the mobile app demo — adapting the Finance Buddy experience for iOS/Android using the same design system and feature set, ensuring cross-platform consistency |
+| **Zizhang** | ML Research & Data Science | Researching and documenting the mechanics of stock market recommendations with machine learning models — identifying training data requirements (~4-7 GB across structured and unstructured sources), evaluating model architectures (LSTM, XGBoost, Transformer, Ensemble), defining input/output schemas, and creating the ML roadmap for Phase 4 (not yet incorporated into the live demo, but fully documented) |
+| **Michael** | Design & Product Spec | Created the Finance Buddy logo and brand identity, authored the comprehensive Software Engineering Specification and product documentation, defined the product vision, feature requirements, and design principles |
+
+---
+
+## 7. Legal & Compliance Awareness
+
+We are transparent about the regulatory landscape:
+
+- The app provides **educational guidance and decision support only** — not financial advice
+- All recommendations are framed as learning opportunities with both opportunities and risks presented
+- A persistent disclaimer will be displayed: *"This is an educational simulator. Not financial advice. No real money is involved. Paper trading only."*
+- Users must be **16 years or older** to create an account
+- Full Terms of Service and Privacy Policy are planned for production release
+- We acknowledge that personalized stock recommendations could trigger SEC/FINRA scrutiny — legal counsel will be consulted before any public release
+- The double-confirmation process for trade recommendations protects users from impulsive decisions
+
+---
+
+## 8. AI Limitations We Acknowledge
+
+Being upfront about AI's limitations is a **strength**, not a weakness:
+
+1. **AI cannot predict the future** — it only detects patterns in historical data
+2. **Lacks contextual understanding** — can't interpret whether news is truly significant
+3. **False signals are common** — even top models achieve only 50-60% directional accuracy
+4. **Overfitting risk** — models that perform well on historical data often fail in live markets
+5. **Black swan events break models** — least reliable during the moments guidance matters most
+6. **Data quality directly impacts output** — delayed, inaccurate, or manipulated data produces unreliable signals
+7. **AI lacks intuition and judgment** — cannot replicate experience-based decision-making
+8. **Crowding effect** — as more traders adopt similar AI models, profitable signals disappear faster
+9. **Timing is extremely difficult** — even correct directional predictions may come too early or late
+10. **AI is decision support, not autonomous** — humans are always responsible for final decisions
+
+**This is why Finance Buddy positions itself as educational first.** We teach users to think critically about financial decisions, not to blindly follow AI recommendations.
+
+---
+
+## 9. Execution Timeline
+
+| Phase | Scope | Status |
+|-------|-------|--------|
+| **Phase 1 — Hackathon MVP** | Web demo with all core pages, AI chatbot, paper trading, budget tracking, mock market data, educational content | **Complete** |
+| **Phase 2 — Enhanced Demo** | Real market data (Polygon.io), enriched insight cards with confidence/risk metrics, double-confirmation flow, Terms of Service | In progress |
+| **Phase 3 — Production** | PostgreSQL database, Plaid bank integration, push notifications, mobile app (React Native/Flutter), full GDPR/CCPA compliance | Planned |
+| **Phase 4 — ML Engine** | Custom machine learning recommendation engine trained on 3-5M+ rows of historical market data, backtested against S&P 500/NASDAQ benchmarks | Research phase |
+
+---
+
+## 10. Why Finance Buddy Wins
+
+Finance Buddy's strategic differentiator is clear: **we are the only platform that treats AI as the product — not a feature bolted onto an existing tool.**
+
+Every other app in the space is either:
+- A budgeting tool that added AI chat (Mint, YNAB)
+- A trading platform that added educational content (Robinhood, Webull)
+- An AI chatbot that knows finance but has no integrated tools (ChatGPT, Claude)
+
+Finance Buddy is **all of these combined into one cohesive experience**, purpose-built for beginners, with an AI companion that knows your goals, your budget, your portfolio, and your learning level — and teaches you something with every interaction.
+
+**We don't just help you manage money. We help you understand it.**
