@@ -38,7 +38,13 @@ function calcBudgetTotals(entries) {
   return { totalIncome, totalExpenses, netSavings: totalIncome - totalExpenses, categoryTotals };
 }
 
-// GET /entries?month=YYYY-MM
+/**
+ * GET /entries?month=YYYY-MM
+ * List budget entries, optionally filtered to a calendar month.
+ * Results are sorted newest-first. Includes aggregated totals.
+ * @query {string} [month] - Filter to month, format YYYY-MM
+ * @returns {200} { entries: BudgetEntry[], totalIncome, totalExpenses, netSavings }
+ */
 router.get('/entries', authenticate, (req, res) => {
   try {
     const { month } = req.query;
@@ -60,7 +66,17 @@ router.get('/entries', authenticate, (req, res) => {
   }
 });
 
-// POST /entries
+/**
+ * POST /entries
+ * Create a new budget entry (income or expense).
+ * @body {string} type - "income" | "expense"
+ * @body {number} amount - Positive number up to 1,000,000
+ * @body {string} category - Non-empty category label
+ * @body {string} [description] - Optional note (max 200 chars)
+ * @body {string} [date] - ISO date YYYY-MM-DD, defaults to today
+ * @returns {201} BudgetEntry
+ * @returns {400} Validation error
+ */
 router.post('/entries', authenticate, (req, res) => {
   try {
     const { type, amount, category, description, date } = req.body;
@@ -99,7 +115,13 @@ router.post('/entries', authenticate, (req, res) => {
   }
 });
 
-// PUT /entries/:id
+/**
+ * PUT /entries/:id
+ * Partially update a budget entry (ownership enforced).
+ * All body fields are optional; only provided fields are updated.
+ * @returns {200} Updated BudgetEntry
+ * @returns {404} Entry not found or not owned by requester
+ */
 router.put('/entries/:id', authenticate, (req, res) => {
   try {
     const entry = getBudgetEntry(req.params.id);
@@ -143,7 +165,12 @@ router.put('/entries/:id', authenticate, (req, res) => {
   }
 });
 
-// DELETE /entries/:id
+/**
+ * DELETE /entries/:id
+ * Delete a budget entry (ownership enforced).
+ * @returns {200} { success: true }
+ * @returns {404} Entry not found or not owned by requester
+ */
 router.delete('/entries/:id', authenticate, (req, res) => {
   try {
     const entry = getBudgetEntry(req.params.id);
@@ -158,7 +185,12 @@ router.delete('/entries/:id', authenticate, (req, res) => {
   }
 });
 
-// GET /insight
+/**
+ * GET /insight
+ * AI-generated 2-3 sentence budget insight based on the user's full entry history.
+ * Falls back to a rule-based summary when ANTHROPIC_API_KEY is not set.
+ * @returns {200} { insight: string }
+ */
 router.get('/insight', authenticate, async (req, res) => {
   try {
     const entries = getBudgetEntries(req.user.id);
@@ -197,7 +229,10 @@ router.get('/insight', authenticate, async (req, res) => {
   }
 });
 
-// GET /goals
+/**
+ * GET /goals
+ * @returns {200} SavingsGoal[] — { id, label, targetAmount, currentAmount, deadline, createdAt }
+ */
 router.get('/goals', authenticate, (req, res) => {
   try {
     res.json(getSavingsGoals(req.user.id));
@@ -207,7 +242,15 @@ router.get('/goals', authenticate, (req, res) => {
   }
 });
 
-// POST /goals
+/**
+ * POST /goals
+ * Create a savings goal.
+ * @body {string} label - Goal name
+ * @body {number} targetAmount - Amount to save (positive)
+ * @body {string} [deadline] - Optional target date YYYY-MM-DD
+ * @returns {201} SavingsGoal
+ * @returns {400} Validation error
+ */
 router.post('/goals', authenticate, (req, res) => {
   try {
     const { label, targetAmount, deadline } = req.body;
