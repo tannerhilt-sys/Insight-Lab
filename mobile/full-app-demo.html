@@ -57,8 +57,8 @@ body{min-height:100vh;display:flex;align-items:center;justify-content:center;bac
 .nav-center.open{transform:rotate(45deg);box-shadow:0 2px 14px rgba(37,99,235,.6)}
 .nav-center svg{width:18px;height:18px;fill:#fff}
 /* Pull-up menu */
-.pull-menu{position:absolute;bottom:-500px;left:0;right:0;z-index:155;background:#1e293b;border-radius:16px 16px 0 0;padding:12px 14px 20px;transition:bottom .4s cubic-bezier(.34,1.2,.64,1);max-height:calc(100% - 130px);overflow-y:auto}
-.pull-menu.show{bottom:78px}
+.pull-menu{position:absolute;bottom:78px;left:0;right:0;z-index:155;background:#1e293b;border-radius:16px 16px 0 0;padding:12px 14px 20px;max-height:calc(100% - 130px);overflow-y:auto;transform:translateY(100%);opacity:0;pointer-events:none;transition:transform .35s cubic-bezier(.34,1.2,.64,1),opacity .25s}
+.pull-menu.show{transform:translateY(0);opacity:1;pointer-events:auto}
 .pull-menu::-webkit-scrollbar{width:0}
 .pull-menu .pm-title{font-size:10px;font-weight:700;color:#64748b;text-transform:uppercase;letter-spacing:.5px;margin-bottom:6px}
 .pull-menu .pm-item{display:flex;align-items:center;gap:8px;padding:10px;border-radius:10px;margin-bottom:3px;transition:background .2s}
@@ -199,14 +199,14 @@ function speak(text){
     if(muted){resolve();return}
     speechSynthesis.cancel();
     const u=new SpeechSynthesisUtterance(text);
-    u.rate=0.82;u.pitch=1.08;u.volume=0.85;
+    u.rate=0.95;u.pitch=1.08;u.volume=0.85;
     if(speechVoice)u.voice=speechVoice;
     u.onend=()=>resolve();
     u.onerror=()=>resolve();
     currentSpeech=u;
     speechSynthesis.speak(u);
     // Fallback timeout in case onend doesn't fire
-    setTimeout(()=>resolve(),Math.max(text.length*130,5000));
+    setTimeout(()=>resolve(),Math.max(text.length*95,4000));
   });
 }
 function toggleMute(){muted=!muted;$('muteLabel').textContent=muted?'Unmute':'Mute';if(muted)speechSynthesis.cancel()}
@@ -216,7 +216,7 @@ async function setStep(n){
   $('s'+n).scrollIntoView({behavior:'smooth',block:'nearest'});
   $('prog').style.width=Math.round(((n+1)/steps.length)*100)+'%';
   if(narr[n])await speak(narr[n]);
-  await wait(900); // pause after speech
+  await wait(500); // pause after speech
 }
 
 function showTap(x,y){const t=$('tap');t.style.left=x+'px';t.style.top=y+'px';t.classList.remove('show');void t.offsetWidth;t.classList.add('show')}
@@ -237,15 +237,15 @@ function setLightStatus(){$('statusBar').style.color='#000';$('homeBar').style.b
 function buildPullMenu(activeIdx){
   $('pullMenu').innerHTML=`<div style="width:30px;height:4px;background:#475569;border-radius:2px;margin:0 auto 8px"></div><div class="pm-title">Navigate to</div>`+navItems.map((it,i)=>`<div class="pm-item${i===activeIdx?' active':''}" style="cursor:pointer" data-idx="${i}"><div class="pm-icon" style="background:${it.color}15">${it.icon}</div><div><div class="pm-name">${it.name}</div><div class="pm-desc">${it.desc}</div></div></div>`).join('');
 }
-async function showPullMenu(){buildPullMenu(-1);$('pullMenu').classList.add('show');const cb=$('navCenterBtn');if(cb)cb.classList.add('open');await wait(300)}
+async function showPullMenu(){buildPullMenu(-1);$('pullMenu').classList.add('show');const cb=$('navCenterBtn');if(cb)cb.classList.add('open');await wait(250)}
 function hidePullMenu(){$('pullMenu').classList.remove('show');const cb=$('navCenterBtn');if(cb)cb.classList.remove('open')}
 async function pullNavTo(idx){
   buildPullMenu(idx);
   const items=$('pullMenu').querySelectorAll('.pm-item');
   if(items[idx])items[idx].style.background='rgba(37,99,235,.15)';
-  await wait(500);
+  await wait(400);
   hidePullMenu();
-  await wait(200);
+  await wait(150);
 }
 
 const screens={};
@@ -297,8 +297,8 @@ const W=wait;
 
 // Helpers for pull-up nav transitions
 async function navTo(screenId,navIdx,tbIdx){
-  showTap(187,750);await W(600);
-  await showPullMenu();await W(900);
+  showTap(187,750);await W(400);
+  await showPullMenu();await W(600);
   await pullNavTo(navIdx);
   setTb(tbIdx||0);
   showScreen(screenId);
@@ -308,79 +308,79 @@ async function navTo(screenId,navIdx,tbIdx){
 // Home screen
 setDarkStatus();hideTb();showScreen('sHome');await setStep(0);
 
-// Open app - narrate intent, then act
-await setStep(1);T(82,300);await W(900);setLightStatus();showTb();setTb(0);showScreen('sLogin');
+// Open app
+await setStep(1);T(82,300);await W(500);setLightStatus();showTb();setTb(0);showScreen('sLogin');
 
-// Login - type credentials
+// Login
 await setStep(2);
-$('emailIn').innerHTML='demo@financebuddy.com';$('emailIn').style.color='#0f172a';$('emailIn').classList.add('typing');await W(1100);$('emailIn').classList.remove('typing');$('passIn').innerHTML='••••••••••';$('passIn').style.color='#0f172a';$('passIn').classList.add('typing');await W(900);$('passIn').classList.remove('typing');
-T(187,350);await W(600);$('signBtn').style.background='#1e3a8a';await W(900);
+$('emailIn').innerHTML='demo@financebuddy.com';$('emailIn').style.color='#0f172a';$('emailIn').classList.add('typing');await W(700);$('emailIn').classList.remove('typing');$('passIn').innerHTML='••••••••••';$('passIn').style.color='#0f172a';$('passIn').classList.add('typing');await W(500);$('passIn').classList.remove('typing');
+T(187,350);await W(400);$('signBtn').style.background='#1e3a8a';await W(500);
 
-// Dashboard - show FIRST, then narrate what's visible
-showScreen('sDash');await setStep(3);await scrollTo($('sDash'),400);await W(1400);
+// Dashboard
+showScreen('sDash');await setStep(3);await scrollTo($('sDash'),400);await W(800);
 
-// Nav to Budget - narrate intent, navigate, then narrate content
-await setStep(4);await navTo('sBudget',1,0);await setStep(5);await scrollTo($('sBudget'),200);await W(900);await scrollTo($('sBudget'),500);await W(900);
+// Budget
+await setStep(4);await navTo('sBudget',1,0);await setStep(5);await scrollTo($('sBudget'),200);await W(500);await scrollTo($('sBudget'),500);await W(500);
 
-// Nav to Banking - narrate intent, navigate, then narrate content
-await setStep(6);await navTo('sBankChase',2,0);await setStep(7);await scrollTo($('sBankChase'),200);await W(900);
+// Banking
+await setStep(6);await navTo('sBankChase',2,0);await setStep(7);await scrollTo($('sBankChase'),200);await W(500);
 
-// Switch to Ally - narrate, then switch
-await setStep(8);T(230,105);await W(600);showScreen('sBankAlly');await W(900);
+// Ally Bank
+await setStep(8);T(230,105);await W(400);showScreen('sBankAlly');await W(500);
 
-// Nav to Savings
-await setStep(9);await navTo('sSavings',3,0);await setStep(10);await scrollTo($('sSavings'),300);await W(900);
+// Savings
+await setStep(9);await navTo('sSavings',3,0);await setStep(10);await scrollTo($('sSavings'),300);await W(500);
 
-// Nav to Loans
-await setStep(11);await navTo('sLoans',4,0);await setStep(12);await scrollTo($('sLoans'),200);await W(900);
+// Loans
+await setStep(11);await navTo('sLoans',4,0);await setStep(12);await scrollTo($('sLoans'),200);await W(500);
 
-// Nav to Portfolio
-await setStep(13);await navTo('sPort',5,2);await setStep(14);await scrollTo($('sPort'),300);await W(900);await setStep(15);await scrollTo($('sPort'),600);await W(900);
+// Portfolio
+await setStep(13);await navTo('sPort',5,2);await setStep(14);await scrollTo($('sPort'),300);await W(500);await setStep(15);await scrollTo($('sPort'),600);await W(500);
 
-// Nav to Credit Cards
-await setStep(16);await navTo('sCredit',6,0);await setStep(17);await scrollTo($('sCredit'),300);await W(900);await setStep(18);await scrollTo($('sCredit'),550);await W(900);
+// Credit Cards
+await setStep(16);await navTo('sCredit',6,0);await setStep(17);await scrollTo($('sCredit'),300);await W(500);await setStep(18);await scrollTo($('sCredit'),550);await W(500);
 
-// Nav to Fraud
-await setStep(19);await navTo('sFraud',7,0);await setStep(20);await scrollTo($('sFraud'),200);await W(900);
+// Fraud
+await setStep(19);await navTo('sFraud',7,0);await setStep(20);await scrollTo($('sFraud'),200);await W(500);
 
 // Breach alert
-await setStep(21);showNotif('⚠️ Data Breach Detected','Your email found in SocialApp.com breach');await W(2800);hideNotif();await W(600);$('breachOv').classList.add('show');
+await setStep(21);showNotif('⚠️ Data Breach Detected','Your email found in SocialApp.com breach');await W(1800);hideNotif();await W(400);$('breachOv').classList.add('show');
 
 // View report
-await setStep(22);T(187,350);await W(600);$('breachReport').style.display='block';$('breachViewBtn').style.display='none';await W(2100);
+await setStep(22);T(187,350);await W(400);$('breachReport').style.display='block';$('breachViewBtn').style.display='none';await W(1400);
 
 // Auto-notify
-await setStep(23);$('breachActions').style.display='block';await W(700);for(const id of['fs1','fs2','fs3','fs4','fs5','fs6']){$(id).classList.add('done');$(id).querySelector('.fs-num').textContent='✓';$(id).querySelector('.fs-desc').textContent='Done';await W(1400)}$('fsStatus').innerHTML='<div style="font-size:11px;font-weight:700;color:#10b981">✅ All accounts protected!</div>';
+await setStep(23);$('breachActions').style.display='block';await W(400);for(const id of['fs1','fs2','fs3','fs4','fs5','fs6']){$(id).classList.add('done');$(id).querySelector('.fs-num').textContent='✓';$(id).querySelector('.fs-desc').textContent='Done';await W(800)}$('fsStatus').innerHTML='<div style="font-size:11px;font-weight:700;color:#10b981">✅ All accounts protected!</div>';
 
 // Protected
-await setStep(24);$('breachOv').classList.remove('show');await W(1100);
+await setStep(24);$('breachOv').classList.remove('show');await W(600);
 
-// Nav to Chat
-await setStep(25);await navTo('sChat',8,1);await setStep(26);$('chatIn').style.borderColor='#2563EB';await W(900);T(330,700);await W(400);const ca=$('chatArea');const ub=document.createElement('div');ub.className='bubble user';ub.textContent='How should I diversify my portfolio?';ca.appendChild(ub);$('chatIn').innerHTML='<span style="color:#94a3b8">Ask anything...</span>';$('chatIn').style.borderColor='#e2e8f0';ca.scrollTop=ca.scrollHeight;
+// Chat
+await setStep(25);await navTo('sChat',8,1);await setStep(26);$('chatIn').style.borderColor='#2563EB';await W(500);T(330,700);await W(300);const ca=$('chatArea');const ub=document.createElement('div');ub.className='bubble user';ub.textContent='How should I diversify my portfolio?';ca.appendChild(ub);$('chatIn').innerHTML='<span style="color:#94a3b8">Ask anything...</span>';$('chatIn').style.borderColor='#e2e8f0';ca.scrollTop=ca.scrollHeight;
 
 // AI response
-await setStep(27);const ab=document.createElement('div');ab.className='bubble ai';ab.innerHTML='<span style="color:#94a3b8;letter-spacing:2px">...</span>';ca.appendChild(ab);ca.scrollTop=ca.scrollHeight;await W(2100);ab.innerHTML="Based on your portfolio analysis:<br><br>📊 <b>Current:</b> 65% tech — too concentrated<br>🎯 <b>Recommend:</b> Add bonds (15%) + int'l stocks (20%)<br>💡 <b>Why:</b> Reduces volatility while maintaining growth potential<br>🏦 <b>Action:</b> Use your Roth IRA for tax-free diversification";ca.scrollTop=ca.scrollHeight;
+await setStep(27);const ab=document.createElement('div');ab.className='bubble ai';ab.innerHTML='<span style="color:#94a3b8;letter-spacing:2px">...</span>';ca.appendChild(ab);ca.scrollTop=ca.scrollHeight;await W(1400);ab.innerHTML="Based on your portfolio analysis:<br><br>📊 <b>Current:</b> 65% tech — too concentrated<br>🎯 <b>Recommend:</b> Add bonds (15%) + int'l stocks (20%)<br>💡 <b>Why:</b> Reduces volatility while maintaining growth potential<br>🏦 <b>Action:</b> Use your Roth IRA for tax-free diversification";ca.scrollTop=ca.scrollHeight;
 
-// Nav to Learn
-await setStep(28);await navTo('sLearn',9,3);await setStep(29);await W(900);
+// Learn
+await setStep(28);await navTo('sLearn',9,3);await setStep(29);await W(500);
 
 // Exit to home
-await setStep(30);setDarkStatus();hideTb();showScreen('sHome');await W(900);
+await setStep(30);setDarkStatus();hideTb();showScreen('sHome');await W(500);
 
 // Stock notification
-await setStep(31);showNotif('📈 NVDA surging +4.7%','Up $41.12 on AI chip demand. Tap to view.');await W(2100);
+await setStep(31);showNotif('📈 NVDA surging +4.7%','Up $41.12 on AI chip demand. Tap to view.');await W(1400);
 
 // NVDA details
-await setStep(32);T(187,78);await W(600);hideNotif();await W(300);setLightStatus();showTb();setTb(2);showScreen('sStock');$('sStock').scrollTop=0;await W(900);await scrollTo($('sStock'),200);await W(1100);
+await setStep(32);T(187,78);await W(400);hideNotif();await W(200);setLightStatus();showTb();setTb(2);showScreen('sStock');$('sStock').scrollTop=0;await W(500);await scrollTo($('sStock'),200);await W(600);
 
 // Buy 3 shares
-await setStep(33);T(120,520);await W(600);$('bkdrop').classList.add('show');$('buyMod').classList.add('show');await W(1700);
+await setStep(33);T(120,520);await W(400);$('bkdrop').classList.add('show');$('buyMod').classList.add('show');await W(1000);
 
 // Confirmed
-await setStep(34);T(187,580);await W(600);$('buyMod').classList.remove('show');$('bkdrop').classList.remove('show');$('successOv').classList.add('show');await W(1700);
+await setStep(34);T(187,580);await W(400);$('buyMod').classList.remove('show');$('bkdrop').classList.remove('show');$('successOv').classList.add('show');await W(1000);
 
 // Transaction alert
-await setStep(35);$('successOv').classList.remove('show');await W(300);showTxToast('Transaction confirmed: 3 shares NVDA — $2,749.20');await W(2100);hideTxToast();await W(400);
+await setStep(35);$('successOv').classList.remove('show');await W(200);showTxToast('Transaction confirmed: 3 shares NVDA — $2,749.20');await W(1400);hideTxToast();await W(300);
 
 // Portfolio updated
 showScreen('sPortNew');await setStep(36);
