@@ -486,6 +486,17 @@ Most AI-powered apps send a prompt and display the response. Finance Buddy's ins
 
 **Why this team composition is well-suited:** Sierra handles the entire web stack alone — a demonstration that the architecture was deliberately chosen for single-developer productivity (React + Express + Zustand minimizes context switching). Zizhang's ML roadmap is Phase 4 work — explicitly scoped *out* of the hackathon demo so it doesn't distract from a working product.
 
+### 24-Hour Hackathon Build Schedule
+
+| Hours | Sierra (Full-Stack / Demo Lead) | Tanner (Mobile) | Zizhang (ML Research) | Michael (Design & Product) | Integration Checkpoint |
+|-------|---------------------------------|-----------------|----------------------|---------------------------|------------------------|
+| **0–4** | Stand up monorepo, confirm API routes compile, seed demo user, wire JWT auth end-to-end | Initialize Expo project, confirm API reachability from device, build Dashboard screen with live data fetch | Finalize ML architecture document: model candidates, dataset spec, backtesting framework | Complete brand identity (logo, color tokens, typography); deliver design tokens to Sierra | **CP1:** Auth round-trip working (signup → token → protected route) |
+| **4–8** | Build Budget CRUD endpoints + Zustand store; wire AI insight generation to budget surface | Build Budget screen (mobile); confirm POST /budget/entries round-trip on device | Draft data requirements document (schema, sources, row count estimates) | Deliver Software Engineering Specification; review all feature pages for UX consistency | **CP2:** Budget entries persist, AI insight card renders on web and mobile |
+| **8–12** | Build Portfolio buy/sell endpoints + HHI analytics; wire paper trading UI with sell confirmation flow | Build Portfolio screen (mobile); confirm live holdings fetch from API | Begin backtesting framework design document | Write product vision section of Master Plan; review competitive landscape | **CP3:** Paper trading functional on both platforms; analytics endpoint returns valid HHI score |
+| **12–16** | Integrate Claude streaming chat (SSE); wire system context injection; test mock fallback responses | Build Chat screen (mobile) with SSE streaming; confirm first-token delivery on device | Complete ML research document; review with team | Final review of Master Plan; draft risk register; confirm all feature descriptions accurate | **CP4:** Chat streaming delivers tokens to both web and mobile; context injection verified |
+| **16–20** | Build Insight Cards pipeline (prompt → JSON parse → validate → fallback); wire all 12 features end-to-end; add JSDoc to all server routes | Full mobile app regression: all 4 screens work with live backend; test on physical device | — | Write AI limitations section; business model projections; success metrics | **CP5:** Insight cards generate valid JSON; all 12 features accessible from Dashboard |
+| **20–24** | Demo flow dry run ×3; confirm fallback responses for all AI endpoints; final README with full API reference; submit | Mobile demo dry run; record backup video of full mobile flow; confirm SSE streaming visible on physical device | — | Finalize Master Plan; proofread all sections; confirm submission checklist complete | **CP6 (Final):** Full 8-minute demo executed without interruption; all fallbacks tested; backup recording saved |
+
 ### Demo Execution Checklist
 
 The following checklist covers the full 8-minute demo flow with owner assignments and time targets:
