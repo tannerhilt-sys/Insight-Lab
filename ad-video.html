@@ -1,0 +1,1050 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Finance Buddy — Ad</title>
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&display=swap');
+  @import url('https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;600;700&display=swap');
+
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+
+  body {
+    background: #000;
+    overflow: hidden;
+    width: 1920px;
+    height: 1080px;
+    font-family: 'Space Grotesk', 'Inter', sans-serif;
+    cursor: none;
+  }
+
+  /* ===== CLICK-TO-START OVERLAY ===== */
+  #startOverlay {
+    position: fixed;
+    inset: 0;
+    background: #000;
+    z-index: 9999;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex-direction: column;
+    gap: 24px;
+    cursor: pointer;
+  }
+  #startOverlay .play-ring {
+    width: 120px;
+    height: 120px;
+    border: 3px solid rgba(59,130,246,0.5);
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    animation: pulseRing 2s ease infinite;
+  }
+  #startOverlay .play-tri {
+    width: 0;
+    height: 0;
+    border-left: 36px solid white;
+    border-top: 22px solid transparent;
+    border-bottom: 22px solid transparent;
+    margin-left: 8px;
+  }
+  #startOverlay p {
+    color: #64748b;
+    font-size: 16px;
+    letter-spacing: 3px;
+    text-transform: uppercase;
+  }
+  @keyframes pulseRing {
+    0%, 100% { transform: scale(1); opacity: 1; }
+    50% { transform: scale(1.08); opacity: 0.7; }
+  }
+
+  /* ===== GLOBAL BG ===== */
+  #bgCanvas {
+    position: fixed;
+    inset: 0;
+    z-index: 0;
+  }
+
+  /* ===== SCENES ===== */
+  .scene {
+    position: absolute;
+    inset: 0;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    opacity: 0;
+    z-index: 1;
+  }
+
+  /* ===== VIGNETTE ===== */
+  #vignette {
+    position: fixed;
+    inset: 0;
+    background: radial-gradient(ellipse at center, transparent 50%, rgba(0,0,0,0.7) 100%);
+    z-index: 2;
+    pointer-events: none;
+  }
+
+  /* ===== SCENE 1: HOOK ===== */
+  .s1 {
+    flex-direction: column;
+    gap: 0;
+  }
+  .s1 .line {
+    font-size: 110px;
+    font-weight: 900;
+    color: white;
+    text-transform: uppercase;
+    letter-spacing: -4px;
+    line-height: 1.05;
+    opacity: 0;
+    overflow: hidden;
+  }
+  .s1 .line.accent { color: #3b82f6; }
+  .s1 .line.outline {
+    color: transparent;
+    -webkit-text-stroke: 2px rgba(255,255,255,0.3);
+  }
+
+  /* ===== SCENE 2: STATS ===== */
+  .s2 {
+    flex-direction: column;
+    gap: 60px;
+  }
+  .s2 .stat-block {
+    text-align: center;
+    opacity: 0;
+  }
+  .s2 .stat-num {
+    font-size: 160px;
+    font-weight: 900;
+    color: white;
+    letter-spacing: -6px;
+    line-height: 1;
+  }
+  .s2 .stat-num span { color: #3b82f6; }
+  .s2 .stat-label {
+    font-size: 24px;
+    color: #64748b;
+    text-transform: uppercase;
+    letter-spacing: 8px;
+    margin-top: 8px;
+  }
+
+  /* ===== SCENE 3: PROBLEM SMASH ===== */
+  .s3 {
+    flex-direction: column;
+    gap: 12px;
+  }
+  .s3 .smash-line {
+    font-size: 48px;
+    font-weight: 700;
+    color: #475569;
+    text-transform: uppercase;
+    letter-spacing: 2px;
+    opacity: 0;
+    position: relative;
+  }
+  .s3 .smash-line .strike {
+    position: absolute;
+    left: -20px;
+    right: -20px;
+    top: 50%;
+    height: 4px;
+    background: #ef4444;
+    transform: scaleX(0);
+    transform-origin: left;
+  }
+
+  /* ===== SCENE 4: BRAND REVEAL ===== */
+  .s4 {
+    flex-direction: column;
+    gap: 16px;
+  }
+  .s4 .brand-icon {
+    width: 140px;
+    height: 140px;
+    opacity: 0;
+    transform: scale(2.5);
+    filter: blur(20px);
+  }
+  .s4 .brand-text {
+    font-size: 96px;
+    font-weight: 900;
+    color: white;
+    letter-spacing: -3px;
+    opacity: 0;
+    transform: scale(1.3);
+    filter: blur(10px);
+  }
+  .s4 .brand-text span { color: #3b82f6; }
+  .s4 .brand-tag {
+    font-size: 22px;
+    color: #94a3b8;
+    letter-spacing: 6px;
+    text-transform: uppercase;
+    opacity: 0;
+  }
+
+  /* ===== SCENE 5: PILLAR CARDS ===== */
+  .s5 {
+    gap: 32px;
+  }
+  .s5 .pcard {
+    width: 340px;
+    height: 420px;
+    border-radius: 24px;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: 16px;
+    opacity: 0;
+    transform: translateY(80px) rotateX(15deg);
+    position: relative;
+    overflow: hidden;
+  }
+  .s5 .pcard::before {
+    content: '';
+    position: absolute;
+    inset: 0;
+    border-radius: 24px;
+    padding: 2px;
+    background: linear-gradient(135deg, rgba(255,255,255,0.15), transparent);
+    -webkit-mask: linear-gradient(#fff 0 0) content-box, linear-gradient(#fff 0 0);
+    -webkit-mask-composite: xor;
+    mask-composite: exclude;
+  }
+  .s5 .pcard.c1 { background: linear-gradient(135deg, #1e3a5f, #0f172a); }
+  .s5 .pcard.c2 { background: linear-gradient(135deg, #064e3b, #0f172a); }
+  .s5 .pcard.c3 { background: linear-gradient(135deg, #713f12, #0f172a); }
+  .s5 .pcard.c4 { background: linear-gradient(135deg, #4c1d95, #0f172a); }
+  .s5 .pcard-emoji { font-size: 64px; }
+  .s5 .pcard-name {
+    font-size: 32px;
+    font-weight: 800;
+    color: white;
+    text-transform: uppercase;
+    letter-spacing: 4px;
+  }
+  .s5 .pcard-desc {
+    font-size: 16px;
+    color: #94a3b8;
+    text-align: center;
+    padding: 0 24px;
+    line-height: 1.6;
+  }
+  .s5 .pcard-num {
+    position: absolute;
+    top: 20px;
+    right: 24px;
+    font-size: 14px;
+    font-weight: 700;
+    color: rgba(255,255,255,0.15);
+    letter-spacing: 2px;
+  }
+
+  /* ===== SCENE 6: CHAT DEMO ===== */
+  .s6 {
+    gap: 80px;
+    padding: 0 140px;
+  }
+  .s6 .phone {
+    width: 360px;
+    height: 700px;
+    background: #111;
+    border-radius: 48px;
+    border: 4px solid #222;
+    overflow: hidden;
+    flex-shrink: 0;
+    opacity: 0;
+    transform: translateY(60px) perspective(800px) rotateY(-8deg);
+    box-shadow: 0 40px 100px rgba(59,130,246,0.15), 0 0 0 1px rgba(255,255,255,0.05);
+    position: relative;
+  }
+  .s6 .phone-inner {
+    margin: 16px;
+    margin-top: 52px;
+    height: calc(100% - 68px);
+    background: linear-gradient(180deg, #0a0f1a, #111827);
+    border-radius: 32px;
+    padding: 24px 16px;
+    overflow: hidden;
+  }
+  .s6 .phone-notch {
+    position: absolute;
+    top: 12px;
+    left: 50%;
+    transform: translateX(-50%);
+    width: 100px;
+    height: 28px;
+    background: #000;
+    border-radius: 20px;
+  }
+  .s6 .bubble {
+    padding: 14px 18px;
+    border-radius: 18px;
+    margin-bottom: 10px;
+    font-size: 14px;
+    line-height: 1.5;
+    opacity: 0;
+    transform: translateY(16px);
+    max-width: 85%;
+  }
+  .s6 .bubble.ai {
+    background: linear-gradient(135deg, #1e3a5f, #1a2744);
+    color: #e2e8f0;
+    border-bottom-left-radius: 4px;
+  }
+  .s6 .bubble.ai .bname {
+    font-size: 11px;
+    font-weight: 700;
+    color: #3b82f6;
+    margin-bottom: 4px;
+    text-transform: uppercase;
+    letter-spacing: 1px;
+  }
+  .s6 .bubble.user {
+    background: rgba(255,255,255,0.08);
+    color: #cbd5e1;
+    margin-left: auto;
+    border-bottom-right-radius: 4px;
+  }
+  .s6 .right-content {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    gap: 24px;
+    justify-content: center;
+  }
+  .s6 .feat-row {
+    display: flex;
+    align-items: center;
+    gap: 20px;
+    opacity: 0;
+    transform: translateX(40px);
+  }
+  .s6 .feat-icon {
+    width: 56px;
+    height: 56px;
+    border-radius: 16px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 24px;
+    flex-shrink: 0;
+    background: rgba(59,130,246,0.1);
+    border: 1px solid rgba(59,130,246,0.15);
+  }
+  .s6 .feat-label {
+    font-size: 20px;
+    font-weight: 600;
+    color: white;
+  }
+  .s6 .feat-sub {
+    font-size: 14px;
+    color: #64748b;
+    margin-top: 2px;
+  }
+
+  /* ===== SCENE 7: AI POWER ===== */
+  .s7 {
+    flex-direction: column;
+    gap: 48px;
+  }
+  .s7 .ai-headline {
+    font-size: 72px;
+    font-weight: 900;
+    text-align: center;
+    color: white;
+    opacity: 0;
+    letter-spacing: -2px;
+  }
+  .s7 .ai-headline span {
+    background: linear-gradient(90deg, #3b82f6, #8b5cf6, #3b82f6);
+    background-size: 200% 100%;
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    animation: gradShift 3s linear infinite;
+  }
+  @keyframes gradShift {
+    0% { background-position: 0% 50%; }
+    100% { background-position: 200% 50%; }
+  }
+  .s7 .ai-grid {
+    display: flex;
+    gap: 24px;
+  }
+  .s7 .ai-tile {
+    width: 260px;
+    padding: 32px 24px;
+    border-radius: 20px;
+    background: rgba(255,255,255,0.03);
+    border: 1px solid rgba(255,255,255,0.06);
+    text-align: center;
+    opacity: 0;
+    transform: scale(0.85);
+  }
+  .s7 .ai-tile-icon { font-size: 40px; margin-bottom: 12px; }
+  .s7 .ai-tile-name { font-size: 18px; font-weight: 700; color: white; margin-bottom: 6px; }
+  .s7 .ai-tile-desc { font-size: 13px; color: #64748b; line-height: 1.5; }
+
+  /* ===== SCENE 8: CTA ===== */
+  .s8 {
+    flex-direction: column;
+    gap: 24px;
+  }
+  .s8 .cta-icon {
+    opacity: 0;
+    transform: scale(3);
+    filter: blur(20px);
+  }
+  .s8 .cta-main {
+    font-size: 80px;
+    font-weight: 900;
+    color: white;
+    text-align: center;
+    letter-spacing: -3px;
+    line-height: 1.1;
+    opacity: 0;
+  }
+  .s8 .cta-sub {
+    font-size: 22px;
+    color: rgba(255,255,255,0.6);
+    letter-spacing: 4px;
+    text-transform: uppercase;
+    opacity: 0;
+  }
+  .s8 .cta-btn {
+    margin-top: 16px;
+    padding: 20px 56px;
+    border-radius: 100px;
+    font-size: 20px;
+    font-weight: 700;
+    color: #0f172a;
+    background: white;
+    box-shadow: 0 0 60px rgba(59,130,246,0.4), 0 0 120px rgba(59,130,246,0.15);
+    opacity: 0;
+    transform: scale(0.8);
+  }
+
+  /* ===== PROGRESS ===== */
+  #progressBar {
+    position: fixed;
+    bottom: 0;
+    left: 0;
+    height: 3px;
+    background: linear-gradient(90deg, #3b82f6, #8b5cf6);
+    width: 0%;
+    z-index: 100;
+  }
+
+  /* ===== REPLAY ===== */
+  .replay {
+    position: fixed;
+    top: 20px;
+    right: 20px;
+    background: rgba(255,255,255,0.06);
+    border: 1px solid rgba(255,255,255,0.1);
+    color: #64748b;
+    font-family: inherit;
+    font-size: 13px;
+    padding: 8px 16px;
+    border-radius: 6px;
+    cursor: pointer;
+    z-index: 100;
+    opacity: 0;
+    transition: opacity 0.5s;
+  }
+  .replay:hover { color: white; border-color: rgba(255,255,255,0.2); }
+
+  /* ===== GRAIN OVERLAY ===== */
+  #grain {
+    position: fixed;
+    inset: 0;
+    z-index: 4;
+    pointer-events: none;
+    opacity: 0.04;
+    background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 256 256' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)' opacity='1'/%3E%3C/svg%3E");
+    background-size: 128px;
+  }
+
+</style>
+</head>
+<body>
+
+<!-- CLICK TO START (needed for audio) -->
+<div id="startOverlay" onclick="startAd()">
+  <div class="play-ring"><div class="play-tri"></div></div>
+  <p>Click to play</p>
+</div>
+
+<canvas id="bgCanvas"></canvas>
+<div id="vignette"></div>
+<div id="grain"></div>
+<div id="progressBar"></div>
+<button class="replay" id="replayBtn" onclick="location.reload()">Replay</button>
+
+<!-- SCENE 1: HOOK -->
+<div class="scene s1" id="sc1">
+  <div class="line" id="l1">Money is</div>
+  <div class="line accent" id="l2">Confusing.</div>
+  <div class="line outline" id="l3">It shouldn't be.</div>
+</div>
+
+<!-- SCENE 2: STATS -->
+<div class="scene s2" id="sc2">
+  <div class="stat-block" id="stB">
+    <div class="stat-num" id="stN"><span>76%</span></div>
+    <div class="stat-label" id="stL">of young adults never learned personal finance</div>
+  </div>
+</div>
+
+<!-- SCENE 3: PROBLEMS -->
+<div class="scene s3" id="sc3">
+  <div class="smash-line" id="sm1">Jargon-filled apps <div class="strike" id="sk1"></div></div>
+  <div class="smash-line" id="sm2">Boring education <div class="strike" id="sk2"></div></div>
+  <div class="smash-line" id="sm3">No real guidance <div class="strike" id="sk3"></div></div>
+  <div class="smash-line" id="sm4">AI that doesn't teach <div class="strike" id="sk4"></div></div>
+</div>
+
+<!-- SCENE 4: BRAND REVEAL -->
+<div class="scene s4" id="sc4">
+  <div class="brand-icon" id="bIcon">
+    <svg width="140" height="140" viewBox="0 0 40 40">
+      <rect width="40" height="40" rx="9" fill="#2563EB"/>
+      <polyline points="7,27 13,21 19,23 26,13 33,9" fill="none" stroke="white" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"/>
+      <circle cx="33" cy="9" r="3.5" fill="white"/>
+    </svg>
+  </div>
+  <div class="brand-text" id="bText">Finance <span>Buddy</span></div>
+  <div class="brand-tag" id="bTag">Your AI Financial Companion</div>
+</div>
+
+<!-- SCENE 5: PILLARS -->
+<div class="scene s5" id="sc5">
+  <div class="pcard c1" id="pc1"><div class="pcard-num">01</div><div class="pcard-emoji">🎓</div><div class="pcard-name">Learn</div><div class="pcard-desc">Adaptive lessons in plain language. From basics to confidence.</div></div>
+  <div class="pcard c2" id="pc2"><div class="pcard-num">02</div><div class="pcard-emoji">💰</div><div class="pcard-name">Budget</div><div class="pcard-desc">AI insights that explain your spending and connect it to goals.</div></div>
+  <div class="pcard c3" id="pc3"><div class="pcard-num">03</div><div class="pcard-emoji">📈</div><div class="pcard-name">Invest</div><div class="pcard-desc">Paper trading with explainable, user-controlled suggestions.</div></div>
+  <div class="pcard c4" id="pc4"><div class="pcard-num">04</div><div class="pcard-emoji">💬</div><div class="pcard-name">Ask</div><div class="pcard-desc">A companion that answers any finance question, anytime.</div></div>
+</div>
+
+<!-- SCENE 6: CHAT + FEATURES -->
+<div class="scene s6" id="sc6">
+  <div class="phone" id="phone">
+    <div class="phone-notch"></div>
+    <div class="phone-inner">
+      <div class="bubble ai" id="b1"><div class="bname">Finn</div>Your portfolio is up 3.2% this week. Want me to break down why?</div>
+      <div class="bubble user" id="b2">Yes! Am I on track for my savings goal?</div>
+      <div class="bubble ai" id="b3"><div class="bname">Finn</div>You're 68% there. Cut dining out by $50/mo and you'll hit it 3 weeks early.</div>
+      <div class="bubble user" id="b4">That's so helpful, thanks Finn!</div>
+    </div>
+  </div>
+  <div class="right-content">
+    <div class="feat-row" id="f1"><div class="feat-icon">🧠</div><div><div class="feat-label">Personalized Onboarding</div><div class="feat-sub">Name your buddy. Get a custom financial profile.</div></div></div>
+    <div class="feat-row" id="f2"><div class="feat-icon">📊</div><div><div class="feat-label">Smart Budget Insights</div><div class="feat-sub">Plain-language tips based on your real spending.</div></div></div>
+    <div class="feat-row" id="f3"><div class="feat-icon">🎯</div><div><div class="feat-label">Goal Tracking</div><div class="feat-sub">AI-optimized plans to hit your targets faster.</div></div></div>
+    <div class="feat-row" id="f4"><div class="feat-icon">🛡️</div><div><div class="feat-label">Double Confirmation</div><div class="feat-sub">Two-step approval. You're always in control.</div></div></div>
+    <div class="feat-row" id="f5"><div class="feat-icon">📰</div><div><div class="feat-label">News Translated</div><div class="feat-sub">Headlines decoded into plain language.</div></div></div>
+  </div>
+</div>
+
+<!-- SCENE 7: AI POWER -->
+<div class="scene s7" id="sc7">
+  <div class="ai-headline" id="aiH"><span>AI that teaches</span>, not just trades.</div>
+  <div class="ai-grid">
+    <div class="ai-tile" id="at1"><div class="ai-tile-icon">🎓</div><div class="ai-tile-name">Education</div><div class="ai-tile-desc">Adapts to your level. Every concept, simplified.</div></div>
+    <div class="ai-tile" id="at2"><div class="ai-tile-icon">💡</div><div class="ai-tile-name">Insights</div><div class="ai-tile-desc">Spots patterns. Flags risks. Connects habits to goals.</div></div>
+    <div class="ai-tile" id="at3"><div class="ai-tile-icon">📈</div><div class="ai-tile-name">Portfolio</div><div class="ai-tile-desc">Watches markets. Explains recommendations with confidence scores.</div></div>
+    <div class="ai-tile" id="at4"><div class="ai-tile-icon">💬</div><div class="ai-tile-name">Chat</div><div class="ai-tile-desc">Ask anything. Get contextual, conversational answers.</div></div>
+  </div>
+</div>
+
+<!-- SCENE 8: CTA -->
+<div class="scene s8" id="sc8">
+  <div class="cta-icon" id="ctaI">
+    <svg width="100" height="100" viewBox="0 0 40 40">
+      <rect width="40" height="40" rx="9" fill="white"/>
+      <polyline points="7,27 13,21 19,23 26,13 33,9" fill="none" stroke="#2563EB" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"/>
+      <circle cx="33" cy="9" r="3.5" fill="#2563EB"/>
+    </svg>
+  </div>
+  <div class="cta-main" id="ctaM">Your Financial Journey<br>Starts Here.</div>
+  <div class="cta-sub" id="ctaS">Learn · Budget · Invest · Ask</div>
+  <div class="cta-btn" id="ctaB">Get Finance Buddy</div>
+</div>
+
+<script>
+// ========== AUDIO ENGINE — Uplifting Ad Soundtrack ==========
+let audioCtx, masterGain;
+
+function initAudio() {
+  audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+  masterGain = audioCtx.createGain();
+  masterGain.gain.value = 0.4;
+  masterGain.connect(audioCtx.destination);
+}
+
+// Note frequencies (C major scale, multiple octaves)
+const N = {
+  C3: 130.81, D3: 146.83, E3: 164.81, F3: 174.61, G3: 196.00, A3: 220.00, B3: 246.94,
+  C4: 261.63, D4: 293.66, E4: 329.63, F4: 349.23, G4: 392.00, A4: 440.00, B4: 493.88,
+  C5: 523.25, D5: 587.33, E5: 659.25, G5: 783.99, C6: 1046.50
+};
+
+// Warm pad — bright major chord, not dark
+function warmPad() {
+  const now = audioCtx.currentTime;
+  // C major -> G major -> Am -> F major (classic uplifting progression)
+  const chords = [
+    { notes: [N.C3, N.E3, N.G3, N.C4], start: 0, dur: 10.5 },
+    { notes: [N.G3, N.B3, N.D4, N.G4], start: 10.5, dur: 5.25 },
+    { notes: [N.A3, N.C4, N.E4, N.A4], start: 15.75, dur: 5.25 },
+    { notes: [N.F3, N.A3, N.C4, N.F4], start: 21, dur: 5.25 },
+    { notes: [N.C3, N.E3, N.G3, N.C4], start: 26.25, dur: 5.25 },
+    { notes: [N.G3, N.B3, N.D4, N.G4], start: 31.5, dur: 5.25 },
+    { notes: [N.C3, N.E4, N.G4, N.C5], start: 36.75, dur: 6 },
+  ];
+
+  chords.forEach(chord => {
+    chord.notes.forEach((freq, i) => {
+      const osc = audioCtx.createOscillator();
+      const gain = audioCtx.createGain();
+      const filter = audioCtx.createBiquadFilter();
+
+      // Triangle wave for warm, clean tone
+      osc.type = 'triangle';
+      osc.frequency.value = freq;
+      // Gentle detuning for richness
+      osc.detune.value = (i - 1.5) * 4;
+
+      filter.type = 'lowpass';
+      filter.frequency.value = 800 + i * 200;
+      filter.Q.value = 0.7;
+
+      const t0 = now + chord.start;
+      const t1 = t0 + chord.dur;
+      gain.gain.setValueAtTime(0, t0);
+      gain.gain.linearRampToValueAtTime(0.045, t0 + 0.8);
+      gain.gain.setValueAtTime(0.045, t1 - 0.8);
+      gain.gain.linearRampToValueAtTime(0, t1);
+
+      osc.connect(filter);
+      filter.connect(gain);
+      gain.connect(masterGain);
+      osc.start(t0);
+      osc.stop(t1 + 0.1);
+    });
+  });
+}
+
+// Piano-like arpeggio — bright, motivational
+function pianoArpeggio() {
+  const now = audioCtx.currentTime;
+
+  // Arpeggio patterns per section — major key, upward motion
+  const patterns = [
+    // Intro (0-10.5s) — gentle C major arpeggios
+    { notes: [N.C4, N.E4, N.G4, N.C5, N.G4, N.E4], bpm: 110, start: 0.5, end: 10.5, vol: 0.08 },
+    // Build (10.5-21s) — G and Am arpeggios, slightly louder
+    { notes: [N.G4, N.B4, N.D5, N.G5, N.D5, N.B4], bpm: 110, start: 10.5, end: 15.75, vol: 0.1 },
+    { notes: [N.A4, N.C5, N.E5, N.C5, N.A4, N.E4], bpm: 110, start: 15.75, end: 21, vol: 0.1 },
+    // Middle (21-31.5s) — F then C, confident energy
+    { notes: [N.F4, N.A4, N.C5, N.F4, N.C5, N.A4], bpm: 120, start: 21, end: 26.25, vol: 0.11 },
+    { notes: [N.C4, N.G4, N.C5, N.E5, N.C5, N.G4], bpm: 120, start: 26.25, end: 31.5, vol: 0.12 },
+    // Climax (31.5-42s) — triumphant ascending
+    { notes: [N.G4, N.B4, N.D5, N.G5, N.D5, N.G5], bpm: 130, start: 31.5, end: 36.75, vol: 0.13 },
+    { notes: [N.C5, N.E5, N.G5, N.C6, N.G5, N.E5], bpm: 130, start: 36.75, end: 42, vol: 0.14 },
+  ];
+
+  patterns.forEach(pat => {
+    const interval = 60 / pat.bpm;
+    let t = now + pat.start;
+    let idx = 0;
+    while (t < now + pat.end) {
+      const freq = pat.notes[idx % pat.notes.length];
+      playTone(freq, t, 0.25, pat.vol);
+      t += interval;
+      idx++;
+    }
+  });
+}
+
+// Clean tone — sounds piano-like with fast attack, medium decay
+function playTone(freq, time, dur, vol) {
+  // Fundamental
+  const osc = audioCtx.createOscillator();
+  const gain = audioCtx.createGain();
+  osc.type = 'sine';
+  osc.frequency.value = freq;
+
+  gain.gain.setValueAtTime(0, time);
+  gain.gain.linearRampToValueAtTime(vol, time + 0.01);
+  gain.gain.exponentialRampToValueAtTime(vol * 0.3, time + dur * 0.4);
+  gain.gain.exponentialRampToValueAtTime(0.001, time + dur);
+
+  osc.connect(gain);
+  gain.connect(masterGain);
+  osc.start(time);
+  osc.stop(time + dur + 0.05);
+
+  // Soft harmonic overtone for brightness
+  const osc2 = audioCtx.createOscillator();
+  const gain2 = audioCtx.createGain();
+  osc2.type = 'sine';
+  osc2.frequency.value = freq * 2;
+  gain2.gain.setValueAtTime(0, time);
+  gain2.gain.linearRampToValueAtTime(vol * 0.15, time + 0.01);
+  gain2.gain.exponentialRampToValueAtTime(0.001, time + dur * 0.6);
+  osc2.connect(gain2);
+  gain2.connect(masterGain);
+  osc2.start(time);
+  osc2.stop(time + dur + 0.05);
+}
+
+// Gentle steady pulse — soft, clean kick (not boomy/dark)
+function steadyPulse() {
+  const now = audioCtx.currentTime;
+  const bpm = 110;
+  const interval = 60 / bpm;
+
+  // Start pulse at 2s, end at 42s
+  for (let beat = 0; beat < 200; beat++) {
+    const t = now + 2 + beat * interval;
+    if (t > now + 42) break;
+
+    // Soft thump — higher pitch than a club kick, more like a heartbeat
+    const osc = audioCtx.createOscillator();
+    const gain = audioCtx.createGain();
+    osc.type = 'sine';
+    osc.frequency.setValueAtTime(100, t);
+    osc.frequency.exponentialRampToValueAtTime(50, t + 0.08);
+    // Volume builds over time
+    const progress = (beat * interval) / 40;
+    const baseVol = 0.06 + progress * 0.06;
+    gain.gain.setValueAtTime(baseVol, t);
+    gain.gain.exponentialRampToValueAtTime(0.001, t + 0.12);
+    osc.connect(gain);
+    gain.connect(masterGain);
+    osc.start(t);
+    osc.stop(t + 0.15);
+
+    // Light shaker on off-beats for motion
+    if (beat % 2 === 1) {
+      const bufSize = audioCtx.sampleRate * 0.025;
+      const buf = audioCtx.createBuffer(1, bufSize, audioCtx.sampleRate);
+      const d = buf.getChannelData(0);
+      for (let j = 0; j < bufSize; j++) d[j] = (Math.random() * 2 - 1) * (1 - j / bufSize);
+      const src = audioCtx.createBufferSource();
+      src.buffer = buf;
+      const sg = audioCtx.createGain();
+      const sf = audioCtx.createBiquadFilter();
+      sf.type = 'highpass';
+      sf.frequency.value = 6000;
+      sg.gain.setValueAtTime(0.03 + progress * 0.02, t);
+      sg.gain.exponentialRampToValueAtTime(0.001, t + 0.04);
+      src.connect(sf);
+      sf.connect(sg);
+      sg.connect(masterGain);
+      src.start(t);
+    }
+  }
+}
+
+// Bright chime — ascending major notes
+function playChime(time) {
+  [N.C5, N.E5, N.G5, N.C6].forEach((freq, i) => {
+    const osc = audioCtx.createOscillator();
+    const g = audioCtx.createGain();
+    osc.type = 'sine';
+    osc.frequency.value = freq;
+    const t = time + i * 0.1;
+    g.gain.setValueAtTime(0.14, t);
+    g.gain.exponentialRampToValueAtTime(0.001, t + 1.5);
+    osc.connect(g);
+    g.connect(masterGain);
+    osc.start(t);
+    osc.stop(t + 1.8);
+  });
+}
+
+// Lift — smooth rising tone for energy before CTA
+function playLift(time) {
+  const osc = audioCtx.createOscillator();
+  const g = audioCtx.createGain();
+  const f = audioCtx.createBiquadFilter();
+  osc.type = 'triangle';
+  osc.frequency.setValueAtTime(N.C4, time);
+  osc.frequency.exponentialRampToValueAtTime(N.C5, time + 2.5);
+  f.type = 'lowpass';
+  f.frequency.setValueAtTime(300, time);
+  f.frequency.linearRampToValueAtTime(2000, time + 2.5);
+  g.gain.setValueAtTime(0, time);
+  g.gain.linearRampToValueAtTime(0.08, time + 1);
+  g.gain.linearRampToValueAtTime(0.1, time + 2.2);
+  g.gain.linearRampToValueAtTime(0, time + 2.8);
+  osc.connect(f);
+  f.connect(g);
+  g.connect(masterGain);
+  osc.start(time);
+  osc.stop(time + 3);
+}
+
+// Gentle sub bass — warmth without being dark
+function warmBass() {
+  const now = audioCtx.currentTime;
+  const bassNotes = [
+    { freq: N.C3, start: 0, dur: 10.5 },
+    { freq: N.G3, start: 10.5, dur: 5.25 },
+    { freq: N.A3, start: 15.75, dur: 5.25 },
+    { freq: N.F3, start: 21, dur: 5.25 },
+    { freq: N.C3, start: 26.25, dur: 5.25 },
+    { freq: N.G3, start: 31.5, dur: 5.25 },
+    { freq: N.C3, start: 36.75, dur: 6 },
+  ];
+  bassNotes.forEach(bn => {
+    const osc = audioCtx.createOscillator();
+    const gain = audioCtx.createGain();
+    osc.type = 'sine';
+    osc.frequency.value = bn.freq / 2; // one octave below
+    const t0 = now + bn.start;
+    const t1 = t0 + bn.dur;
+    gain.gain.setValueAtTime(0, t0);
+    gain.gain.linearRampToValueAtTime(0.1, t0 + 1);
+    gain.gain.setValueAtTime(0.1, t1 - 1);
+    gain.gain.linearRampToValueAtTime(0, t1);
+    osc.connect(gain);
+    gain.connect(masterGain);
+    osc.start(t0);
+    osc.stop(t1 + 0.1);
+  });
+}
+
+function scheduleAudio() {
+  const now = audioCtx.currentTime;
+  const D = 42;
+  warmPad();
+  warmBass();
+  pianoArpeggio();
+  steadyPulse();
+  playChime(now + 0.35 * D);  // brand reveal
+  playLift(now + 0.81 * D);   // energy build before CTA
+  playChime(now + 0.87 * D);  // CTA landing
+  playChime(now + 0.96 * D);  // final resolve
+}
+
+// ========== BACKGROUND CANVAS ==========
+const canvas = document.getElementById('bgCanvas');
+const ctx = canvas.getContext('2d');
+canvas.width = 1920;
+canvas.height = 1080;
+
+let bgHue = 220;
+let bgTargetHue = 220;
+const dots = [];
+for (let i = 0; i < 80; i++) {
+  dots.push({
+    x: Math.random() * 1920,
+    y: Math.random() * 1080,
+    vx: (Math.random() - 0.5) * 0.5,
+    vy: (Math.random() - 0.5) * 0.5,
+    r: 1 + Math.random() * 2,
+    a: 0.1 + Math.random() * 0.2
+  });
+}
+
+function drawBg(time) {
+  bgHue += (bgTargetHue - bgHue) * 0.01;
+  ctx.fillStyle = `hsl(${bgHue}, 40%, 4%)`;
+  ctx.fillRect(0, 0, 1920, 1080);
+
+  const grd1 = ctx.createRadialGradient(
+    960 + Math.sin(time * 0.0003) * 200, 540 + Math.cos(time * 0.0002) * 150, 0,
+    960, 540, 600
+  );
+  grd1.addColorStop(0, `hsla(${bgHue}, 70%, 25%, 0.12)`);
+  grd1.addColorStop(1, 'transparent');
+  ctx.fillStyle = grd1;
+  ctx.fillRect(0, 0, 1920, 1080);
+
+  const grd2 = ctx.createRadialGradient(
+    400 + Math.sin(time * 0.00025) * 150, 800 + Math.cos(time * 0.00035) * 100, 0,
+    400, 800, 400
+  );
+  grd2.addColorStop(0, `hsla(${bgHue + 40}, 60%, 20%, 0.08)`);
+  grd2.addColorStop(1, 'transparent');
+  ctx.fillStyle = grd2;
+  ctx.fillRect(0, 0, 1920, 1080);
+
+  dots.forEach(d => {
+    d.x += d.vx;
+    d.y += d.vy;
+    if (d.x < 0 || d.x > 1920) d.vx *= -1;
+    if (d.y < 0 || d.y > 1080) d.vy *= -1;
+    ctx.beginPath();
+    ctx.arc(d.x, d.y, d.r, 0, Math.PI * 2);
+    ctx.fillStyle = `hsla(${bgHue}, 50%, 60%, ${d.a})`;
+    ctx.fill();
+  });
+  for (let i = 0; i < dots.length; i++) {
+    for (let j = i + 1; j < dots.length; j++) {
+      const dx = dots[i].x - dots[j].x;
+      const dy = dots[i].y - dots[j].y;
+      const dist = Math.sqrt(dx * dx + dy * dy);
+      if (dist < 180) {
+        ctx.beginPath();
+        ctx.moveTo(dots[i].x, dots[i].y);
+        ctx.lineTo(dots[j].x, dots[j].y);
+        ctx.strokeStyle = `hsla(${bgHue}, 40%, 50%, ${0.06 * (1 - dist / 180)})`;
+        ctx.lineWidth = 0.5;
+        ctx.stroke();
+      }
+    }
+  }
+}
+
+// ========== ANIMATION ENGINE ==========
+const TOTAL = 42000;
+let startTime = null;
+
+function ease(t) {
+  return t < 0.5 ? 4 * t * t * t : 1 - Math.pow(-2 * t + 2, 3) / 2;
+}
+function easeOut(t) {
+  return 1 - Math.pow(1 - t, 4);
+}
+
+function anim(el, prog, enter, dur, props) {
+  const t = Math.max(0, Math.min(1, (prog - enter) / dur));
+  const e = ease(t);
+  let tf = '';
+  if (props.y != null) tf += `translateY(${(1 - e) * props.y}px) `;
+  if (props.x != null) tf += `translateX(${(1 - e) * props.x}px) `;
+  if (props.s != null) tf += `scale(${1 + (props.s - 1) * (1 - e)}) `;
+  if (props.ry != null) tf += `perspective(800px) rotateY(${(1 - e) * props.ry}deg) `;
+  if (props.rx != null) tf += `rotateX(${(1 - e) * props.rx}deg) `;
+  el.style.transform = tf;
+  el.style.opacity = e;
+  if (props.blur != null) el.style.filter = `blur(${(1 - e) * props.blur}px)`;
+}
+
+function scaleX(el, prog, enter, dur) {
+  const t = Math.max(0, Math.min(1, (prog - enter) / dur));
+  el.style.transform = `scaleX(${easeOut(t)})`;
+}
+
+function showSc(id, prog, a, b) {
+  const el = document.getElementById(id);
+  const fi = Math.min(1, Math.max(0, (prog - a) / 0.015));
+  const fo = Math.min(1, Math.max(0, (b - prog) / 0.015));
+  el.style.opacity = Math.min(fi, fo);
+  return prog >= a && prog <= b;
+}
+
+function loop(ts) {
+  if (!startTime) startTime = ts;
+  const elapsed = ts - startTime;
+  const p = Math.min(1, elapsed / TOTAL);
+
+  document.getElementById('progressBar').style.width = (p * 100) + '%';
+
+  // BG color shifts per scene — bright, confident tones
+  if (p < 0.13) bgTargetHue = 220;      // blue — opening
+  else if (p < 0.25) bgTargetHue = 215;  // blue — stats
+  else if (p < 0.35) bgTargetHue = 210;  // blue — problems
+  else if (p < 0.47) bgTargetHue = 218;  // brand blue
+  else if (p < 0.61) bgTargetHue = 200;  // teal-blue — pillars
+  else if (p < 0.74) bgTargetHue = 225;  // blue — chat demo
+  else if (p < 0.84) bgTargetHue = 230;  // indigo — AI power
+  else bgTargetHue = 215;                // brand blue — CTA
+
+  drawBg(ts);
+
+  // SC1: 0 - 0.13
+  if (showSc('sc1', p, 0, 0.13)) {
+    anim(document.getElementById('l1'), p, 0.005, 0.03, { y: 60 });
+    anim(document.getElementById('l2'), p, 0.03, 0.03, { y: 60 });
+    anim(document.getElementById('l3'), p, 0.06, 0.03, { y: 60 });
+  }
+
+  // SC2: 0.12 - 0.24
+  if (showSc('sc2', p, 0.12, 0.24)) {
+    anim(document.getElementById('stB'), p, 0.13, 0.04, { s: 1.5, blur: 12 });
+  }
+
+  // SC3: 0.23 - 0.35
+  if (showSc('sc3', p, 0.23, 0.35)) {
+    anim(document.getElementById('sm1'), p, 0.24, 0.02, { x: -80 });
+    anim(document.getElementById('sm2'), p, 0.26, 0.02, { x: -80 });
+    anim(document.getElementById('sm3'), p, 0.28, 0.02, { x: -80 });
+    anim(document.getElementById('sm4'), p, 0.30, 0.02, { x: -80 });
+    scaleX(document.getElementById('sk1'), p, 0.255, 0.015);
+    scaleX(document.getElementById('sk2'), p, 0.275, 0.015);
+    scaleX(document.getElementById('sk3'), p, 0.295, 0.015);
+    scaleX(document.getElementById('sk4'), p, 0.315, 0.015);
+  }
+
+  // SC4: 0.34 - 0.47
+  if (showSc('sc4', p, 0.34, 0.47)) {
+    anim(document.getElementById('bIcon'), p, 0.35, 0.04, { s: 2.5, blur: 20 });
+    anim(document.getElementById('bText'), p, 0.38, 0.04, { s: 1.3, blur: 10 });
+    anim(document.getElementById('bTag'), p, 0.42, 0.03, { y: 20 });
+  }
+
+  // SC5: 0.46 - 0.61
+  if (showSc('sc5', p, 0.46, 0.61)) {
+    anim(document.getElementById('pc1'), p, 0.47, 0.03, { y: 80, rx: 15 });
+    anim(document.getElementById('pc2'), p, 0.49, 0.03, { y: 80, rx: 15 });
+    anim(document.getElementById('pc3'), p, 0.51, 0.03, { y: 80, rx: 15 });
+    anim(document.getElementById('pc4'), p, 0.53, 0.03, { y: 80, rx: 15 });
+  }
+
+  // SC6: 0.60 - 0.74
+  if (showSc('sc6', p, 0.60, 0.74)) {
+    anim(document.getElementById('phone'), p, 0.61, 0.04, { y: 60, ry: -8 });
+    anim(document.getElementById('b1'), p, 0.63, 0.02, { y: 16 });
+    anim(document.getElementById('b2'), p, 0.65, 0.02, { y: 16 });
+    anim(document.getElementById('b3'), p, 0.67, 0.02, { y: 16 });
+    anim(document.getElementById('b4'), p, 0.69, 0.02, { y: 16 });
+    anim(document.getElementById('f1'), p, 0.62, 0.025, { x: 40 });
+    anim(document.getElementById('f2'), p, 0.64, 0.025, { x: 40 });
+    anim(document.getElementById('f3'), p, 0.66, 0.025, { x: 40 });
+    anim(document.getElementById('f4'), p, 0.68, 0.025, { x: 40 });
+    anim(document.getElementById('f5'), p, 0.70, 0.025, { x: 40 });
+  }
+
+  // SC7: 0.73 - 0.84
+  if (showSc('sc7', p, 0.73, 0.84)) {
+    anim(document.getElementById('aiH'), p, 0.74, 0.03, { y: 30 });
+    anim(document.getElementById('at1'), p, 0.77, 0.02, { s: 0.85 });
+    anim(document.getElementById('at2'), p, 0.78, 0.02, { s: 0.85 });
+    anim(document.getElementById('at3'), p, 0.79, 0.02, { s: 0.85 });
+    anim(document.getElementById('at4'), p, 0.80, 0.02, { s: 0.85 });
+  }
+
+  // SC8: 0.83 - 1
+  if (showSc('sc8', p, 0.83, 1.01)) {
+    anim(document.getElementById('ctaI'), p, 0.84, 0.03, { s: 3, blur: 20 });
+    anim(document.getElementById('ctaM'), p, 0.87, 0.04, { y: 40 });
+    anim(document.getElementById('ctaS'), p, 0.92, 0.03, { y: 20 });
+    anim(document.getElementById('ctaB'), p, 0.95, 0.03, { s: 0.8 });
+  }
+
+  if (p >= 0.98) document.getElementById('replayBtn').style.opacity = '1';
+
+  if (p < 1) requestAnimationFrame(loop);
+}
+
+// ========== START ==========
+function startAd() {
+  document.getElementById('startOverlay').style.display = 'none';
+  initAudio();
+  scheduleAudio();
+  requestAnimationFrame(loop);
+}
+</script>
+</body>
+</html>
