@@ -1,0 +1,608 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Finance Buddy — Stock Alert Demo</title>
+  <style>
+    @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&display=swap');
+
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+
+    body {
+      min-height: 100vh;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      background: linear-gradient(135deg, #0f172a 0%, #1e293b 50%, #334155 100%);
+      font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+      overflow: hidden;
+    }
+
+    .scene { display: flex; align-items: center; gap: 50px; }
+
+    .branding { color: white; max-width: 340px; }
+    .branding h1 {
+      font-size: 38px; font-weight: 900; line-height: 1.1; margin-bottom: 10px;
+      background: linear-gradient(135deg, #818cf8, #a78bfa, #c084fc);
+      -webkit-background-clip: text; -webkit-text-fill-color: transparent;
+    }
+    .branding p { font-size: 15px; color: #94a3b8; line-height: 1.6; margin-bottom: 20px; }
+    .branding .step-indicator { display: flex; flex-direction: column; gap: 10px; }
+    .branding .step {
+      display: flex; align-items: center; gap: 12px; padding: 10px 14px;
+      border-radius: 12px; border: 1px solid rgba(255,255,255,0.06);
+      background: rgba(255,255,255,0.03); transition: all 0.4s;
+    }
+    .branding .step.active {
+      background: rgba(99,102,241,0.15); border-color: rgba(99,102,241,0.3);
+    }
+    .branding .step .num {
+      width: 28px; height: 28px; border-radius: 8px; display: flex; align-items: center;
+      justify-content: center; font-size: 13px; font-weight: 700;
+      background: rgba(255,255,255,0.08); color: #64748b; transition: all 0.4s;
+    }
+    .branding .step.active .num { background: #6366f1; color: #fff; }
+    .branding .step.done .num { background: #10b981; color: #fff; }
+    .branding .step .label { font-size: 13px; color: #64748b; font-weight: 500; transition: all 0.3s; }
+    .branding .step.active .label { color: #e2e8f0; }
+    .branding .step.done .label { color: #94a3b8; }
+
+    .replay-btn {
+      margin-top: 20px; padding: 10px 20px; border-radius: 10px; border: 1px solid rgba(255,255,255,0.15);
+      background: rgba(255,255,255,0.05); color: #94a3b8; font-size: 13px; font-weight: 600;
+      cursor: pointer; transition: all 0.3s;
+    }
+    .replay-btn:hover { background: rgba(255,255,255,0.1); color: #fff; }
+
+    /* iPhone */
+    .iphone { position: relative; width: 375px; height: 812px; background: #1a1a1a; border-radius: 52px; padding: 11px;
+      box-shadow: 0 0 0 2px #333, 0 40px 80px rgba(0,0,0,0.5), 0 0 100px rgba(99,102,241,0.08); }
+    .screen { width: 100%; height: 100%; border-radius: 42px; overflow: hidden; background: #f8fafc; position: relative; }
+
+    .dynamic-island { position: absolute; top: 10px; left: 50%; transform: translateX(-50%); width: 120px; height: 34px; background: #000; border-radius: 18px; z-index: 200; }
+    .status-bar { position: absolute; top: 14px; left: 28px; right: 28px; display: flex; justify-content: space-between; z-index: 199; font-size: 14px; font-weight: 600; color: #000; }
+    .home-bar { position: absolute; bottom: 8px; left: 50%; transform: translateX(-50%); width: 130px; height: 5px; background: rgba(0,0,0,0.2); border-radius: 3px; z-index: 200; }
+
+    .btn-r { position: absolute; right: -3px; top: 175px; width: 3px; height: 76px; background: #2a2a2a; border-radius: 0 2px 2px 0; }
+    .btn-l1 { position: absolute; left: -3px; top: 155px; width: 3px; height: 38px; background: #2a2a2a; border-radius: 2px 0 0 2px; }
+    .btn-l2 { position: absolute; left: -3px; top: 205px; width: 3px; height: 38px; background: #2a2a2a; border-radius: 2px 0 0 2px; }
+    .btn-l3 { position: absolute; left: -3px; top: 118px; width: 3px; height: 18px; background: #2a2a2a; border-radius: 2px 0 0 2px; }
+
+    /* App Screens */
+    .app-screen {
+      position: absolute; inset: 0; opacity: 0; transition: opacity 0.5s ease;
+      display: flex; flex-direction: column; overflow-y: auto;
+    }
+    .app-screen.visible { opacity: 1; }
+
+    /* Notification overlay */
+    .notification {
+      position: absolute; top: -100px; left: 16px; right: 16px; z-index: 300;
+      background: rgba(255,255,255,0.95); backdrop-filter: blur(20px);
+      border-radius: 20px; padding: 14px 16px; display: flex; align-items: center; gap: 12px;
+      box-shadow: 0 8px 32px rgba(0,0,0,0.15); transition: top 0.6s cubic-bezier(0.34, 1.56, 0.64, 1);
+    }
+    .notification.show { top: 54px; }
+    .notification .notif-icon { width: 40px; height: 40px; border-radius: 10px; background: linear-gradient(135deg, #6366f1, #8b5cf6); display: flex; align-items: center; justify-content: center; flex-shrink: 0; }
+    .notification .notif-icon svg { width: 20px; height: 20px; fill: #fff; }
+    .notification .notif-body { flex: 1; }
+    .notification .notif-app { font-size: 11px; font-weight: 600; color: #6366f1; text-transform: uppercase; letter-spacing: 0.5px; }
+    .notification .notif-title { font-size: 14px; font-weight: 700; color: #0f172a; margin-top: 1px; }
+    .notification .notif-text { font-size: 12px; color: #64748b; margin-top: 2px; line-height: 1.3; }
+    .notification .notif-time { font-size: 11px; color: #94a3b8; align-self: flex-start; margin-top: 2px; }
+
+    /* Tap ripple */
+    .tap-indicator {
+      position: absolute; z-index: 500; width: 44px; height: 44px; border-radius: 22px;
+      background: rgba(99,102,241,0.3); opacity: 0; pointer-events: none;
+      transform: translate(-50%, -50%) scale(0);
+    }
+    .tap-indicator.show {
+      animation: tapRipple 0.6s ease-out forwards;
+    }
+    @keyframes tapRipple {
+      0% { opacity: 1; transform: translate(-50%, -50%) scale(0); }
+      50% { opacity: 0.5; transform: translate(-50%, -50%) scale(1.2); }
+      100% { opacity: 0; transform: translate(-50%, -50%) scale(1.5); }
+    }
+
+    /* Screen content styles */
+    .screen-pad { padding: 0 18px; }
+    .screen-header { padding: 58px 18px 14px; background: #fff; }
+    .screen-header h2 { font-size: 18px; font-weight: 700; color: #0f172a; }
+
+    /* Stock Detail Screen */
+    .stock-hero { padding: 58px 18px 20px; background: linear-gradient(135deg, #6366f1, #8b5cf6); color: #fff; }
+    .stock-hero .back-row { display: flex; align-items: center; gap: 6px; font-size: 14px; font-weight: 500; margin-bottom: 16px; opacity: 0.8; }
+    .stock-hero .ticker-row { display: flex; justify-content: space-between; align-items: flex-end; }
+    .stock-hero .ticker { font-size: 28px; font-weight: 900; }
+    .stock-hero .company { font-size: 13px; opacity: 0.8; margin-top: 2px; }
+    .stock-hero .price { font-size: 32px; font-weight: 800; text-align: right; }
+    .stock-hero .change { font-size: 14px; font-weight: 600; text-align: right; margin-top: 2px; }
+    .stock-hero .change.up { color: #86efac; }
+
+    /* Chart placeholder */
+    .chart-area { padding: 18px; background: #fff; }
+    .chart-svg { width: 100%; height: 120px; }
+    .chart-tabs { display: flex; gap: 6px; margin-top: 10px; }
+    .chart-tab { padding: 6px 12px; border-radius: 8px; font-size: 12px; font-weight: 600; color: #64748b; background: #f1f5f9; }
+    .chart-tab.active { background: #6366f1; color: #fff; }
+
+    /* Why section */
+    .why-card { margin: 0 18px 12px; background: #fff; border-radius: 14px; padding: 14px; border: 1px solid #e2e8f0; }
+    .why-card .why-header { display: flex; align-items: center; gap: 8px; margin-bottom: 8px; }
+    .why-card .why-icon { width: 32px; height: 32px; border-radius: 8px; display: flex; align-items: center; justify-content: center; font-size: 16px; }
+    .why-card .why-title { font-size: 14px; font-weight: 700; color: #0f172a; }
+    .why-card .why-text { font-size: 13px; color: #475569; line-height: 1.5; }
+    .why-card .why-tag { display: inline-block; margin-top: 6px; padding: 3px 8px; border-radius: 6px; font-size: 11px; font-weight: 600; }
+
+    /* Action buttons */
+    .action-row { display: flex; gap: 10px; padding: 14px 18px; }
+    .btn-buy { flex: 1; padding: 14px; border-radius: 12px; text-align: center; font-size: 15px; font-weight: 700; color: #fff; background: #10b981; }
+    .btn-sell { flex: 1; padding: 14px; border-radius: 12px; text-align: center; font-size: 15px; font-weight: 700; color: #fff; background: #ef4444; }
+
+    /* Buy modal */
+    .buy-modal {
+      position: absolute; bottom: -400px; left: 0; right: 0; z-index: 400;
+      background: #fff; border-radius: 24px 24px 0 0; padding: 24px 20px 40px;
+      box-shadow: 0 -10px 40px rgba(0,0,0,0.15); transition: bottom 0.5s cubic-bezier(0.34, 1.3, 0.64, 1);
+    }
+    .buy-modal.show { bottom: 0; }
+    .buy-modal .modal-handle { width: 36px; height: 4px; background: #e2e8f0; border-radius: 2px; margin: 0 auto 18px; }
+    .buy-modal h3 { font-size: 18px; font-weight: 700; color: #0f172a; margin-bottom: 16px; }
+    .buy-modal .modal-row { display: flex; justify-content: space-between; padding: 10px 0; border-bottom: 1px solid #f1f5f9; font-size: 14px; }
+    .buy-modal .modal-label { color: #64748b; }
+    .buy-modal .modal-val { font-weight: 600; color: #0f172a; }
+    .buy-modal .confirm-btn {
+      margin-top: 18px; width: 100%; padding: 16px; border-radius: 14px; text-align: center;
+      font-size: 16px; font-weight: 700; color: #fff; background: linear-gradient(135deg, #10b981, #059669);
+    }
+
+    /* Success overlay */
+    .success-overlay {
+      position: absolute; inset: 0; z-index: 500; background: rgba(255,255,255,0.97);
+      display: flex; flex-direction: column; align-items: center; justify-content: center;
+      opacity: 0; transition: opacity 0.4s;
+    }
+    .success-overlay.show { opacity: 1; }
+    .success-check { width: 80px; height: 80px; border-radius: 40px; background: #10b981; display: flex; align-items: center; justify-content: center; margin-bottom: 16px; }
+    .success-check svg { width: 40px; height: 40px; fill: #fff; }
+    .success-overlay h3 { font-size: 22px; font-weight: 800; color: #0f172a; }
+    .success-overlay .success-detail { font-size: 14px; color: #64748b; margin-top: 6px; text-align: center; line-height: 1.5; }
+
+    /* Portfolio update screen */
+    .portfolio-header { padding: 58px 18px 16px; background: #fff; border-bottom: 1px solid #e2e8f0; }
+    .portfolio-header h2 { font-size: 18px; font-weight: 700; color: #0f172a; }
+    .portfolio-hero-card { margin: 14px 18px; background: linear-gradient(135deg, #6366f1, #8b5cf6); border-radius: 18px; padding: 20px; color: #fff; }
+    .portfolio-hero-card .port-label { font-size: 12px; opacity: 0.8; }
+    .portfolio-hero-card .port-value { font-size: 30px; font-weight: 800; margin-top: 2px; }
+    .portfolio-hero-card .port-change { font-size: 14px; font-weight: 600; color: #86efac; margin-top: 4px; }
+    .portfolio-hero-card .port-new { display: inline-block; margin-top: 8px; padding: 4px 10px; background: rgba(255,255,255,0.15); border-radius: 8px; font-size: 12px; font-weight: 600; }
+
+    .holding-card { margin: 0 18px 8px; background: #fff; border-radius: 14px; padding: 14px; display: flex; align-items: center; gap: 12px; border: 1px solid #e2e8f0; }
+    .holding-card.new-holding { border-color: #10b981; background: #f0fdf4; }
+    .holding-card .h-icon { width: 40px; height: 40px; border-radius: 10px; background: #f1f5f9; display: flex; align-items: center; justify-content: center; font-size: 14px; font-weight: 800; color: #334155; }
+    .holding-card.new-holding .h-icon { background: #dcfce7; color: #16a34a; }
+    .holding-card .h-info { flex: 1; }
+    .holding-card .h-symbol { font-size: 15px; font-weight: 700; color: #0f172a; }
+    .holding-card .h-shares { font-size: 12px; color: #64748b; }
+    .holding-card .h-value { text-align: right; }
+    .holding-card .h-price { font-size: 15px; font-weight: 600; color: #0f172a; }
+    .holding-card .h-pct { font-size: 12px; font-weight: 600; }
+    .holding-card .new-badge { font-size: 10px; font-weight: 700; color: #16a34a; background: #dcfce7; padding: 2px 6px; border-radius: 4px; margin-left: 6px; }
+
+    /* Dashboard mini */
+    .dash-content { padding: 58px 0 0; background: #f8fafc; }
+    .dash-welcome { padding: 14px 18px 8px; }
+    .dash-welcome h2 { font-size: 20px; font-weight: 700; color: #0f172a; }
+    .dash-welcome p { font-size: 13px; color: #64748b; margin-top: 2px; }
+    .dash-cards { display: flex; gap: 10px; padding: 8px 18px; overflow-x: auto; }
+    .dash-card { min-width: 140px; background: #fff; border-radius: 14px; padding: 14px; border: 1px solid #e2e8f0; }
+    .dash-card .dc-label { font-size: 11px; color: #64748b; }
+    .dash-card .dc-value { font-size: 18px; font-weight: 700; color: #0f172a; margin-top: 4px; }
+    .dash-card .dc-badge { font-size: 11px; font-weight: 600; margin-top: 4px; }
+
+    .tab-bar { position: absolute; bottom: 0; left: 0; right: 0; height: 80px; background: #fff; border-top: 1px solid #e2e8f0; display: flex; align-items: flex-start; padding-top: 10px; z-index: 150; }
+    .tab-item { flex: 1; display: flex; flex-direction: column; align-items: center; gap: 3px; }
+    .tab-item svg { width: 22px; height: 22px; }
+    .tab-item .tab-label { font-size: 10px; font-weight: 600; }
+    .tab-item.active svg { fill: #6366f1; color: #6366f1; }
+    .tab-item.active .tab-label { color: #6366f1; }
+    .tab-item:not(.active) svg { fill: #94a3b8; color: #94a3b8; }
+    .tab-item:not(.active) .tab-label { color: #94a3b8; }
+
+    /* Backdrop dim */
+    .backdrop { position: absolute; inset: 0; background: rgba(0,0,0,0.3); z-index: 350; opacity: 0; transition: opacity 0.3s; pointer-events: none; }
+    .backdrop.show { opacity: 1; }
+
+    @media (max-height: 880px) { .iphone { transform: scale(0.82); } }
+    @media (max-width: 880px) { .scene { flex-direction: column; gap: 24px; } .branding { text-align: center; padding: 16px; } .iphone { transform: scale(0.72); } }
+  </style>
+</head>
+<body>
+  <div class="scene">
+    <div class="branding">
+      <h1>Stock Alert Flow</h1>
+      <p>Watch how Finance Buddy delivers real-time stock alerts, helps you understand market moves, and lets you trade instantly — all updating your portfolio in real time.</p>
+      <div class="step-indicator">
+        <div class="step" id="step1"><div class="num">1</div><div class="label">Stock alert notification arrives</div></div>
+        <div class="step" id="step2"><div class="num">2</div><div class="label">View stock details & analysis</div></div>
+        <div class="step" id="step3"><div class="num">3</div><div class="label">See why the stock is moving</div></div>
+        <div class="step" id="step4"><div class="num">4</div><div class="label">Buy shares with one tap</div></div>
+        <div class="step" id="step5"><div class="num">5</div><div class="label">Confirm the purchase</div></div>
+        <div class="step" id="step6"><div class="num">6</div><div class="label">Portfolio updates instantly</div></div>
+      </div>
+      <button class="replay-btn" id="replayBtn" onclick="startDemo()">&#8635; Replay Demo</button>
+    </div>
+
+    <div class="iphone">
+      <div class="btn-r"></div><div class="btn-l1"></div><div class="btn-l2"></div><div class="btn-l3"></div>
+      <div class="screen" id="phoneScreen">
+        <div class="dynamic-island"></div>
+        <div class="status-bar"><span>9:41</span><span style="font-size:12px">●●●● WiFi 🔋</span></div>
+        <div class="home-bar"></div>
+
+        <!-- Tap indicator -->
+        <div class="tap-indicator" id="tap"></div>
+
+        <!-- Notification -->
+        <div class="notification" id="notification">
+          <div class="notif-icon"><svg viewBox="0 0 24 24"><path d="M13 7.5h5v2h-5zm0 4h5v2h-5zM6 7.5h5v2H6zm0 4h5v2H6zm-4-8v17h20v-17H2zm18 15H4v-11h16v11z"/></svg></div>
+          <div class="notif-body">
+            <div class="notif-app">Finance Buddy</div>
+            <div class="notif-title">📈 NVDA is surging +4.7%</div>
+            <div class="notif-text">NVIDIA up $41.12 today on strong AI chip demand. Tap to view.</div>
+          </div>
+          <div class="notif-time">now</div>
+        </div>
+
+        <!-- Screen 1: Dashboard -->
+        <div class="app-screen visible" id="screenDash">
+          <div class="dash-content">
+            <div class="dash-welcome">
+              <h2>Hey there! Buddy here</h2>
+              <p>Here's your financial overview for today.</p>
+            </div>
+            <div class="dash-cards">
+              <div class="dash-card">
+                <div class="dc-label">Portfolio</div>
+                <div class="dc-value">$12,847</div>
+                <div class="dc-badge" style="color:#10b981">+4.2% ↑</div>
+              </div>
+              <div class="dash-card">
+                <div class="dc-label">Budget</div>
+                <div class="dc-value">$4,200</div>
+                <div class="dc-badge" style="color:#10b981">+$1,500</div>
+              </div>
+              <div class="dash-card">
+                <div class="dc-label">Savings</div>
+                <div class="dc-value">$7,300</div>
+                <div class="dc-badge" style="color:#f59e0b">73% goal</div>
+              </div>
+            </div>
+            <div style="padding:14px 18px">
+              <div style="background:#fff;border-radius:14px;padding:14px;border:1px solid #e2e8f0">
+                <div style="display:flex;align-items:center;gap:8px;margin-bottom:10px">
+                  <div style="width:32px;height:32px;border-radius:8px;background:#f3e8ff;display:flex;align-items:center;justify-content:center">✨</div>
+                  <div><div style="font-size:13px;font-weight:700;color:#6b21a8">AI Insight</div></div>
+                </div>
+                <div style="font-size:13px;color:#475569;line-height:1.5">You're on track to save $1.5k this month! Consider increasing your NVDA position.</div>
+              </div>
+            </div>
+            <div style="padding:6px 18px">
+              <div style="font-size:15px;font-weight:700;color:#0f172a;margin-bottom:10px">Recent Activity</div>
+              <div style="background:#fff;border-radius:14px;border:1px solid #e2e8f0">
+                <div style="padding:12px 14px;display:flex;align-items:center;gap:10px;border-bottom:1px solid #f1f5f9">
+                  <div style="width:28px;height:28px;border-radius:14px;background:#dcfce7;display:flex;align-items:center;justify-content:center;font-size:12px;color:#16a34a">↑</div>
+                  <div style="flex:1"><div style="font-size:13px;font-weight:500;color:#1e293b">Salary deposit</div><div style="font-size:11px;color:#94a3b8">3d ago</div></div>
+                  <div style="font-size:13px;font-weight:600;color:#10b981">+$4,200</div>
+                </div>
+                <div style="padding:12px 14px;display:flex;align-items:center;gap:10px">
+                  <div style="width:28px;height:28px;border-radius:14px;background:#fee2e2;display:flex;align-items:center;justify-content:center;font-size:12px;color:#ef4444">↓</div>
+                  <div style="flex:1"><div style="font-size:13px;font-weight:500;color:#1e293b">Grocery shopping</div><div style="font-size:11px;color:#94a3b8">2h ago</div></div>
+                  <div style="font-size:13px;font-weight:600;color:#ef4444">-$87.52</div>
+                </div>
+              </div>
+            </div>
+          </div>
+          <div class="tab-bar">
+            <div class="tab-item active"><svg viewBox="0 0 24 24" fill="currentColor"><rect x="3" y="3" width="7" height="7" rx="1.5"/><rect x="14" y="3" width="7" height="7" rx="1.5"/><rect x="3" y="14" width="7" height="7" rx="1.5"/><rect x="14" y="14" width="7" height="7" rx="1.5"/></svg><div class="tab-label">Home</div></div>
+            <div class="tab-item"><svg viewBox="0 0 24 24" fill="currentColor"><path d="M20 2H4c-1.1 0-2 .9-2 2v18l4-4h14c1.1 0 2-.9 2-2V4c0-1.1-.9-2-2-2z"/></svg><div class="tab-label">Chat</div></div>
+            <div class="tab-item"><svg viewBox="0 0 24 24" fill="currentColor"><path d="M16 6l2.29 2.29-4.88 4.88-4-4L2 16.59 3.41 18l6-6 4 4 6.3-6.29L22 12V6z"/></svg><div class="tab-label">Invest</div></div>
+            <div class="tab-item"><svg viewBox="0 0 24 24" fill="currentColor"><path d="M5 13.18v4L12 21l7-3.82v-4L12 17l-7-3.82zM12 3L1 9l11 6 9-4.91V17h2V9L12 3z"/></svg><div class="tab-label">Learn</div></div>
+          </div>
+        </div>
+
+        <!-- Screen 2: Stock Detail -->
+        <div class="app-screen" id="screenStock">
+          <div class="stock-hero">
+            <div class="back-row">← Back</div>
+            <div class="ticker-row">
+              <div>
+                <div class="ticker">NVDA</div>
+                <div class="company">NVIDIA Corporation</div>
+              </div>
+              <div>
+                <div class="price">$916.40</div>
+                <div class="change up">+$41.12 (+4.70%)</div>
+              </div>
+            </div>
+          </div>
+
+          <!-- Chart -->
+          <div class="chart-area">
+            <svg class="chart-svg" viewBox="0 0 340 120">
+              <defs>
+                <linearGradient id="cg" x1="0" y1="0" x2="0" y2="1">
+                  <stop offset="0%" stop-color="#6366f1" stop-opacity="0.3"/>
+                  <stop offset="100%" stop-color="#6366f1" stop-opacity="0"/>
+                </linearGradient>
+              </defs>
+              <path d="M0 90 Q30 85 60 80 T120 65 T180 55 T220 35 T260 20 T300 30 T340 15" fill="none" stroke="#6366f1" stroke-width="2.5"/>
+              <path d="M0 90 Q30 85 60 80 T120 65 T180 55 T220 35 T260 20 T300 30 T340 15 V120 H0 Z" fill="url(#cg)"/>
+              <circle cx="340" cy="15" r="4" fill="#6366f1"/>
+            </svg>
+            <div class="chart-tabs">
+              <div class="chart-tab">1D</div>
+              <div class="chart-tab active">1W</div>
+              <div class="chart-tab">1M</div>
+              <div class="chart-tab">3M</div>
+              <div class="chart-tab">1Y</div>
+            </div>
+          </div>
+
+          <!-- Why cards -->
+          <div style="padding:14px 0 0">
+            <div style="padding:0 18px 10px;font-size:15px;font-weight:700;color:#0f172a">Why NVDA is Moving</div>
+            <div class="why-card">
+              <div class="why-header">
+                <div class="why-icon" style="background:#dbeafe">📊</div>
+                <div class="why-title">Strong AI Chip Demand</div>
+              </div>
+              <div class="why-text">NVIDIA reported record data center revenue of $18.4B, driven by surging demand for AI training and inference chips. Major tech companies are increasing GPU orders.</div>
+              <div class="why-tag" style="background:#dcfce7;color:#16a34a">Bullish Signal</div>
+            </div>
+            <div class="why-card">
+              <div class="why-header">
+                <div class="why-icon" style="background:#fef3c7">📈</div>
+                <div class="why-title">Analyst Upgrades</div>
+              </div>
+              <div class="why-text">3 major analysts raised price targets today. Average PT now $1,050 (+14.6% upside). Goldman Sachs upgraded to "Conviction Buy."</div>
+              <div class="why-tag" style="background:#e0e7ff;color:#4f46e5">Strong Consensus</div>
+            </div>
+            <div class="why-card">
+              <div class="why-header">
+                <div class="why-icon" style="background:#f3e8ff">🤖</div>
+                <div class="why-title">AI Buddy Analysis</div>
+              </div>
+              <div class="why-text">Based on your moderate risk profile, adding 3 shares of NVDA would bring your tech allocation to 28% — within your target range. Strong momentum play with solid fundamentals.</div>
+              <div class="why-tag" style="background:#dcfce7;color:#16a34a">Recommended Buy</div>
+            </div>
+          </div>
+
+          <!-- Buy/Sell -->
+          <div class="action-row">
+            <div class="btn-buy" id="buyBtn">Buy</div>
+            <div class="btn-sell">Sell</div>
+          </div>
+
+          <div style="height:80px"></div>
+          <div class="tab-bar">
+            <div class="tab-item"><svg viewBox="0 0 24 24" fill="currentColor"><rect x="3" y="3" width="7" height="7" rx="1.5"/><rect x="14" y="3" width="7" height="7" rx="1.5"/><rect x="3" y="14" width="7" height="7" rx="1.5"/><rect x="14" y="14" width="7" height="7" rx="1.5"/></svg><div class="tab-label">Home</div></div>
+            <div class="tab-item"><svg viewBox="0 0 24 24" fill="currentColor"><path d="M20 2H4c-1.1 0-2 .9-2 2v18l4-4h14c1.1 0 2-.9 2-2V4c0-1.1-.9-2-2-2z"/></svg><div class="tab-label">Chat</div></div>
+            <div class="tab-item active"><svg viewBox="0 0 24 24" fill="currentColor"><path d="M16 6l2.29 2.29-4.88 4.88-4-4L2 16.59 3.41 18l6-6 4 4 6.3-6.29L22 12V6z"/></svg><div class="tab-label">Invest</div></div>
+            <div class="tab-item"><svg viewBox="0 0 24 24" fill="currentColor"><path d="M5 13.18v4L12 21l7-3.82v-4L12 17l-7-3.82zM12 3L1 9l11 6 9-4.91V17h2V9L12 3z"/></svg><div class="tab-label">Learn</div></div>
+          </div>
+
+          <!-- Buy Modal -->
+          <div class="backdrop" id="backdrop"></div>
+          <div class="buy-modal" id="buyModal">
+            <div class="modal-handle"></div>
+            <h3>Buy NVDA</h3>
+            <div class="modal-row"><span class="modal-label">Stock</span><span class="modal-val">NVIDIA (NVDA)</span></div>
+            <div class="modal-row"><span class="modal-label">Shares</span><span class="modal-val">3 shares</span></div>
+            <div class="modal-row"><span class="modal-label">Price per share</span><span class="modal-val">$916.40</span></div>
+            <div class="modal-row"><span class="modal-label">Estimated Total</span><span class="modal-val" style="font-size:18px;color:#10b981">$2,749.20</span></div>
+            <div class="modal-row"><span class="modal-label">Available Cash</span><span class="modal-val">$5,120.00</span></div>
+            <div class="confirm-btn" id="confirmBtn">✓ Confirm Purchase</div>
+          </div>
+
+          <!-- Success overlay -->
+          <div class="success-overlay" id="successOverlay">
+            <div class="success-check"><svg viewBox="0 0 24 24"><path d="M9 16.17L4.83 12l-1.42 1.41L9 19 21 7l-1.41-1.41z"/></svg></div>
+            <h3>Purchase Complete!</h3>
+            <div class="success-detail">You bought <b>3 shares of NVDA</b><br>at $916.40 per share<br><br>Total: <b style="color:#10b981">$2,749.20</b></div>
+          </div>
+        </div>
+
+        <!-- Screen 3: Updated Portfolio -->
+        <div class="app-screen" id="screenPortfolio">
+          <div class="portfolio-header"><h2>Portfolio</h2></div>
+          <div class="portfolio-hero-card">
+            <div class="port-label">Total Portfolio Value</div>
+            <div class="port-value">$15,596.20</div>
+            <div class="port-change">+$2,749.20 today (+21.4%)</div>
+            <div class="port-new">✨ Updated just now</div>
+          </div>
+
+          <div style="padding:6px 18px 8px;font-size:15px;font-weight:700;color:#0f172a">Your Holdings</div>
+
+          <div class="holding-card new-holding">
+            <div class="h-icon">NV</div>
+            <div class="h-info">
+              <div class="h-symbol">NVDA <span class="new-badge">NEW</span></div>
+              <div class="h-shares">3 shares · Just purchased</div>
+            </div>
+            <div class="h-value">
+              <div class="h-price">$2,749.20</div>
+              <div class="h-pct" style="color:#10b981">+4.70%</div>
+            </div>
+          </div>
+          <div class="holding-card">
+            <div class="h-icon">AA</div>
+            <div class="h-info"><div class="h-symbol">AAPL</div><div class="h-shares">10 shares</div></div>
+            <div class="h-value"><div class="h-price">$1,787.20</div><div class="h-pct" style="color:#10b981">+1.33%</div></div>
+          </div>
+          <div class="holding-card">
+            <div class="h-icon">MS</div>
+            <div class="h-info"><div class="h-symbol">MSFT</div><div class="h-shares">5 shares</div></div>
+            <div class="h-value"><div class="h-price">$1,894.55</div><div class="h-pct" style="color:#10b981">+1.37%</div></div>
+          </div>
+          <div class="holding-card">
+            <div class="h-icon">TS</div>
+            <div class="h-info"><div class="h-symbol">TSLA</div><div class="h-shares">8 shares</div></div>
+            <div class="h-value"><div class="h-price">$1,987.84</div><div class="h-pct" style="color:#ef4444">-1.46%</div></div>
+          </div>
+          <div class="holding-card">
+            <div class="h-icon">AM</div>
+            <div class="h-info"><div class="h-symbol">AMZN</div><div class="h-shares">4 shares</div></div>
+            <div class="h-value"><div class="h-price">$740.28</div><div class="h-pct" style="color:#10b981">+1.03%</div></div>
+          </div>
+
+          <div style="margin:14px 18px;padding:14px;background:#f0fdf4;border-radius:14px;border:1px solid #bbf7d0">
+            <div style="display:flex;align-items:center;gap:8px;margin-bottom:6px">
+              <span style="font-size:16px">✨</span>
+              <span style="font-size:14px;font-weight:700;color:#16a34a">Portfolio Updated</span>
+            </div>
+            <div style="font-size:13px;color:#475569;line-height:1.5">Your NVDA purchase brings tech allocation to 28%. Cash remaining: $2,370.80. Great entry point based on current momentum!</div>
+          </div>
+
+          <div style="height:90px"></div>
+          <div class="tab-bar">
+            <div class="tab-item"><svg viewBox="0 0 24 24" fill="currentColor"><rect x="3" y="3" width="7" height="7" rx="1.5"/><rect x="14" y="3" width="7" height="7" rx="1.5"/><rect x="3" y="14" width="7" height="7" rx="1.5"/><rect x="14" y="14" width="7" height="7" rx="1.5"/></svg><div class="tab-label">Home</div></div>
+            <div class="tab-item"><svg viewBox="0 0 24 24" fill="currentColor"><path d="M20 2H4c-1.1 0-2 .9-2 2v18l4-4h14c1.1 0 2-.9 2-2V4c0-1.1-.9-2-2-2z"/></svg><div class="tab-label">Chat</div></div>
+            <div class="tab-item active"><svg viewBox="0 0 24 24" fill="currentColor"><path d="M16 6l2.29 2.29-4.88 4.88-4-4L2 16.59 3.41 18l6-6 4 4 6.3-6.29L22 12V6z"/></svg><div class="tab-label">Invest</div></div>
+            <div class="tab-item"><svg viewBox="0 0 24 24" fill="currentColor"><path d="M5 13.18v4L12 21l7-3.82v-4L12 17l-7-3.82zM12 3L1 9l11 6 9-4.91V17h2V9L12 3z"/></svg><div class="tab-label">Learn</div></div>
+          </div>
+        </div>
+
+      </div>
+    </div>
+  </div>
+
+<script>
+  const $ = id => document.getElementById(id);
+  let running = false;
+
+  function showScreen(id) {
+    document.querySelectorAll('.app-screen').forEach(s => s.classList.remove('visible'));
+    $(id).classList.add('visible');
+  }
+
+  function setStep(n) {
+    for (let i = 1; i <= 6; i++) {
+      const el = $('step' + i);
+      el.classList.remove('active', 'done');
+      if (i < n) el.classList.add('done');
+      if (i === n) el.classList.add('active');
+    }
+  }
+
+  function showTap(x, y) {
+    const tap = $('tap');
+    tap.style.left = x + 'px';
+    tap.style.top = y + 'px';
+    tap.classList.remove('show');
+    void tap.offsetWidth;
+    tap.classList.add('show');
+  }
+
+  function wait(ms) { return new Promise(r => setTimeout(r, ms)); }
+
+  async function startDemo() {
+    if (running) return;
+    running = true;
+    $('replayBtn').style.opacity = '0.5';
+
+    // Reset
+    showScreen('screenDash');
+    $('notification').classList.remove('show');
+    $('buyModal').classList.remove('show');
+    $('backdrop').classList.remove('show');
+    $('successOverlay').classList.remove('show');
+    $('tap').classList.remove('show');
+    setStep(1);
+
+    await wait(1200);
+
+    // Step 1: Notification slides in
+    setStep(1);
+    $('notification').classList.add('show');
+    await wait(3000);
+
+    // Step 2: Tap notification → Stock detail
+    setStep(2);
+    showTap(187, 85);
+    await wait(600);
+    $('notification').classList.remove('show');
+    await wait(300);
+    showScreen('screenStock');
+    $('screenStock').scrollTop = 0;
+    await wait(2500);
+
+    // Step 3: Scroll down to see why
+    setStep(3);
+    const stockScreen = $('screenStock');
+    let scrollTarget = 280;
+    let scrollCurrent = 0;
+    const scrollStep = () => {
+      if (scrollCurrent < scrollTarget) {
+        scrollCurrent += 8;
+        stockScreen.scrollTop = scrollCurrent;
+        requestAnimationFrame(scrollStep);
+      }
+    };
+    scrollStep();
+    await wait(3500);
+
+    // Step 4: Tap Buy button
+    setStep(4);
+    showTap(120, 620);
+    await wait(800);
+
+    // Step 5: Show buy modal
+    setStep(5);
+    $('backdrop').classList.add('show');
+    $('buyModal').classList.add('show');
+    await wait(3000);
+
+    // Tap confirm
+    showTap(187, 680);
+    await wait(600);
+    $('buyModal').classList.remove('show');
+    $('backdrop').classList.remove('show');
+
+    // Success animation
+    $('successOverlay').classList.add('show');
+    await wait(2500);
+
+    // Step 6: Show updated portfolio
+    setStep(6);
+    $('successOverlay').classList.remove('show');
+    await wait(400);
+    showScreen('screenPortfolio');
+    await wait(1000);
+
+    // Scroll portfolio to see all holdings
+    const portScreen = $('screenPortfolio');
+    let pScroll = 0;
+    const pStep = () => {
+      if (pScroll < 200) {
+        pScroll += 5;
+        portScreen.scrollTop = pScroll;
+        requestAnimationFrame(pStep);
+      }
+    };
+    pStep();
+
+    await wait(4000);
+    running = false;
+    $('replayBtn').style.opacity = '1';
+  }
+
+  // Auto-start after page load
+  window.addEventListener('load', () => setTimeout(startDemo, 800));
+</script>
+</body>
+</html>

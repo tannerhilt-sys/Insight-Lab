@@ -36,7 +36,7 @@ router.post('/signup', async (req, res) => {
     addUser(user);
 
     const token = signToken(user.id);
-    res.status(201).json({ token, userId: user.id, buddyName: user.buddyName });
+    res.status(201).json({ token, user: { id: user.id, email: user.email, buddyName: user.buddyName } });
   } catch (err) {
     console.error('Signup error:', err);
     res.status(500).json({ error: 'Internal server error' });
@@ -63,7 +63,7 @@ router.post('/login', async (req, res) => {
     }
 
     const token = signToken(user.id);
-    res.json({ token, userId: user.id, buddyName: user.buddyName });
+    res.json({ token, user: { id: user.id, email: user.email, buddyName: user.buddyName } });
   } catch (err) {
     console.error('Login error:', err);
     res.status(500).json({ error: 'Internal server error' });
@@ -77,7 +77,7 @@ router.get('/me', authenticate, (req, res) => {
     if (!user) return res.status(404).json({ error: 'User not found' });
 
     const { password, ...safe } = user;
-    res.json(safe);
+    res.json({ user: safe });
   } catch (err) {
     console.error('Get me error:', err);
     res.status(500).json({ error: 'Internal server error' });
