@@ -94,7 +94,7 @@ router.post('/login', async (req, res) => {
     }
 
     const token = signToken(user.id);
-    res.json({ token, user: { id: user.id, email: user.email, buddyName: user.buddyName } });
+    res.json({ token, userId: user.id, buddyName: user.buddyName });
   } catch (err) {
     console.error('Login error:', err);
     res.status(500).json({ error: 'Internal server error' });
